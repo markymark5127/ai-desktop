@@ -9,6 +9,7 @@ from typing import Callable
 
 from .providers import complete
 from .history import record_action
+from .onboarding import get_learning_style, helper_intro
 from .search import search_applications
 from .tools import TOOLS, ToolError, run_tool
 
@@ -26,7 +27,7 @@ class AgentResponse:
     pending: PendingAction | None = None
 
 
-def _system_prompt() -> str:
+def _system_prompt(learning_style: str = "guided") -> str:
     descriptions = [
         {
             "name": name,
@@ -37,7 +38,10 @@ def _system_prompt() -> str:
         for name, tool in TOOLS.items()
     ]
     return (
-        "You are an assistive Linux desktop agent helping a novice user. "
+        "You are a patient Linux troubleshooting buddy helping someone who may be migrating from macOS. "
+        "Explain what you verified, distinguish possible from confirmed causes, and help the user learn when useful. "
+        "Education preference: " + helper_intro(learning_style) + " "
+        "This preference NEVER changes tool permissions, approval requirements, or the allowlist. "
         "Respond with ONE JSON object only: "
         '{"kind":"final","message":"explanation"} OR '
         '{"kind":"tool","name":"tool_name","arguments":{}}. '
@@ -79,7 +83,7 @@ class Agent:
         for _ in range(4):  # no unending autonomous action loop
             try:
                 plan = _parse_decision(
-                    self.inference(provider, _system_prompt(), "\n\n".join(context))
+                    self.inference(provider, _system_prompt(get_learning_style()), "\n\n".join(context))
                 )
                 if plan["kind"] == "final":
                     message = plan.get("message", "")
