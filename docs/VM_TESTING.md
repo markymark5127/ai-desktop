@@ -45,7 +45,16 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 bash scripts/run-dev.sh --search steam
 bash scripts/run-dev.sh --ask "system info" --provider builtin
 bash scripts/run-dev.sh
+# Reopen the welcome guide at any time
+bash scripts/run-dev.sh --setup
+bash scripts/run-dev.sh --setup-status
 ```
+
+The **first launch automatically opens the skippable welcome wizard**.
+Work through the theme, keyboard, helper, Newelle status, GSConnect and Steam
+steps. To re-open it later, click **Setup** in the launcher. See
+[ONBOARDING.md](ONBOARDING.md) for the regression checklist and exact privacy
+boundaries.
 
 - Search for a GNOME application by name. Type a few letters; press Enter.
 - Try "my sound is not working" with **Built-in (offline)** selected.
