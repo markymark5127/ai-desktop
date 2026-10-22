@@ -12,7 +12,7 @@ if ! flatpak info io.github.qwersyk.Newelle >/dev/null 2>&1; then
   exit 1
 fi
 config_root="$HOME/.config"
-if [[ -n "$XDG_CONFIG_HOME" ]]; then config_root="$XDG_CONFIG_HOME"; fi
+if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then config_root="$XDG_CONFIG_HOME"; fi
 config_dir="$config_root/ai-desktop"
 if [[ ! -s "$config_dir/newelle-token" ]]; then
   echo "Missing $config_dir/newelle-token." >&2

@@ -2,13 +2,14 @@
 
 ## Phase 0: prototype (this commit)
 - Native GNOME window, bounded model-driven tool calls, CLI, tests.
-- Built-in, Ollama, OpenAI API, Anthropic API.
+- Headless Newelle inference adapter as default (plus built-in, direct Ollama, OpenAI API and Anthropic API), authentication and optional systemd user service.
 - Explicit per-request cloud consent; explicit change approval.
 
 ## Phase 1: genuinely helpful desktop assistant
 - Offline instant app search and natural-language queries (app search implemented; indexed file search pending).
 - Desktop application discovery by friendly name (implemented in search UI; agent tool exposes IDs internally).
 - GNOME Shell overlay still pending; opt-in, reversible Super+Space GSettings binding implemented.
+- Newelle setup guided by documentation today; next build in-app onboarding, provider status/selection and a privacy-aware first-run wizard.
 - Conversation state, explanation of troubleshooting, verifiable fixes and undo.
 
 ## Phase 2: safe system agent

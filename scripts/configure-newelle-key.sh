@@ -7,7 +7,7 @@ if [[ ! -t 0 ]]; then
 fi
 umask 077
 config_root="$HOME/.config"
-if [[ -n "$XDG_CONFIG_HOME" ]]; then config_root="$XDG_CONFIG_HOME"; fi
+if [[ -n "${XDG_CONFIG_HOME:-}" ]]; then config_root="$XDG_CONFIG_HOME"; fi
 target_dir="$config_root/ai-desktop"
 mkdir -p -m 700 "$target_dir"
 chmod 700 "$target_dir"

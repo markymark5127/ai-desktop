@@ -15,6 +15,6 @@ jobs:
       - name: Compile all Python source (including GNOME UI)
         run: python -m compileall -q src scripts tests
       - name: Run headless smoke test
-        run: PYTHONPATH=src python -m aidesktop --ask "system info"
+        run: PYTHONPATH=src python -m aidesktop --ask "system info" --provider builtin
       - name: Run tests
         run: PYTHONPATH=src python -m unittest discover -s tests -v

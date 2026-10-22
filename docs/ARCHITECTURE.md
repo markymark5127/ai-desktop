@@ -3,7 +3,7 @@
 ## Design
 
 GNOME/libadwaita GUI -> provider-independent Agent -> explicit tool registry -> OS.
-Inference providers: built-in routing, local Ollama, OpenAI API, Anthropic API.
+Inference providers: **headless Newelle GUI API** (default), built-in routing, optional direct local Ollama, OpenAI API and Anthropic API. Newelle is separately installed and managed via a systemd user service (optional).
 
 ## Current prototype
 
@@ -11,12 +11,13 @@ Inference providers: built-in routing, local Ollama, OpenAI API, Anthropic API.
 - Approved actions: launch a desktop application, change an existing default PulseAudio/PipeWire sink.
 - Four maximum agent planning steps per query; no free-form terminal commands.
 - GTK operations only on the GTK thread; inference runs on worker threads.
-- Cloud model selection asks for confirmation for each request.
+- Newelle and cloud model selections ask for confirmation for each request; configured Newelle models may be local or cloud.
+- Newelle adapter accepts only loopback 127.0.0.1 on a validated port and requires a configured API token. Only /v1/models and /v1/chat/completions are called. The full Newelle agent API is not used.
 
 ## Security limitations / TODO
 
 - Cloud providers receive prompts and tool output, including potentially sensitive log lines, with one per-request consent. A production edition needs per-tool data-sharing decisions and redaction.
-- Providers currently rely on environment variables instead of GNOME Secret Service/Keyring.
+- Direct providers currently rely on environment variables instead of GNOME Secret Service/Keyring. Newelle key is stored in a user-private config file or environment. A shared localhost service can still pose a security risk.
 - Actions are restricted, but no general permission broker or audit log exists yet.
 - Approved AI-driven actions are now logged (timestamp, tool name and status only) to a user-private JSONL history file, with no prompts or tool outputs. Automatic rollback is not yet implemented.
 - No MCP application adapters, polkit helper, rollback, App Store, distro image or iPhone companion yet.

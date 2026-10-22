@@ -10,14 +10,14 @@ A Mac-inspired search window that lets people describe what they want in everyda
 - Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation.
 - Enter launches the selected app; Ctrl+Enter sends text to the agent; Esc closes the window.
 - Built-in read-only diagnostics, even without an AI model.
-- Model adapters: local Ollama; OpenAI API; Anthropic API (Claude).
+- **Headless Newelle (default)** for local or cloud models configured once in Newelle; legacy direct Ollama, OpenAI API and Anthropic API adapters remain optional.
 - A model can request only allowlisted tools, never arbitrary shell commands.
 - Every application launch or default audio-output change requires an explicit click to approve.
 - Network requests run in background workers instead of freezing the window.
 - Private history of approved AI-driven actions (no chat transcripts or diagnostic output).
 - CLI mode for development and unit tests.
 
-**Not yet implemented:** GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
+**Not yet implemented:** automatic Newelle onboarding and provider switching UI, GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
 
 ## Quick start on GNOME Linux
 
@@ -32,6 +32,7 @@ For a read-only test without GNOME:
     bash scripts/run-dev.sh --ask "system info"
     bash scripts/run-dev.sh --search steam
     bash scripts/run-dev.sh --history
+    bash scripts/run-dev.sh --check-newelle
 
 To open the graphical launcher on a GNOME machine:
 
@@ -51,13 +52,29 @@ This changes GNOME's input-source shortcut if it conflicts. The installer saves 
 
 The script is opt-in; inspect it first if you prefer. This is still a standalone window, not a custom GNOME Shell overlay. If you already use Super+Space to switch languages, expect that behavior to change while AI Desktop is bound.
 
-### Using local AI
+### Recommended: headless Newelle on Bazzite GNOME
+
+Newelle manages your model configuration while AI Desktop owns the Spotlight
+UI, system tools and approvals. **No fork is needed.**
+
+Follow **[Headless Newelle setup](docs/NEWELLE_SETUP.md)** to install the Flatpak,
+set a localhost-only GUI API with authentication, connect the AI Desktop client,
+and optionally enable an automatic systemd **user service**. With it running,
+select **Newelle (recommended)** (the new default) in the launcher.
+
+This integration intentionally uses only the non-agent model endpoint:
+Newelle does **not** get to run system commands or MCP tools behind our
+permission interface. AI Desktop validates requests, proposes changes and asks
+permission before modifying settings. The full Newelle agent/MCP pipeline is
+not connected yet.
+
+### Optional: direct local AI without Newelle
 
 Install Ollama separately, ensure its local server is running, and pull a small model. For example:
 
     ollama pull qwen2.5:3b
 
-Choose Local AI (Ollama) in the model selector. Override the model ID via AIDESKTOP_LOCAL_MODEL if desired. The built-in mode requires no model and no network access.
+Choose Local Ollama in the model selector. Override the model ID via AIDESKTOP_LOCAL_MODEL if desired. The built-in mode requires no model and no network access.
 
 ### Using OpenAI or Claude
 
@@ -82,14 +99,15 @@ Select the desired provider in the window. Each cloud request requires a privacy
 - src/aidesktop/history.py — timestamped, private audit trail for approved actions
 - src/aidesktop/agent.py — bounded AI planner and confirmation handling
 - src/aidesktop/providers.py — model provider adapters
+- src/aidesktop/newelle_client.py — authenticated loopback-only Newelle model adapter
 - src/aidesktop/tools.py — restricted Linux diagnostics/actions
 - tests/ — headless tests (also run via GitHub Actions)
-- scripts/ — dev launcher and home-directory desktop integration
+- scripts/ — dev launcher, GNOME desktop integration, and optional Newelle systemd user service
 - docs/ARCHITECTURE.md — trust boundaries and future security work
 
 ## Safety boundaries
 
-No free-form command executor is available to the model. AI-proposed changes need an approval click; selecting an app search result counts as an explicit launch request. Installed apps are validated against visible desktop entries. The app is not intended to run as root. The software has NOT been tested on real hardware in this repository, and its diagnosis cannot be relied on. Use a VM or spare machine first. See docs/ARCHITECTURE.md for limitations.
+No free-form command executor is available to the model. AI-proposed changes need an approval click; selecting an app search result counts as an explicit launch request. Installed apps are validated against visible desktop entries. The app is not intended to run as root. The Newelle connection has been tested with a simulated local HTTP service; the full GUI + Newelle service has NOT been tested on real hardware in this repository, and its diagnosis cannot be relied on. Use a VM or spare machine first. See docs/ARCHITECTURE.md for limitations.
 
 ## Keyboard usage
 
