@@ -92,12 +92,13 @@ This diagnosis must appear only if supported by real system evidence.
 
 ## Build order
 
-1. Deterministic local omnibox: existing app search, add Settings pages, indexed files and Steam titles.
-2. Keyboard UI separating Open, Do and Get help; quick results without model latency.
-3. Safe, verified troubleshooting of one recurring problem (wrong audio output), with action history and undo if supported.
-4. Learning style preference and optional explanations, independent from action permissions.
-5. First-run buddy tour with a real Super+Space exercise and privacy-aware Newelle setup.
-6. Additional trusted capabilities via D-Bus/desktop portals/MCP and gaming support.
+1. Provide a Mac/standard English (US) physical keyboard choice in onboarding, with **⌘ Command = Super** on a typical Mac keyboard and **Win = Super** on a PC keyboard; teach ⌘+Space versus Win+Space. Verify actual key events in the wizard rather than assuming a VM or unusual keyboard maps modifiers correctly.
+2. Deterministic local omnibox: existing app search, add Settings pages, indexed files and Steam titles.
+3. Keyboard UI separating Open, Do and Get help; quick results without model latency.
+4. Safe, verified troubleshooting of one recurring problem (wrong audio output), with action history and undo if supported.
+5. Learning style preference and optional explanations, independent from action permissions.
+6. First-run buddy tour with a real Super+Space exercise and privacy-aware Newelle setup.
+7. Additional trusted capabilities via D-Bus/desktop portals/MCP and gaming support.
 
 ## Test with beginners
 
