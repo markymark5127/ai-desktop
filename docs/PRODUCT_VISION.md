@@ -1,6 +1,6 @@
 # Product vision: a Mac-familiar gaming desktop
 
-**North star:** A long-time Mac user should be able to install the OS, immediately recognize how to navigate it, connect their phone, launch Steam games, and solve routine problems without learning Linux commands.
+**North star:** A long-time Mac user should be able to install the OS, immediately recognize how to navigate it, connect their phone, launch Steam games, and solve routine problems without learning Linux commands. **Super + Space is the everyday control center, and the helper is Linux training wheels rather than AI hype.** See [Helper Experience](HELPER_EXPERIENCE.md).
 
 This is **not a macOS clone**, a new desktop environment, or an AI chatbot pasted on top of a distro. Build an approachable GNOME desktop experience atop Bazzite, with a fast Spotlight-style launcher, headless Newelle inference, safe system actions, and gaming support.
 
@@ -51,11 +51,13 @@ The device wizard should detect connection problems and present accurate trouble
 1. Choose light Japandi, dark Cyberpunk, or system look; show a real preview and accessible fallback.
 2. Choose a familiar dock/layout style and turn on any GNOME extensions with explicit user control.
 3. Explain the **Super** key on PC and **Command** key on Apple keyboards and teach the 5 most useful shortcuts.
-4. Optionally install/configure Newelle locally or choose a supported cloud model (consent, privacy, costs, separate authentication).
-5. Optionally pair a phone via GSConnect/KDE Connect; show OS-specific capability chart.
-6. Optional Mac migration guide (browser data, documents, music/photos, passwords, app alternatives).
-7. Test graphics/controller basics and offer Steam sign-in/gaming mode on supported devices.
-8. Show recovery entry points and a clear **Undo/Revert** path for supported changes.
+4. Introduce **"Your computer comes with a helping hand"**, not an AI feature pitch: demonstrate Super+Space as an instant app/file/settings launcher and a plain-English troubleshooting buddy; allow a real "Try it now" task.
+5. Choose an explanation preference: "Just help me fix things", "Help me and briefly explain" (default), or "Teach me as we go". This must never alter permissions or approval rules.
+6. Configure headless Newelle as an **optional backend**, with privacy/cost disclosure for cloud use; ensure Spotlight and ordinary navigation still work without it.
+7. Optionally pair a phone via GSConnect/KDE Connect; show OS-specific capability chart.
+8. Optional Mac migration guide (browser data, documents, music/photos, passwords, app alternatives).
+9. Test graphics/controller basics and offer Steam sign-in/gaming mode on supported devices.
+10. Show recovery entry points and a clear **Undo/Revert** path for supported changes.
 
 No Apple ID or sensitive credential should be requested by the distro just to perform basic onboarding.
 
