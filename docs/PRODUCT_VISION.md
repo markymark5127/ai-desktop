@@ -27,7 +27,7 @@ This is **not a macOS clone**, a new desktop environment, or an AI chatbot paste
 | Finder with file previews | GNOME Files (Nautilus) and GNOME Sushi Quick Look where supported | High |
 | Mission Control/Spaces | GNOME Overview, workspaces, gestures, intentional keyboard mapping | High |
 | Easy split windows | Built-in GNOME half snapping; test an extension such as Smart Tiling/Tiling Assistant for quarters and assisted layouts | High |
-| macOS keyboard muscle memory | Show a Mac-oriented shortcut guide; use Super for Shell actions. Don't globally rewrite Ctrl vs Command in apps without explicit opt-in | High |
+| macOS keyboard muscle memory | Offer **Mac English US** (⌘ Command = Super) or **standard English US** (Win = Super), optional reversible GNOME input layout, and shortcut guide. Don't globally rewrite Ctrl vs Command in apps without explicit opt-in | High |
 | AirDrop/Continuity sharing | GSConnect on GNOME, KDE Connect on phones; pair-device walkthrough | High |
 | Mac-style coherent interface | App-scoped Japandi/Cyberpunk already available; future matching shell/dock/wallpaper/icons | Medium |
 | macOS migration | Explain equivalent Linux apps and how to import local files/browser/bookmarks | Medium |
@@ -50,7 +50,7 @@ The device wizard should detect connection problems and present accurate trouble
 
 1. Choose light Japandi, dark Cyberpunk, or system look; show a real preview and accessible fallback.
 2. Choose a familiar dock/layout style and turn on any GNOME extensions with explicit user control.
-3. Explain the **Super** key on PC and **Command** key on Apple keyboards and teach the 5 most useful shortcuts.
+3. Offer **Standard English (US)** or **Mac English (US)** physical-keyboard setup, with Win/Command acting as Super for Spotlight, a keyboard test and a reversible optional GNOME input layout; teach the 5 most useful shortcuts and explain that Ctrl+C/V behavior is unchanged.
 4. Introduce **"Your computer comes with a helping hand"**, not an AI feature pitch: demonstrate Super+Space as an instant app/file/settings launcher and a plain-English troubleshooting buddy; allow a real "Try it now" task.
 5. Choose an explanation preference: "Just help me fix things", "Help me and briefly explain" (default), or "Teach me as we go". This must never alter permissions or approval rules.
 6. Configure headless Newelle as an **optional backend**, with privacy/cost disclosure for cloud use; ensure Spotlight and ordinary navigation still work without it.
