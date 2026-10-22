@@ -1,8 +1,10 @@
 # AI Desktop
 
-**Experimental GNOME assistant for Linux beginners, not yet a Linux distribution.**
+**A Mac-familiar GNOME gaming desktop in development—currently a standalone assistant prototype, not yet a distribution.**
 
 A Mac-inspired search window that lets people describe what they want in everyday language. It can inspect common Linux problems, explain findings, and request confirmation before making a supported change. The intended future base is Bazzite GNOME for gaming, but this first milestone runs as a normal GNOME application.
+
+Our [product vision](docs/PRODUCT_VISION.md) is to help Mac users feel at home on a Bazzite-based gaming PC: Spotlight-style search with headless Newelle, GNOME dock/gestures/window snapping, honest phone continuity through GSConnect/KDE Connect, approachable game support and safe system repair. Mac-like *behavior* comes before cosmetic imitation.
 
 ## Working in this first version
 
