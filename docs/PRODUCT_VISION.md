@@ -46,7 +46,13 @@ On iPhone, prioritize: app-mediated file transfer, link sharing, and optional re
 
 The device wizard should detect connection problems and present accurate troubleshooting without overstating feature support. Respect users' choice not to pair a phone.
 
-## The first-run wizard (future)
+## First-run wizard (prototype implemented; platform integrations pending)
+
+A working, skippable/reopenable GTK wizard now guides appearance, Mac/PC keyboards and modifier-key testing, the troubleshooting-buddy learning styles, optional headless Newelle status, GSConnect pairing guidance and detected Steam availability. It does **not** yet install/configure dock or tiling extensions, pair a phone automatically, install AI providers, or create a Bazzite image.
+
+See [ONBOARDING.md](ONBOARDING.md) for exactly what works, what remains manual, and the VM regression checks.
+
+### Target end-to-end experience
 
 1. Choose light Japandi, dark Cyberpunk, or system look; show a real preview and accessible fallback.
 2. Choose a familiar dock/layout style and turn on any GNOME extensions with explicit user control.
