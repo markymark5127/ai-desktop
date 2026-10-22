@@ -16,7 +16,7 @@ A Mac-inspired search window that lets people describe what they want in everyda
 - Network requests run in background workers instead of freezing the window.
 - CLI mode for development and unit tests.
 
-**Not yet implemented:** automatic Super+Space binding, indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
+**Not yet implemented:** GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
 
 ## Quick start on GNOME Linux
 
@@ -39,7 +39,15 @@ To add a desktop launcher (installs only under your home directory):
 
     bash scripts/install-local.sh
 
-To make it Spotlight-like, create a custom GNOME keyboard shortcut pointing to $HOME/.local/bin/ai-desktop with Super+Space. GNOME normally uses Super+Space to change input sources; reassign that shortcut first. This is a standalone window, not yet a GNOME Shell overlay.
+To enable the GNOME **Super+Space** shortcut after running the local installer:
+
+    python3 scripts/shortcut.py --apply
+
+This changes GNOME's input-source shortcut if it conflicts. The installer saves the previous settings under $XDG_STATE_HOME/ai-desktop/gnome-shortcut.json (or ~/.local/state/ai-desktop/gnome-shortcut.json). To restore the original shortcuts:
+
+    python3 scripts/shortcut.py --restore
+
+The script is opt-in; inspect it first if you prefer. This is still a standalone window, not a custom GNOME Shell overlay. If you already use Super+Space to switch languages, expect that behavior to change while AI Desktop is bound.
 
 ### Using local AI
 

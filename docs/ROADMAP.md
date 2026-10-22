@@ -8,7 +8,7 @@
 ## Phase 1: genuinely helpful desktop assistant
 - Offline instant app search and natural-language queries (app search implemented; indexed file search pending).
 - Desktop application discovery by friendly name (implemented in search UI; agent tool exposes IDs internally).
-- GNOME Shell extension / optional Super+Space integration (pending; manual shortcut currently supported).
+- GNOME Shell overlay still pending; opt-in, reversible Super+Space GSettings binding implemented.
 - Conversation state, explanation of troubleshooting, verifiable fixes and undo.
 
 ## Phase 2: safe system agent
