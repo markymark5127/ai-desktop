@@ -11,8 +11,9 @@
 - GNOME Shell overlay still pending; opt-in, reversible Super+Space GSettings binding implemented.
 - Japandi/Cyberpunk/System theme selector and saved launcher preference implemented; OS-wide styling still pending.
 - Standard US vs Mac US keyboard profile selector, displayed Super-key shortcut labels, opt-in reversible GNOME XKB source selection (implemented). Next: guided physical-key test and optional shortcut emulation, without globally swapping Ctrl/Cmd.
+- **First-run wizard prototype now implemented:** launch on first run/--setup; skippable and reopenable from launcher. Includes app-search exercise, theme, Mac/PC keyboard and live key test, helper, optional Newelle check, GSConnect availability/pairing guidance, Steam detection. See [Onboarding](ONBOARDING.md).
 - Reframe the first-run step as **"Your computer comes with a helping hand"**, not "select an AI model"; let users test Super+Space immediately. See [Helper Experience](HELPER_EXPERIENCE.md).
-- Add three optional learning/explanation styles; never change action approval policy based on style.
+- Three user learning/explanation styles now stored and included in AI Desktop's prompt; no tool authorization or approval changes from style. Future: rich details UI, verified repair narratives.
 - Newelle setup guided by documentation today; next build in-app onboarding, provider status/selection and a privacy-aware first-run wizard.
 - Develop a unified **Open / Do / Get help** omnibox with indexed file/settings/game search, deterministic typed tools, multi-step verified troubleshooting and graceful unsupported-action handling.
 - Conversation state, explanation of troubleshooting, verifiable fixes and undo.
@@ -27,7 +28,7 @@
 - Design for Mac-to-Linux migration and Steam/Proton gaming; see [Product vision](PRODUCT_VISION.md).
 - Evaluate compatible Dash to Dock and tiling extensions, GNOME Overview and Sushi file previews, with version-specific Shell testing.
 - Provide optional GSConnect device pairing. KDE Connect iOS lacks full background connectivity, iMessage/SMS and system notification mirroring; never advertise AirDrop/Continuity feature parity.
-- Build first-run wizard with appearance/layout, shortcuts, AI/privacy settings, optional phone pairing, Mac files/app migration and basic Steam setup.
+- First-run GTK wizard prototype built with appearance, physical key test, AI connection check, phone/GSConnect guidance and installed Steam check. Still need actual pairing UI, guided local model install, file migration, dock/window tiling configuration, game diagnostics and dedicated Bazzite first-login integration.
 - Preserve a standalone GNOME install path; only create a Bazzite-derived image after real UX and native gaming QA.
 
 ## Phase 3: app ecosystem
