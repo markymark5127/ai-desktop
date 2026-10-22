@@ -9,6 +9,7 @@
 - Offline instant app search and natural-language queries (app search implemented; indexed file search pending).
 - Desktop application discovery by friendly name (implemented in search UI; agent tool exposes IDs internally).
 - GNOME Shell overlay still pending; opt-in, reversible Super+Space GSettings binding implemented.
+- Japandi/Cyberpunk/System theme selector and saved launcher preference implemented; OS-wide styling still pending.
 - Newelle setup guided by documentation today; next build in-app onboarding, provider status/selection and a privacy-aware first-run wizard.
 - Conversation state, explanation of troubleshooting, verifiable fixes and undo.
 
