@@ -2,7 +2,9 @@
 
 ## Design
 
-GNOME/libadwaita GUI -> provider-independent Agent -> explicit tool registry -> OS.
+GNOME/libadwaita GUI (Japandi/Cyberpunk/System themes) -> provider-independent Agent -> explicit tool registry -> OS.
+
+The prototype is a GNOME **application** with a future Shell extension. It is not a custom GNOME fork or a new desktop environment. A customized signed Bazzite GNOME OS image may be built later for distribution, preserving the reusable desktop assistant as a standalone app.
 Inference providers: **headless Newelle GUI API** (default), built-in routing, optional direct local Ollama, OpenAI API and Anthropic API. Newelle is separately installed and managed via a systemd user service (optional).
 
 ## Current prototype
