@@ -6,7 +6,7 @@ A Mac-inspired search window that lets people describe what they want in everyda
 
 ## Working in this first version
 
-- GTK4 / libadwaita search-first application window (native GNOME styling).
+- GTK4 / libadwaita search-first application window with **switchable Japandi, Cyberpunk or System appearance**.
 - Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation.
 - Enter launches the selected app; Ctrl+Enter sends text to the agent; Esc closes the window.
 - Built-in read-only diagnostics, even without an AI model.
@@ -17,7 +17,11 @@ A Mac-inspired search window that lets people describe what they want in everyda
 - Private history of approved AI-driven actions (no chat transcripts or diagnostic output).
 - CLI mode for development and unit tests.
 
-**Not yet implemented:** automatic Newelle onboarding and provider switching UI, GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
+**Not yet implemented:** OS-wide visual theming (current appearance affects only our launcher), automatic Newelle onboarding and provider switching UI, GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
+
+## Test on Windows before installing Linux
+
+Follow [Windows VM testing](docs/VM_TESTING.md) for the recommended VMware Workstation Pro + Fedora Workstation GNOME workflow, snapshot strategy, and graphical/AI test checklist. The first VM test validates **desktop behavior**, not native GPU performance.
 
 ## Quick start on GNOME Linux
 
@@ -95,6 +99,7 @@ Select the desired provider in the window. Each cloud request requires a privacy
 ## Repository layout
 
 - src/aidesktop/ui.py — GNOME keyboard-first window, app suggestions, approval dialogs
+- src/aidesktop/themes.py — reusable, app-scoped Japandi and Cyberpunk styles
 - src/aidesktop/search.py — freedesktop application catalog and instant ranked search
 - src/aidesktop/history.py — timestamped, private audit trail for approved actions
 - src/aidesktop/agent.py — bounded AI planner and confirmation handling
@@ -108,6 +113,10 @@ Select the desired provider in the window. Each cloud request requires a privacy
 ## Safety boundaries
 
 No free-form command executor is available to the model. AI-proposed changes need an approval click; selecting an app search result counts as an explicit launch request. Installed apps are validated against visible desktop entries. The app is not intended to run as root. The Newelle connection has been tested with a simulated local HTTP service; the full GUI + Newelle service has NOT been tested on real hardware in this repository, and its diagnosis cannot be relied on. Use a VM or spare machine first. See docs/ARCHITECTURE.md for limitations.
+
+## Appearance
+
+Select **Japandi**, **Cyberpunk** or **System** in the launcher's title bar. Japandi is the first-run default. The selected look persists across launches, and changing it does not alter the OS or other applications. See [Theme design](docs/THEMES.md).
 
 ## Keyboard usage
 
