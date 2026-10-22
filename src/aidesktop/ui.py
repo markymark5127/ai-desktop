@@ -62,6 +62,10 @@ class AssistantWindow(Adw.ApplicationWindow):
         header.set_title_widget(Gtk.Label(label="Ask your computer"))
         self.choice = Gtk.DropDown.new_from_strings([item[0] for item in CHOICES])
         header.pack_end(self.choice)
+        self.setup_button = Gtk.Button(label="Setup")
+        self.setup_button.set_tooltip_text("Reopen the Mac-to-Linux welcome guide")
+        self.setup_button.connect("clicked", self._open_setup)
+        header.pack_start(self.setup_button)
         self.theme_choice = Gtk.DropDown.new_from_strings([label for label, _ in THEME_LABELS])
         header.pack_start(self.theme_choice)
         root.append(header)
@@ -223,6 +227,11 @@ class AssistantWindow(Adw.ApplicationWindow):
 
     def _restore_keyboard_layout(self, *_unused) -> None:
         self._execute(lambda: self._keyboard_action(restore_previous_layout))
+
+    def _open_setup(self, *_unused) -> None:
+        from .setup_wizard import SetupWizard
+        wizard = SetupWizard(self.get_application(), on_done=self.present)
+        wizard.present()
 
     def _show_text(self, text: str) -> None:
         self.output.get_buffer().set_text(text)
@@ -392,15 +401,28 @@ class AssistantWindow(Adw.ApplicationWindow):
 
 
 class AssistantApp(Adw.Application):
-    def __init__(self):
+    def __init__(self, *, force_setup: bool = False):
         super().__init__(
             application_id="io.github.markymark5127.AIDesktop",
             flags=Gio.ApplicationFlags.FLAGS_NONE,
         )
+        self.force_setup = force_setup
+
+    def _show_launcher(self) -> None:
+        window = AssistantWindow(self)
+        window.present()
+        window.entry.grab_focus()
 
     def do_activate(self) -> None:
         window = self.props.active_window
         if not window:
-            window = AssistantWindow(self)
+            from .onboarding import is_setup_done
+            if self.force_setup or not is_setup_done():
+                from .setup_wizard import SetupWizard
+                window = SetupWizard(self, on_done=self._show_launcher)
+                self.force_setup = False
+            else:
+                window = AssistantWindow(self)
         window.present()
-        window.entry.grab_focus()
+        if isinstance(window, AssistantWindow):
+            window.entry.grab_focus()
