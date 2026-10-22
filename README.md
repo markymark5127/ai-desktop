@@ -1,7 +1,77 @@
-# ai-desktop
+# AI Desktop
 
-An experimental AI-native GNOME desktop for approachable Linux troubleshooting and natural-language actions. This repository begins as a desktop assistant, **not** a standalone Linux distribution.
+**Experimental GNOME assistant for Linux beginners, not yet a Linux distribution.**
 
-The first milestone is a `Super + Space`-style assistant that can investigate common problems with read-only tools and ask permission before changing settings.
+A Mac-inspired search window that lets people describe what they want in everyday language. It can inspect common Linux problems, explain findings, and request confirmation before making a supported change. The intended future base is Bazzite GNOME for gaming, but this first milestone runs as a normal GNOME application.
 
-Development is in progress; see the upcoming implementation and documentation.
+## Working in this first version
+
+- GTK4 / libadwaita application window (native GNOME styling).
+- Built-in read-only diagnostics, even without an AI model.
+- Model adapters: local Ollama; OpenAI API; Anthropic API (Claude).
+- A model can request only allowlisted tools, never arbitrary shell commands.
+- Every application launch or default audio-output change requires an explicit click to approve.
+- Network requests run in background workers instead of freezing the window.
+- CLI mode for development and unit tests.
+
+**Not yet implemented:** automatic Super+Space binding, instant app/file search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
+
+## Quick start on GNOME Linux
+
+Requires Python 3.11+, GTK4, libadwaita, PyGObject (Python gi), and a working graphical GNOME session. Verify the graphical dependencies with:
+
+    python3 -c "import gi; gi.require_version('Gtk','4.0'); gi.require_version('Adw','1'); from gi.repository import Gtk, Adw; print('GNOME libraries ready')"
+
+For a read-only test without GNOME:
+
+    git clone https://github.com/markymark5127/ai-desktop.git
+    cd ai-desktop
+    bash scripts/run-dev.sh --ask "system info"
+
+To open the graphical launcher on a GNOME machine:
+
+    bash scripts/run-dev.sh
+
+To add a desktop launcher (installs only under your home directory):
+
+    bash scripts/install-local.sh
+
+To make it Spotlight-like, create a custom GNOME keyboard shortcut pointing to $HOME/.local/bin/ai-desktop with Super+Space. GNOME normally uses Super+Space to change input sources; reassign that shortcut first. This is a standalone window, not yet a GNOME Shell overlay.
+
+### Using local AI
+
+Install Ollama separately, ensure its local server is running, and pull a small model. For example:
+
+    ollama pull qwen2.5:3b
+
+Choose Local AI (Ollama) in the model selector. Override the model ID via AIDESKTOP_LOCAL_MODEL if desired. The built-in mode requires no model and no network access.
+
+### Using OpenAI or Claude
+
+Export your own API credentials before starting the app:
+
+    export OPENAI_API_KEY=...
+    export ANTHROPIC_API_KEY=...
+    bash scripts/run-dev.sh
+
+Select the desired provider in the window. Each cloud request requires a privacy confirmation because the prompt and any tool results can be sent off-device, including log snippets and host details. Do not share confidential diagnostics.
+
+**Important:** This MVP uses separately billed API keys, NOT your ChatGPT or Claude subscription sign-in. Subscription/OAuth-style provider flows are future integrations, subject to each provider's terms and eligibility.
+
+### Run tests
+
+    PYTHONPATH=src python3 -m unittest discover -s tests -v
+
+## Repository layout
+
+- src/aidesktop/ui.py — GNOME window and approval dialogs
+- src/aidesktop/agent.py — bounded AI planner and confirmation handling
+- src/aidesktop/providers.py — model provider adapters
+- src/aidesktop/tools.py — restricted Linux diagnostics/actions
+- tests/ — headless tests (also run via GitHub Actions)
+- scripts/ — dev launcher and home-directory desktop integration
+- docs/ARCHITECTURE.md — trust boundaries and future security work
+
+## Safety boundaries
+
+No free-form command executor is available to the model. Changes need an approval click; the app is not intended to run as root. The software has NOT been tested on real hardware in this repository, and its diagnosis cannot be relied on. Use a VM or spare machine first. See docs/ARCHITECTURE.md for limitations.
