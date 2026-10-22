@@ -13,6 +13,15 @@ from .agent import Agent, AgentResponse, PendingAction  # noqa: E402
 from .search import AppResult, list_applications, search_applications  # noqa: E402
 from .tools import run_tool  # noqa: E402
 from .themes import THEME_LABELS, STYLES, SCHEMES, load_theme, save_theme  # noqa: E402
+from .keyboard_profiles import (
+    PROFILES as KEYBOARD_PROFILES,
+    KeyboardError,
+    apply_profile_layout,
+    get_profile,
+    restore_previous_layout,
+    set_profile,
+    shortcut_label,
+)  # noqa: E402
 
 
 CHOICES = [
@@ -84,6 +93,25 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.hint.add_css_class("dim-label")
         root.append(self.hint)
 
+        keyboard_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        keyboard_row.append(Gtk.Label(label="Keyboard"))
+        self.keyboard_choice = Gtk.DropDown.new_from_strings(
+            [label for label, _name in KEYBOARD_PROFILES]
+        )
+        self.keyboard_choice.set_selected(
+            next(i for i, (_label, name) in enumerate(KEYBOARD_PROFILES) if name == get_profile())
+        )
+        self.keyboard_choice.connect("notify::selected", self._on_keyboard_changed)
+        keyboard_row.append(self.keyboard_choice)
+        self.keyboard_apply = Gtk.Button(label="Apply layout to GNOME")
+        self.keyboard_apply.connect("clicked", self._confirm_keyboard_apply)
+        keyboard_row.append(self.keyboard_apply)
+        self.keyboard_restore = Gtk.Button(label="Restore layout")
+        self.keyboard_restore.connect("clicked", self._restore_keyboard_layout)
+        keyboard_row.append(self.keyboard_restore)
+        root.append(keyboard_row)
+        self._update_keyboard_hint()
+
         self.go = Gtk.Button(label="Ask assistant")
         self.go.add_css_class("suggested-action")
         self.go.connect("clicked", lambda *_: self._ask_ai())
@@ -145,6 +173,57 @@ class AssistantWindow(Adw.ApplicationWindow):
         except OSError:
             self._show_text("Theme applied for this session, but preference could not be saved.")
 
+    def _keyboard_profile(self) -> str:
+        return KEYBOARD_PROFILES[self.keyboard_choice.get_selected()][1]
+
+    def _update_keyboard_hint(self) -> None:
+        shortcut = shortcut_label(self._keyboard_profile())
+        self.hint.set_label(
+            f"Spotlight: {shortcut}  •  Enter opens app  •  Ctrl+Enter asks AI  •  Esc closes"
+        )
+
+    def _on_keyboard_changed(self, *_unused) -> None:
+        profile = self._keyboard_profile()
+        self._update_keyboard_hint()
+        try:
+            set_profile(profile)
+        except OSError:
+            self._show_text("Keyboard profile selected for this session but could not be saved.")
+
+    def _confirm_keyboard_apply(self, *_unused) -> None:
+        profile = self._keyboard_profile()
+        dialog = Gtk.MessageDialog(
+            transient_for=self, modal=True,
+            message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.NONE,
+            text="Apply the selected US keyboard layout to GNOME?",
+        )
+        dialog.format_secondary_text(
+            "This will make the selected English (US) layout your first input source. "
+            "Other language layouts will be kept and the original configuration saved. "
+            "The physical Command key normally works as Super already; this does not "
+            "force a modifier-key swap. You can restore the previous layouts here."
+        )
+        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        dialog.add_button("Apply", Gtk.ResponseType.OK)
+
+        def confirm(dlg, response_id):
+            dlg.destroy()
+            if response_id == Gtk.ResponseType.OK:
+                self._execute(lambda: self._keyboard_action(lambda: apply_profile_layout(profile)))
+
+        dialog.connect("response", confirm)
+        dialog.present()
+
+    @staticmethod
+    def _keyboard_action(operation) -> AgentResponse:
+        try:
+            return AgentResponse(operation())
+        except (KeyboardError, OSError, ValueError) as exc:
+            return AgentResponse(f"Keyboard change was not completed: {exc}")
+
+    def _restore_keyboard_layout(self, *_unused) -> None:
+        self._execute(lambda: self._keyboard_action(restore_previous_layout))
+
     def _show_text(self, text: str) -> None:
         self.output.get_buffer().set_text(text)
 
@@ -157,6 +236,9 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.entry.set_sensitive(not busy)
         self.choice.set_sensitive(not busy)
         self.approve_button.set_sensitive(not busy)
+        self.keyboard_choice.set_sensitive(not busy)
+        self.keyboard_apply.set_sensitive(not busy)
+        self.keyboard_restore.set_sensitive(not busy)
 
     def _on_search_changed(self, *_unused) -> None:
         self._update_results()
