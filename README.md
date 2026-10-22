@@ -9,6 +9,7 @@ Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.
 ## Working in this first version
 
 - GTK4 / libadwaita search-first application window with **switchable Japandi, Cyberpunk or System appearance**.
+- **Standard English US / Mac English US keyboard profiles**, with Win+Space versus ⌘+Space labels, explicit GNOME layout application, and reversible input-source backup.
 - Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation.
 - Enter launches the selected app; Ctrl+Enter sends text to the agent; Esc closes the window.
 - Built-in read-only diagnostics, even without an AI model.
@@ -102,6 +103,7 @@ Select the desired provider in the window. Each cloud request requires a privacy
 
 - src/aidesktop/ui.py — GNOME keyboard-first window, app suggestions, approval dialogs
 - src/aidesktop/themes.py — reusable, app-scoped Japandi and Cyberpunk styles
+- src/aidesktop/keyboard_profiles.py — Mac/PC US profile settings and optional reversible GNOME layout
 - src/aidesktop/search.py — freedesktop application catalog and instant ranked search
 - src/aidesktop/history.py — timestamped, private audit trail for approved actions
 - src/aidesktop/agent.py — bounded AI planner and confirmation handling
@@ -115,6 +117,14 @@ Select the desired provider in the window. Each cloud request requires a privacy
 ## Safety boundaries
 
 No free-form command executor is available to the model. AI-proposed changes need an approval click; selecting an app search result counts as an explicit launch request. Installed apps are validated against visible desktop entries. The app is not intended to run as root. The Newelle connection has been tested with a simulated local HTTP service; the full GUI + Newelle service has NOT been tested on real hardware in this repository, and its diagnosis cannot be relied on. Use a VM or spare machine first. See docs/ARCHITECTURE.md for limitations.
+
+## Keyboard setup
+
+Choose **Standard US · Win** or **Mac US · ⌘ Command** in AI Desktop's Keyboard selector. On typical Apple keyboards, ⌘ Command already sends the Linux **Super** modifier. The Spotlight shortcut is always the same Super+Space binding; it appears as Win+Space or ⌘+Space depending on the physical keyboard.
+
+The **Apply layout to GNOME** button is an optional, separately confirmed system change. It prefers `us` or `us+mac` while preserving other input languages and saving a reversible backup. **Restore layout** restores the prior list. Switching profiles by itself changes only AI Desktop's labels and preference, not your OS keymap. It does not globally remap Command+C/V to Ctrl+C/V.
+
+Full detail: [Keyboard setup / physical Command key behavior](docs/KEYBOARD_PROFILES.md). The first-login setup wizard will include this choice.
 
 ## Appearance
 
