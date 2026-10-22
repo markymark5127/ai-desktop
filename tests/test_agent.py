@@ -1,6 +1,6 @@
 import unittest
 
-from aidesktop.agent import Agent, PendingAction, _parse_decision
+from aidesktop.agent import Agent, PendingAction, _parse_decision, _system_prompt
 from aidesktop.search import AppResult
 from unittest.mock import patch
 from aidesktop.tools import ToolError
@@ -52,6 +52,16 @@ class AgentTests(unittest.TestCase):
                 answer = Agent().approve(action)
         self.assertIn("could not complete", answer.message)
         record.assert_called_once_with("set_audio_output", "failed")
+
+    def test_learning_style_alters_explanation_not_approval_capabilities(self):
+        quick = _system_prompt("simple")
+        learned = _system_prompt("learn")
+        self.assertIn("I'll focus on the next useful step", quick)
+        self.assertIn("Mac comparisons", learned)
+        self.assertIn('"requires_confirmation": true', quick)
+        self.assertIn('"requires_confirmation": true', learned)
+        self.assertIn('"name": "set_audio_output"', quick)
+        self.assertIn('"name": "set_audio_output"', learned)
 
     def test_final_response(self):
         agent = Agent(inference=lambda *_: '{"kind":"final","message":"I cannot verify that."}')
