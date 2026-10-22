@@ -12,11 +12,19 @@ def main() -> None:
     parser.add_argument("--ask", help="Run one request without opening the GUI")
     parser.add_argument("--search", help="Search installed applications without opening the GUI")
     parser.add_argument("--history", action="store_true", help="Show recent approved actions")
+    parser.add_argument("--check-newelle", action="store_true", help="Test the local Newelle GUI API connection")
     parser.add_argument(
-        "--provider", choices=("builtin", "local", "openai", "anthropic"),
-        default="builtin", help="Inference backend for --ask (default: builtin)",
+        "--provider", choices=("newelle", "builtin", "local", "openai", "anthropic"),
+        default="newelle", help="Inference backend for --ask (default: newelle)",
     )
     args = parser.parse_args()
+    if args.check_newelle:
+        from .newelle_client import NewelleError, check_newelle
+        try:
+            print(check_newelle())
+        except NewelleError as exc:
+            parser.exit(1, f"Newelle: {exc}\n")
+        return
     if args.history:
         from .history import recent_actions
         for item in recent_actions():

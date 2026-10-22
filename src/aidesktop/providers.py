@@ -35,6 +35,10 @@ def _post_json(url: str, payload: dict, headers: dict[str, str]) -> dict:
 
 
 def complete(provider: str, system_prompt: str, user_prompt: str) -> str:
+    if provider == "newelle":
+        from .newelle_client import complete_newelle
+        return complete_newelle(system_prompt, user_prompt)
+
     if provider == "local":
         model = os.getenv("AIDESKTOP_LOCAL_MODEL", "qwen2.5:3b")
         data = _post_json(

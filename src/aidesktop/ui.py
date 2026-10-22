@@ -15,6 +15,7 @@ from .tools import run_tool  # noqa: E402
 
 
 CHOICES = [
+    ("Newelle (recommended)", "newelle"),
     ("Built-in (offline)", "builtin"),
     ("Local Ollama", "local"),
     ("OpenAI API", "openai"),
@@ -207,15 +208,16 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.pending = None
         self.approve_button.set_visible(False)
         self.cancel_button.set_visible(False)
-        if provider in ("openai", "anthropic"):
+        if provider in ("newelle", "openai", "anthropic"):
             dialog = Gtk.MessageDialog(
                 transient_for=self, modal=True, message_type=Gtk.MessageType.QUESTION,
                 buttons=Gtk.ButtonsType.NONE,
-                text="Send request and diagnostics to a cloud AI?",
+                text="Allow the selected model to receive this request?",
             )
             dialog.format_secondary_text(
-                "Your prompt and the results of diagnostic tools can leave the computer. "
-                "Do not continue if these may contain sensitive information."
+                "Newelle may use a local or cloud model. Your prompt and diagnostic "
+                "results can leave this computer depending on the configured provider. "
+                "Do not continue with sensitive information."
             )
             dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
             dialog.add_button("Continue", Gtk.ResponseType.OK)
