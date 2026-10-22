@@ -41,6 +41,9 @@ class SetupWizard(Adw.ApplicationWindow):
         self.set_title("Welcome to AI Desktop")
         self.set_default_size(740, 610)
         self.index = 0
+        self.status = Gtk.Label(xalign=0)
+        self.status.set_wrap(True)
+        self.status.add_css_class("dim-label")
 
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         root.set_margin_top(18)
@@ -79,9 +82,6 @@ class SetupWizard(Adw.ApplicationWindow):
         wrapper.set_child(self.stack)
         root.append(wrapper)
 
-        self.status = Gtk.Label(xalign=0)
-        self.status.set_wrap(True)
-        self.status.add_css_class("dim-label")
         root.append(self.status)
 
         buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
@@ -403,7 +403,7 @@ class SetupWizard(Adw.ApplicationWindow):
         self.phone_details = Gtk.Label(xalign=0)
         self.phone_details.set_wrap(True)
         page.append(self.phone_details)
-        self._phone_selected()
+        self._phone_selected(persist=False)
 
         self.gsconnect_status = Gtk.Label(label="GSConnect not checked yet.", xalign=0)
         self.gsconnect_status.set_wrap(True)
@@ -422,7 +422,7 @@ class SetupWizard(Adw.ApplicationWindow):
         )
         return page
 
-    def _phone_selected(self, *_unused):
+    def _phone_selected(self, *_unused, persist=True):
         value = PHONE_OPTIONS[self.phone_choice.get_selected()][1]
         descriptions = {
             "iphone": (
@@ -437,10 +437,11 @@ class SetupWizard(Adw.ApplicationWindow):
             "later": "You can set up GSConnect at any time in GNOME later.",
         }
         self.phone_details.set_text(descriptions[value])
-        try:
-            save_preferences(phone=value)
-        except OSError:
-            self.status.set_text("Phone preference could not be saved.")
+        if persist:
+            try:
+                save_preferences(phone=value)
+            except OSError:
+                self.status.set_text("Phone preference could not be saved.")
 
     def _check_gsconnect(self, *_unused):
         self.gsconnect_status.set_text("Checking GNOME extensions…")
