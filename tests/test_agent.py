@@ -1,6 +1,8 @@
 import unittest
 
 from aidesktop.agent import Agent, PendingAction, _parse_decision
+from aidesktop.search import AppResult
+from unittest.mock import patch
 
 
 class AgentTests(unittest.TestCase):
@@ -19,6 +21,20 @@ class AgentTests(unittest.TestCase):
         answer = agent.ask("change audio output", "local")
         self.assertIsInstance(answer.pending, PendingAction)
         self.assertEqual(answer.pending.name, "set_audio_output")
+
+    def test_builtin_open_friendly_name_requires_approval(self):
+        with patch("aidesktop.agent.search_applications", return_value=[
+            AppResult("steam.desktop", "Steam")
+        ]):
+            result = Agent().ask("open Steam", "builtin")
+        self.assertEqual(result.pending.name, "launch_application")
+        self.assertEqual(result.pending.arguments["desktop_id"], "steam.desktop")
+
+    def test_builtin_open_unknown_app(self):
+        with patch("aidesktop.agent.search_applications", return_value=[]):
+            result = Agent().ask("open SomeNonexistentApp", "builtin")
+        self.assertIsNone(result.pending)
+        self.assertIn("No installed application", result.message)
 
     def test_final_response(self):
         agent = Agent(inference=lambda *_: '{"kind":"final","message":"I cannot verify that."}')

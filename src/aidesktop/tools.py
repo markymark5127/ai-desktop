@@ -10,6 +10,8 @@ import subprocess
 from dataclasses import dataclass
 from typing import Callable
 
+from .search import resolve_app_id, search_applications
+
 
 class ToolError(Exception):
     pass
@@ -68,6 +70,8 @@ def _launch_application(args: dict[str, str]) -> str:
     desktop_id = args["desktop_id"]
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,150}", desktop_id):
         raise ToolError("Invalid desktop application ID")
+    if not resolve_app_id(desktop_id):
+        raise ToolError("Application is not installed or is not visible in the app menu")
     try:
         subprocess.Popen(
             ["gtk-launch", desktop_id],
@@ -79,6 +83,13 @@ def _launch_application(args: dict[str, str]) -> str:
     except FileNotFoundError as exc:
         raise ToolError("gtk-launch is not installed") from exc
     return f"Launch requested for {desktop_id}. App startup is not yet verified."
+
+
+def _search_installed_apps(args: dict[str, str]) -> str:
+    matches = search_applications(args["query"], limit=8)
+    if not matches:
+        return "No installed applications found for that search."
+    return "\n".join(f"{app.name}: {app.desktop_id}" for app in matches)
 
 
 def _set_audio_output(args: dict[str, str]) -> str:
@@ -120,6 +131,10 @@ TOOLS: dict[str, Tool] = {
     ),
     "installed_apps": Tool(
         "List installed Flatpak applications", {}, False, _installed_apps,
+    ),
+    "search_installed_apps": Tool(
+        "Find installed applications using a friendly name. Returns launchable desktop IDs.",
+        {"query": "Name or part of an application name"}, False, _search_installed_apps,
     ),
     "launch_application": Tool(
         "Launch a desktop application by its desktop file ID",

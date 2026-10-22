@@ -6,7 +6,9 @@ A Mac-inspired search window that lets people describe what they want in everyda
 
 ## Working in this first version
 
-- GTK4 / libadwaita application window (native GNOME styling).
+- GTK4 / libadwaita search-first application window (native GNOME styling).
+- Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation.
+- Enter launches the selected app; Ctrl+Enter sends text to the agent; Esc closes the window.
 - Built-in read-only diagnostics, even without an AI model.
 - Model adapters: local Ollama; OpenAI API; Anthropic API (Claude).
 - A model can request only allowlisted tools, never arbitrary shell commands.
@@ -14,7 +16,7 @@ A Mac-inspired search window that lets people describe what they want in everyda
 - Network requests run in background workers instead of freezing the window.
 - CLI mode for development and unit tests.
 
-**Not yet implemented:** automatic Super+Space binding, instant app/file search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
+**Not yet implemented:** automatic Super+Space binding, indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
 
 ## Quick start on GNOME Linux
 
@@ -27,6 +29,7 @@ For a read-only test without GNOME:
     git clone https://github.com/markymark5127/ai-desktop.git
     cd ai-desktop
     bash scripts/run-dev.sh --ask "system info"
+    bash scripts/run-dev.sh --search steam
 
 To open the graphical launcher on a GNOME machine:
 
@@ -64,7 +67,8 @@ Select the desired provider in the window. Each cloud request requires a privacy
 
 ## Repository layout
 
-- src/aidesktop/ui.py — GNOME window and approval dialogs
+- src/aidesktop/ui.py — GNOME keyboard-first window, app suggestions, approval dialogs
+- src/aidesktop/search.py — freedesktop application catalog and instant ranked search
 - src/aidesktop/agent.py — bounded AI planner and confirmation handling
 - src/aidesktop/providers.py — model provider adapters
 - src/aidesktop/tools.py — restricted Linux diagnostics/actions
@@ -74,4 +78,10 @@ Select the desired provider in the window. Each cloud request requires a privacy
 
 ## Safety boundaries
 
-No free-form command executor is available to the model. Changes need an approval click; the app is not intended to run as root. The software has NOT been tested on real hardware in this repository, and its diagnosis cannot be relied on. Use a VM or spare machine first. See docs/ARCHITECTURE.md for limitations.
+No free-form command executor is available to the model. AI-proposed changes need an approval click; selecting an app search result counts as an explicit launch request. Installed apps are validated against visible desktop entries. The app is not intended to run as root. The software has NOT been tested on real hardware in this repository, and its diagnosis cannot be relied on. Use a VM or spare machine first. See docs/ARCHITECTURE.md for limitations.
+
+## Keyboard usage
+
+Type part of an installed app name and press Enter to open it. Arrow keys change the selected match. For natural-language help, use the **Ask assistant** button or press Ctrl+Enter (or prefix the request with `ask `). Esc closes the window. Built-in mode can also resolve `open Steam` to the installed desktop application.
+
+**Limitation:** The app catalog loads when the launcher opens; restart the window after installing software. No search results are sent to a model until you explicitly ask the assistant. Native GNOME shortcut binding and full Spotlight overlay remain future milestones.

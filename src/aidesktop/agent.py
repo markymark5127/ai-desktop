@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from .providers import complete
+from .search import search_applications
 from .tools import TOOLS, ToolError, run_tool
 
 
@@ -122,6 +123,20 @@ class Agent:
     def _builtin(self, request: str) -> AgentResponse:
         question = request.lower()
         try:
+            if question.startswith(("open ", "launch ")):
+                name = request.split(" ", 1)[1].strip()
+                matches = search_applications(name)
+                if not matches:
+                    return AgentResponse(f"No installed application matched '{name}'.")
+                best = matches[0]
+                if len(matches) > 1 and matches[1].name.casefold() == best.name.casefold():
+                    return AgentResponse(
+                        "More than one app matched. Use the search results to select one."
+                    )
+                return AgentResponse(
+                    f"Launch {best.name}? This will open {best.desktop_id}.",
+                    PendingAction("launch_application", {"desktop_id": best.desktop_id}, "Launch application"),
+                )
             if any(word in question for word in ("sound", "audio", "speaker", "headphone")):
                 return AgentResponse(
                     "Current audio status:\n" + run_tool("audio_outputs", {})
@@ -137,16 +152,10 @@ class Agent:
                 )
             if "app" in question or "installed" in question:
                 return AgentResponse(run_tool("installed_apps", {}))
-            if question.startswith("open "):
-                app_id = request[5:].strip()
-                return AgentResponse(
-                    f"Approve launching {app_id}?",
-                    PendingAction("launch_application", {"desktop_id": app_id}, "Launch application"),
-                )
         except ToolError as exc:
             return AgentResponse(f"Diagnostic unavailable: {exc}")
         return AgentResponse(
-            "Built-in mode handles audio, network, storage, warning logs, installed "
-            "apps, and 'open <desktop-id>'. For natural-language planning, select "
+            "Built-in mode handles audio, network, storage, warning logs and installed "
+            "apps, plus 'open <app name>'. For natural-language planning, select "
             "Local (Ollama), OpenAI API, or Claude API."
         )

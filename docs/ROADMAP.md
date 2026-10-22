@@ -6,9 +6,9 @@
 - Explicit per-request cloud consent; explicit change approval.
 
 ## Phase 1: genuinely helpful desktop assistant
-- Unified indexed Spotlight search and natural-language queries.
-- Desktop application discovery by friendly name; no user-facing desktop IDs.
-- GNOME Shell extension for Super+Space; avoid interfering with input-source switching.
+- Offline instant app search and natural-language queries (app search implemented; indexed file search pending).
+- Desktop application discovery by friendly name (implemented in search UI; agent tool exposes IDs internally).
+- GNOME Shell extension / optional Super+Space integration (pending; manual shortcut currently supported).
 - Conversation state, explanation of troubleshooting, verifiable fixes and undo.
 
 ## Phase 2: safe system agent
