@@ -19,6 +19,13 @@
 - Structured provider-native tool calls, redaction, sensitive-data minimization.
 - Test suite against real/virtual Linux failure scenarios.
 
+## Mac-familiar desktop experience (cross-cutting milestones)
+- Design for Mac-to-Linux migration and Steam/Proton gaming; see [Product vision](PRODUCT_VISION.md).
+- Evaluate compatible Dash to Dock and tiling extensions, GNOME Overview and Sushi file previews, with version-specific Shell testing.
+- Provide optional GSConnect device pairing. KDE Connect iOS lacks full background connectivity, iMessage/SMS and system notification mirroring; never advertise AirDrop/Continuity feature parity.
+- Build first-run wizard with appearance/layout, shortcuts, AI/privacy settings, optional phone pairing, Mac files/app migration and basic Steam setup.
+- Preserve a standalone GNOME install path; only create a Bazzite-derived image after real UX and native gaming QA.
+
 ## Phase 3: app ecosystem
 - MCP broker, capability manifests, discovery, permission settings.
 - Flatpak storefront integration instead of breaking compatibility with existing apps.
