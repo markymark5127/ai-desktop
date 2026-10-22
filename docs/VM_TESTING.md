@@ -51,6 +51,8 @@ bash scripts/run-dev.sh
 - Try "my sound is not working" with **Built-in (offline)** selected.
 - Change the appearance between **Japandi**, **Cyberpunk**, and **System**.
 - Restart the window and confirm that your choice was saved.
+- Select **Mac US · ⌘ Command**, then **Apply layout to GNOME** and verify it offers the English (Macintosh) source without removing other languages.
+- Press **Restore layout** and verify the previous input-source list returns. See [Keyboard Profiles](KEYBOARD_PROFILES.md).
 
 For application launching, only installed desktop applications should appear
 and no model call should be needed.
@@ -62,7 +64,7 @@ bash scripts/install-local.sh
 python3 scripts/shortcut.py --apply
 ```
 
-Press **Super+Space**. The window should appear without opening Newelle's UI.
+Press **Super+Space** (Win+Space on a PC keyboard, ⌘+Space on most Apple keyboards). The window should appear without opening Newelle's UI. On a Windows-hosted VM, physical Mac modifier behavior can be intercepted by the host/hypervisor; verify on actual Apple hardware later.
 This replaces GNOME's usual Super+Space input-source action while enabled.
 
 To restore the original shortcut:
