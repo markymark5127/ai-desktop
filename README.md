@@ -14,6 +14,7 @@ A Mac-inspired search window that lets people describe what they want in everyda
 - A model can request only allowlisted tools, never arbitrary shell commands.
 - Every application launch or default audio-output change requires an explicit click to approve.
 - Network requests run in background workers instead of freezing the window.
+- Private history of approved AI-driven actions (no chat transcripts or diagnostic output).
 - CLI mode for development and unit tests.
 
 **Not yet implemented:** GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
@@ -30,6 +31,7 @@ For a read-only test without GNOME:
     cd ai-desktop
     bash scripts/run-dev.sh --ask "system info"
     bash scripts/run-dev.sh --search steam
+    bash scripts/run-dev.sh --history
 
 To open the graphical launcher on a GNOME machine:
 
@@ -77,6 +79,7 @@ Select the desired provider in the window. Each cloud request requires a privacy
 
 - src/aidesktop/ui.py — GNOME keyboard-first window, app suggestions, approval dialogs
 - src/aidesktop/search.py — freedesktop application catalog and instant ranked search
+- src/aidesktop/history.py — timestamped, private audit trail for approved actions
 - src/aidesktop/agent.py — bounded AI planner and confirmation handling
 - src/aidesktop/providers.py — model provider adapters
 - src/aidesktop/tools.py — restricted Linux diagnostics/actions
@@ -93,3 +96,7 @@ No free-form command executor is available to the model. AI-proposed changes nee
 Type part of an installed app name and press Enter to open it. Arrow keys change the selected match. For natural-language help, use the **Ask assistant** button or press Ctrl+Enter (or prefix the request with `ask `). Esc closes the window. Built-in mode can also resolve `open Steam` to the installed desktop application.
 
 **Limitation:** The app catalog loads when the launcher opens; restart the window after installing software. No search results are sent to a model until you explicitly ask the assistant. Native GNOME shortcut binding and full Spotlight overlay remain future milestones.
+
+## Repair history (first version)
+
+User-approved AI actions are recorded under `~/.local/state/ai-desktop/actions.jsonl` (or `$XDG_STATE_HOME/ai-desktop/actions.jsonl`). Events include only the action name, timestamp and success/failure—not chat prompts, secrets, arguments or diagnostic results. Run `bash scripts/run-dev.sh --history` to inspect recent events. This is a primitive audit trail, **not** a rollback system. App launches initiated directly from search results are not recorded as AI repair actions.

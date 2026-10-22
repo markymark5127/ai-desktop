@@ -3,6 +3,7 @@ import unittest
 from aidesktop.agent import Agent, PendingAction, _parse_decision
 from aidesktop.search import AppResult
 from unittest.mock import patch
+from aidesktop.tools import ToolError
 
 
 class AgentTests(unittest.TestCase):
@@ -35,6 +36,22 @@ class AgentTests(unittest.TestCase):
             result = Agent().ask("open SomeNonexistentApp", "builtin")
         self.assertIsNone(result.pending)
         self.assertIn("No installed application", result.message)
+
+    def test_approved_action_records_history(self):
+        action = PendingAction("set_audio_output", {"sink": "test"}, "Change output")
+        with patch("aidesktop.agent.run_tool", return_value="done"):
+            with patch("aidesktop.agent.record_action") as record:
+                answer = Agent().approve(action)
+        self.assertEqual(answer.message, "done")
+        record.assert_called_once_with("set_audio_output", "succeeded")
+
+    def test_failed_approved_action_records_history(self):
+        action = PendingAction("set_audio_output", {"sink": "test"}, "Change output")
+        with patch("aidesktop.agent.run_tool", side_effect=ToolError("bad sink")):
+            with patch("aidesktop.agent.record_action") as record:
+                answer = Agent().approve(action)
+        self.assertIn("could not complete", answer.message)
+        record.assert_called_once_with("set_audio_output", "failed")
 
     def test_final_response(self):
         agent = Agent(inference=lambda *_: '{"kind":"final","message":"I cannot verify that."}')

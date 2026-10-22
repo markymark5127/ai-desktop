@@ -18,6 +18,7 @@ Inference providers: built-in routing, local Ollama, OpenAI API, Anthropic API.
 - Cloud providers receive prompts and tool output, including potentially sensitive log lines, with one per-request consent. A production edition needs per-tool data-sharing decisions and redaction.
 - Providers currently rely on environment variables instead of GNOME Secret Service/Keyring.
 - Actions are restricted, but no general permission broker or audit log exists yet.
+- Approved AI-driven actions are now logged (timestamp, tool name and status only) to a user-private JSONL history file, with no prompts or tool outputs. Automatic rollback is not yet implemented.
 - No MCP application adapters, polkit helper, rollback, App Store, distro image or iPhone companion yet.
 - No arbitrary shell tool should be exposed to models.
 - Do not run this prototype as root. Test first in a disposable VM.

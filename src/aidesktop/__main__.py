@@ -11,11 +11,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="AI Desktop early prototype")
     parser.add_argument("--ask", help="Run one request without opening the GUI")
     parser.add_argument("--search", help="Search installed applications without opening the GUI")
+    parser.add_argument("--history", action="store_true", help="Show recent approved actions")
     parser.add_argument(
         "--provider", choices=("builtin", "local", "openai", "anthropic"),
         default="builtin", help="Inference backend for --ask (default: builtin)",
     )
     args = parser.parse_args()
+    if args.history:
+        from .history import recent_actions
+        for item in recent_actions():
+            print(f"{item['timestamp']}  {item['tool']}  {item['status']}")
+        return
     if args.search is not None:
         from .search import search_applications
         results = search_applications(args.search)

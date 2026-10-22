@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from .providers import complete
+from .history import record_action
 from .search import search_applications
 from .tools import TOOLS, ToolError, run_tool
 
@@ -115,10 +116,16 @@ class Agent:
         if action.name not in TOOLS or not TOOLS[action.name].requires_approval:
             return AgentResponse("Rejected an invalid pending action.")
         try:
-            result = run_tool(action.name, action.arguments)
-            return AgentResponse(result)
+            message = run_tool(action.name, action.arguments)
+            status = "succeeded"
         except (ToolError, OSError) as exc:
-            return AgentResponse(f"Action could not complete: {exc}")
+            message = f"Action could not complete: {exc}"
+            status = "failed"
+        try:
+            record_action(action.name, status)
+        except OSError:
+            message += "\nWarning: could not write the action history."
+        return AgentResponse(message)
 
     def _builtin(self, request: str) -> AgentResponse:
         question = request.lower()
