@@ -12,6 +12,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 from .agent import Agent, AgentResponse, PendingAction  # noqa: E402
 from .search import AppResult, list_applications, search_applications  # noqa: E402
 from .tools import run_tool  # noqa: E402
+from .themes import THEME_LABELS, STYLES, SCHEMES, load_theme, save_theme  # noqa: E402
 
 
 CHOICES = [
@@ -39,12 +40,21 @@ class AssistantWindow(Adw.ApplicationWindow):
         root.set_margin_bottom(16)
         root.set_margin_start(20)
         root.set_margin_end(20)
+        root.add_css_class("ai-desktop")
         self.set_content(root)
+        self._theme_provider = Gtk.CssProvider()
+        Gtk.StyleContext.add_provider_for_display(
+            self.get_display(),
+            self._theme_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
 
         header = Gtk.HeaderBar()
         header.set_title_widget(Gtk.Label(label="Ask your computer"))
         self.choice = Gtk.DropDown.new_from_strings([item[0] for item in CHOICES])
         header.pack_end(self.choice)
+        self.theme_choice = Gtk.DropDown.new_from_strings([label for label, _ in THEME_LABELS])
+        header.pack_start(self.theme_choice)
         root.append(header)
 
         self.entry = Gtk.Entry()
@@ -105,7 +115,32 @@ class AssistantWindow(Adw.ApplicationWindow):
         actions.append(self.cancel_button)
         root.append(actions)
         self._update_results()
+        active_theme = load_theme()
+        self.theme_choice.set_selected(
+            next(i for i, (_, name) in enumerate(THEME_LABELS) if name == active_theme)
+        )
+        self._apply_theme(active_theme)
+        self.theme_choice.connect("notify::selected", self._on_theme_changed)
         self.entry.grab_focus()
+
+    def _apply_theme(self, theme: str) -> None:
+        self._theme_provider.load_from_data(STYLES[theme].encode("utf-8"))
+        scheme = SCHEMES[theme]
+        style_manager = Adw.StyleManager.get_default()
+        if scheme == "light":
+            style_manager.set_color_scheme(Adw.ColorScheme.FORCE_LIGHT)
+        elif scheme == "dark":
+            style_manager.set_color_scheme(Adw.ColorScheme.FORCE_DARK)
+        else:
+            style_manager.set_color_scheme(Adw.ColorScheme.DEFAULT)
+
+    def _on_theme_changed(self, *_unused) -> None:
+        theme = THEME_LABELS[self.theme_choice.get_selected()][1]
+        self._apply_theme(theme)
+        try:
+            save_theme(theme)
+        except OSError:
+            self._show_text("Theme applied for this session, but preference could not be saved.")
 
     def _show_text(self, text: str) -> None:
         self.output.get_buffer().set_text(text)
