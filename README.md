@@ -20,7 +20,20 @@ Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.
 - Private history of approved AI-driven actions (no chat transcripts or diagnostic output).
 - CLI mode for development and unit tests.
 
-**Not yet implemented:** OS-wide visual theming (current appearance affects only our launcher), automatic Newelle onboarding and provider switching UI, GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
+**Not yet implemented:** automated device pairing/AI provider onboarding in the welcome wizard, OS-wide visual theming (current appearance affects only our launcher), automatic Newelle onboarding and provider switching UI, GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
+
+## New: working first-run welcome wizard (prototype)
+
+On first graphical launch, AI Desktop opens a skippable **Mac-to-Linux welcome wizard**. The launcher also has a **Setup** button to reopen it at any time:
+
+    bash scripts/run-dev.sh --setup
+    bash scripts/run-dev.sh --setup-status
+
+The wizard offers Japandi/Cyberpunk appearance, Mac or PC US keyboard selection with a real modifier-key test, a separately approved/reversible GNOME keymap option, a live installed-app search exercise, the **Linux troubleshooting buddy** explanation mode, a Newelle connection check, GSConnect/iPhone/Android guidance, and Steam detection.
+
+It does **not** yet automatically install Newelle, pair a phone, configure a Mac-like dock/advanced tiling, index files, or make Bazzite installation images. Those are separate milestones.
+
+See [First-run onboarding](docs/ONBOARDING.md) for the implemented steps, privacy boundaries, and VM test checklist.
 
 ## Test on Windows before installing Linux
 
@@ -104,6 +117,8 @@ Select the desired provider in the window. Each cloud request requires a privacy
 - src/aidesktop/ui.py — GNOME keyboard-first window, app suggestions, approval dialogs
 - src/aidesktop/themes.py — reusable, app-scoped Japandi and Cyberpunk styles
 - src/aidesktop/keyboard_profiles.py — Mac/PC US profile settings and optional reversible GNOME layout
+- src/aidesktop/onboarding.py — secure per-user first-run status, phone choice and learning style
+- src/aidesktop/setup_wizard.py — GTK welcome, keyboard test, Newelle check, GSConnect guidance and Steam overview
 - src/aidesktop/search.py — freedesktop application catalog and instant ranked search
 - src/aidesktop/history.py — timestamped, private audit trail for approved actions
 - src/aidesktop/agent.py — bounded AI planner and confirmation handling
