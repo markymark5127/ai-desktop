@@ -1,0 +1,118 @@
+# Testing AI Desktop inside Windows (VMware + Fedora GNOME)
+
+This is the recommended **development** environment. It lets you validate
+the launcher, keyboard shortcut, themes, Newelle integration, and basic Linux
+diagnostics without repartitioning your Windows computer or changing Bazzite
+on any existing gaming hardware. It is NOT a valid GPU/gaming performance test.
+
+## 1. Host and guest
+
+- Windows host: install [VMware Workstation Pro](https://knowledge.broadcom.com/external/article/368667/download-and-license-free-vmware-desktop.html).
+  Workstation Pro 26H1 is free and available through Broadcom's portal.
+- Linux guest: download [Fedora Workstation 44 (x86_64)](https://fedoraproject.org/workstation/download/).
+- Create a new Linux/Fedora 64-bit virtual machine with the ISO attached.
+- Use **UEFI**, **4 vCPUs**, **8 GB RAM**, **80 GB virtual disk** (growable),
+  **NAT** networking and **3D acceleration** to start. On a Windows machine
+  with only 16 GB RAM, allocate 4–6 GB to the VM instead.
+- Take a VM snapshot named `clean-fedora` immediately after setup.
+- If GNOME graphical rendering is corrupted or sluggish, try adjusting the
+  virtual display/3D setting. VMware's virtual GPU is *not* your host GPU.
+
+Fedora rather than Bazzite is recommended at first because its GNOME
+dependencies are straightforward and you can focus on the launcher and AI
+features. Repeat the test with a Bazzite GNOME guest or physical install later
+to catch Flatpak/atomic-system differences.
+
+## 2. Install desktop development requirements
+
+Inside the Fedora guest, open Terminal:
+
+```bash
+sudo dnf upgrade --refresh -y
+sudo dnf install -y git python3-gobject gtk4 libadwaita open-vm-tools-desktop
+python3 -c "import gi; gi.require_version('Gtk', '4.0'); gi.require_version('Adw', '1'); from gi.repository import Gtk, Adw; print('GNOME libraries ready')"
+```
+
+This VM setup uses host-installed GTK/GObject rather than trying to pip-install
+PyGObject on Windows.
+
+## 3. Pull AI Desktop and exercise it offline
+
+```bash
+git clone https://github.com/markymark5127/ai-desktop.git
+cd ai-desktop
+PYTHONPATH=src python3 -m unittest discover -s tests -v
+bash scripts/run-dev.sh --search steam
+bash scripts/run-dev.sh --ask "system info" --provider builtin
+bash scripts/run-dev.sh
+```
+
+- Search for a GNOME application by name. Type a few letters; press Enter.
+- Try "my sound is not working" with **Built-in (offline)** selected.
+- Change the appearance between **Japandi**, **Cyberpunk**, and **System**.
+- Restart the window and confirm that your choice was saved.
+
+For application launching, only installed desktop applications should appear
+and no model call should be needed.
+
+## 4. Install the Spotlight shortcut (optional)
+
+```bash
+bash scripts/install-local.sh
+python3 scripts/shortcut.py --apply
+```
+
+Press **Super+Space**. The window should appear without opening Newelle's UI.
+This replaces GNOME's usual Super+Space input-source action while enabled.
+
+To restore the original shortcut:
+
+```bash
+python3 scripts/shortcut.py --restore
+```
+
+Take another snapshot named `desktop-search-working`.
+
+## 5. Add headless Newelle
+
+Install Newelle and follow
+[NEWELLE_SETUP.md](NEWELLE_SETUP.md) to select a model and configure its
+localhost GUI API **with a key**. Then:
+
+```bash
+bash scripts/configure-newelle-key.sh
+bash scripts/install-newelle-service.sh
+bash scripts/run-dev.sh --check-newelle
+bash scripts/run-dev.sh
+```
+
+The API model is configured inside Newelle, but AI Desktop remains the only
+window for normal use. Enable AI Desktop's Newelle provider and ask a
+non-sensitive question, for example "What audio devices are available?"
+
+If Newelle uses a model on the host computer, networking and API exposure
+need a separate security design; the current AI Desktop adapter **only**
+accepts loopback inside the VM. Do not weaken the bind address to expose its
+privileged GUI API over the LAN.
+
+## 6. Regression checklist
+
+- [ ] Fedora and GNOME boot reliably; mouse/keyboard shortcuts work
+- [ ] App search results appear immediately without starting a model
+- [ ] Enter opens an app; Ctrl+Enter uses the selected AI backend
+- [ ] Both design themes display readable text and useful selection contrast
+- [ ] Super+Space activates the window and can be reverted
+- [ ] Offline diagnostics work when Newelle is stopped
+- [ ] Newelle headless user service reconnects after VM reboot
+- [ ] Approved action requires an actual click; declining makes no change
+- [ ] `--history` records approved actions but not prompts or secrets
+- [ ] Model-unavailable and wrong-key errors are understandable
+
+## 7. When a VM is not enough
+
+Test on physical AMD, Intel and NVIDIA PCs for: graphics drivers, sleep,
+controller recognition, Steam Input, Proton compatibility, gaming performance,
+Bluetooth, battery/power management, and real-world audio devices.
+
+A Bazzite-derived image and bootable installer should come only after the
+GNOME user experience survives these initial tests.
