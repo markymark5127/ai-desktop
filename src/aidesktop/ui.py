@@ -124,9 +124,12 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.entry.grab_focus()
 
     def _apply_theme(self, theme: str) -> None:
-        self._theme_provider.load_from_data(STYLES[theme].encode("utf-8"))
-        scheme = SCHEMES[theme]
         style_manager = Adw.StyleManager.get_default()
+        # High contrast has priority over decorative themes for accessibility.
+        accessible = style_manager.get_high_contrast()
+        css = "" if accessible else STYLES[theme]
+        self._theme_provider.load_from_data(css.encode("utf-8"))
+        scheme = "default" if accessible else SCHEMES[theme]
         if scheme == "light":
             style_manager.set_color_scheme(Adw.ColorScheme.FORCE_LIGHT)
         elif scheme == "dark":
