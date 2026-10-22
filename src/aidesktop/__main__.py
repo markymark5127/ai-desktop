@@ -12,12 +12,19 @@ def main() -> None:
     parser.add_argument("--ask", help="Run one request without opening the GUI")
     parser.add_argument("--search", help="Search installed applications without opening the GUI")
     parser.add_argument("--history", action="store_true", help="Show recent approved actions")
+    parser.add_argument("--setup", action="store_true", help="Show the welcome wizard again")
+    parser.add_argument("--setup-status", action="store_true", help="Show saved onboarding status")
     parser.add_argument("--check-newelle", action="store_true", help="Test the local Newelle GUI API connection")
     parser.add_argument(
         "--provider", choices=("newelle", "builtin", "local", "openai", "anthropic"),
         default="newelle", help="Inference backend for --ask (default: newelle)",
     )
     args = parser.parse_args()
+    if args.setup_status:
+        from .onboarding import load_preferences
+        import json
+        print(json.dumps(load_preferences(), sort_keys=True))
+        return
     if args.check_newelle:
         from .newelle_client import NewelleError, check_newelle
         try:
@@ -52,7 +59,7 @@ def main() -> None:
             "GNOME graphical libraries are required to launch the UI. "
             f"Try --ask for headless diagnostics. Details: {exc}"
         )
-    app = AssistantApp()
+    app = AssistantApp(force_setup=args.setup)
     raise SystemExit(app.run(None))
 
 
