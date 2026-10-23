@@ -68,6 +68,22 @@ class NewelleTests(unittest.TestCase):
         self.assertEqual(payload['messages'][1], {'role':'user','content':'User question'})
         self.assertIs(payload['stream'], False)
 
+    def test_explicit_inference_self_test(self):
+        from aidesktop.newelle_client import test_newelle as probe
+        with patch.dict(os.environ, {
+            'AIDESKTOP_NEWELLE_PORT': str(self.server.server_port),
+            'AIDESKTOP_NEWELLE_API_KEY': 'test-private-key',
+        }):
+            self.assertIn('model replied successfully', probe())
+
+    def test_empty_model_reply_is_actionable(self):
+        from aidesktop.newelle_client import complete_newelle
+        with patch('aidesktop.newelle_client._request', return_value={
+            'choices': [{'message': {'content': ''}}]
+        }):
+            with self.assertRaisesRegex(NewelleError, 'empty model reply'):
+                complete_newelle('system', 'user')
+
     def test_reads_private_token_file(self):
         with tempfile.TemporaryDirectory() as tmp:
             location = Path(tmp) / 'ai-desktop'
