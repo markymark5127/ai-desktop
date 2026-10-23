@@ -119,6 +119,9 @@ privileged GUI API over the LAN.
 - [ ] Enter opens an app; Ctrl+Enter uses the selected AI backend
 - [ ] Both design themes display readable text and useful selection contrast
 - [ ] Super+Space activates the window and can be reverted
+- [ ] Clicking another app/desktop hides Spotlight, but clicking its settings or privacy dialog does not
+- [ ] Enter on unmatched query asks AI; Enter on app result launches; nothing is sent while typing
+- [ ] Newelle --check-newelle and --test-newelle distinguish API availability from working inference
 - [ ] Offline diagnostics work when Newelle is stopped
 - [ ] Newelle headless user service reconnects after VM reboot
 - [ ] Approved action requires an actual click; declining makes no change
