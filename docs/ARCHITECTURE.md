@@ -13,12 +13,12 @@ Inference providers: **headless Newelle GUI API** (default), built-in routing, o
 - Approved actions: launch a desktop application, change an existing default PulseAudio/PipeWire sink.
 - Four maximum agent planning steps per query; no free-form terminal commands.
 - GTK operations only on the GTK thread; inference runs on worker threads.
-- Newelle and cloud model selections ask for confirmation for each request; configured Newelle models may be local or cloud.
+- Model requests (Newelle, local Ollama, direct cloud providers) require a saved explicit, revocable opt-in. This defaults to off even for existing users. Once enabled, no repeated privacy dialogs are shown. Newelle may use local or cloud models.
 - Newelle adapter accepts only loopback 127.0.0.1 on a validated port and requires a configured API token. Only /v1/models and /v1/chat/completions are called. The full Newelle agent API is not used.
 
 ## Security limitations / TODO
 
-- Cloud providers receive prompts and tool output, including potentially sensitive log lines, with one per-request consent. A production edition needs per-tool data-sharing decisions and redaction.
+- When a user opts into model sharing, cloud providers may receive prompts and tool output, including potentially sensitive log lines. Opting out blocks future agent model requests; already transmitted/in-flight content cannot be recalled. A production edition still needs per-tool data-sharing choices and redaction.
 - Direct providers currently rely on environment variables instead of GNOME Secret Service/Keyring. Newelle key is stored in a user-private config file or environment. A shared localhost service can still pose a security risk.
 - Actions are restricted, but no general permission broker or audit log exists yet.
 - Approved AI-driven actions are now logged (timestamp, tool name and status only) to a user-private JSONL history file, with no prompts or tool outputs. Automatic rollback is not yet implemented.
