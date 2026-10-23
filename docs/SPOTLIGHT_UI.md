@@ -73,7 +73,11 @@ Or reopen the wizard separately:
 6. Type a new search: the prior response should collapse.
 7. Open Preferences with the gear icon or Ctrl+, change theme, and verify
    Japandi/Cyberpunk translucent styling. Full setup should still open.
-8. Press Escape: launcher closes. Test Ctrl+, and Esc with the popover open.
+8. Open the gear icon and click **Setup & keyboard settings…**:
+   Spotlight should hide only after the full wizard is visible. Close the
+   wizard's red button or Finish: Spotlight should reappear and the new
+   privacy/keyboard choices should still be saved.
+9. Press Escape: launcher closes. Test Ctrl+, and Esc with the popover open.
 9. Enable GNOME high-contrast mode: input, result rows and responses remain
    readable.
 10. In your graphics-troubled VM, try:
@@ -98,3 +102,17 @@ Enable model sharing via Spotlight Settings, then click the gear icon →
     bash scripts/run-dev.sh --test-newelle
 
 If this fails, follow [NEWELLE_SETUP.md](NEWELLE_SETUP.md). Normal plain-text model replies are displayed as explanations; only validated structured action plans can invoke allowed tools with approvals.
+
+### If the Setup button seems to do nothing
+
+The Setup button now waits for the preferences popover to close before
+presenting the wizard. The old behavior hid Spotlight before building
+the wizard; a GTK error could leave no window or visible diagnostic.
+The updated launcher shows an inline `Couldn't open Setup...` message
+and prints the underlying Python traceback to the Terminal if construction
+fails. For an independent check, quit AI Desktop entirely and run:
+
+    bash scripts/run-dev.sh --setup
+
+Check the terminal for any traceback and share the traceback (not API keys)
+when reporting a remaining GTK-version issue.
