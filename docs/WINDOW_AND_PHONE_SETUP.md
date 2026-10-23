@@ -1,6 +1,6 @@
 # Mac window controls and KDE Connect phone QR setup
 
-The first-run wizard and AI Desktop launcher now use the **left-side**
+The first-run wizard and AI Desktop launcher now use **dedicated 13px circular buttons** on the **left-side**
 Close, Minimize and Maximize headerbar layout and app-scoped red/yellow/green
 traffic-light styling. This does not force other applications to adopt our CSS.
 
