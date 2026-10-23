@@ -26,7 +26,9 @@ from .themes import (
     SPOTLIGHT_HIGH_CONTRAST, load_theme, save_theme,
 )
 from .keyboard_profiles import shortcut_label, get_profile
-from .onboarding import model_sharing_allowed, set_model_sharing_allowed
+from .onboarding import (
+    model_sharing_allowed, set_model_sharing_allowed, MODEL_SHARING_LABEL,
+)
 
 
 CHOICES = [
@@ -181,15 +183,14 @@ class AssistantWindow(Adw.ApplicationWindow):
             [item[0] for item in CHOICES]
         )
         menu.append(self.choice)
-        self.model_permission = Gtk.CheckButton(
-            label="Allow questions and diagnostics to be sent to the AI model"
-        )
+        self.model_permission = Gtk.CheckButton(label=MODEL_SHARING_LABEL)
         self.model_permission.set_active(model_sharing_allowed())
         self.model_permission.connect("toggled", self._on_model_permission_changed)
         menu.append(self.model_permission)
         privacy_description = Gtk.Label(
-            label="Optional. Newelle may use a cloud provider. Turn this off "
-                  "anytime to stop future model requests.",
+            label="When enabled, questions and relevant diagnostic details "
+                  "are sent to the selected model. Newelle may use the cloud. "
+                  "Turn it off anytime to stop future requests.",
             xalign=0,
         )
         privacy_description.set_wrap(True)
@@ -515,8 +516,8 @@ class AssistantWindow(Adw.ApplicationWindow):
         if provider != "builtin" and not model_sharing_allowed():
             self._show_text(
                 "AI model requests are switched off. To ask the selected "
-                "assistant, open the gear icon and check 'Allow questions "
-                "and diagnostics to be sent to the AI model'. "
+                "assistant, open the gear icon and check 'Allow AI model "
+                "sharing'. "
                 "Installed-app search and built-in checks still work."
             )
             return
