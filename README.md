@@ -4,7 +4,7 @@
 
 A Mac-inspired search window that lets people describe what they want in everyday language. It can inspect common Linux problems, explain findings, and request confirmation before making a supported change. The intended future base is Bazzite GNOME for gaming, but this first milestone runs as a normal GNOME application.
 
-Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.md) makes the helper into optional Linux training wheels and supports user-adjustable explanation levels (planned, not yet built). Our [product vision](docs/PRODUCT_VISION.md) is to help Mac users feel at home on a Bazzite-based gaming PC: Spotlight-style search with headless Newelle, GNOME dock/gestures/window snapping, honest phone continuity through GSConnect/KDE Connect, approachable game support and safe system repair. Mac-like *behavior* comes before cosmetic imitation.
+Our [Adaptive Desktop vision](docs/ADAPTIVE_DESKTOP.md) adds automatic MacBook-to-iPad-like transitions on supported convertible laptops, with tablet-first app-grid Home and an explicit manual override (planned, not implemented). Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.md) makes the helper into optional Linux training wheels and supports user-adjustable explanation levels (planned, not yet built). Our [product vision](docs/PRODUCT_VISION.md) is to help Mac users feel at home on a Bazzite-based gaming PC: Spotlight-style search with headless Newelle, GNOME dock/gestures/window snapping, honest phone continuity through GSConnect/KDE Connect, approachable game support and safe system repair. Mac-like *behavior* comes before cosmetic imitation.
 
 ## Working in this first version
 
@@ -24,7 +24,7 @@ Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.
 - Private history of approved AI-driven actions (no chat transcripts or diagnostic output).
 - CLI mode for development and unit tests.
 
-**Not yet implemented:** automated device pairing/AI provider onboarding in the welcome wizard, OS-wide visual theming (current appearance affects only our launcher), automatic Newelle onboarding and provider switching UI, GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
+**Not yet implemented:** convertible/tablet posture detection, touch-first app-grid Home or swipe-up tablet navigation, automated device pairing/AI provider onboarding in the welcome wizard, OS-wide visual theming (current appearance affects only our launcher), automatic Newelle onboarding and provider switching UI, GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
 
 ## New: working first-run welcome wizard (prototype)
 
