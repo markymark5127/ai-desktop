@@ -48,6 +48,17 @@ class SpotlightLifecycleTests(unittest.TestCase):
         self.assertIn("row.set_selectable(False)", heading)
         self.assertIn("row.set_activatable(False)", heading)
 
+    def test_ai_suggestions_are_prefill_only(self):
+        constructor = method_source(UI, "AssistantWindow", "__init__")
+        fill = method_source(UI, "AssistantWindow", "_prefill_ai")
+        results = method_source(UI, "AssistantWindow", "_update_results")
+        self.assertIn('"Explain this"', constructor)
+        self.assertIn('"Troubleshoot"', constructor)
+        self.assertIn('self.suggestion_chips.add_css_class("spotlight-chips")', constructor)
+        self.assertIn("self.entry.set_text(prefix + current)", fill)
+        self.assertNotIn("agent.ask(", fill)
+        self.assertIn("self.suggestion_chips.set_visible", results)
+
     def test_local_file_search_is_off_main_typing_path(self):
         constructor = method_source(UI, "AssistantWindow", "__init__")
         start = method_source(UI, "AssistantWindow", "_begin_file_scan")
