@@ -49,37 +49,40 @@ COMMON = """
 # left-side controls OS-wide is a separate, reversible GNOME user preference;
 # Qt/Electron apps can provide their own decorations.
 WINDOW_BUTTONS = """
-.ai-desktop-window windowcontrols button.close,
-.ai-desktop-window windowcontrols button.minimize,
-.ai-desktop-window windowcontrols button.maximize {
-  border-radius: 999px;
-  min-width: 14px;
-  min-height: 14px;
-  padding: 0;
-  margin-left: 2px;
-  margin-right: 2px;
+/* These are our own non-stretching 13px GTK Buttons, not GNOME's tall
+   windowcontrols buttons; keep normal headerbar controls fully separate. */
+window.ai-desktop-window headerbar .mac-stoplights {
+  background: transparent;
+  border: none;
   box-shadow: none;
+}
+window.ai-desktop-window headerbar button.mac-stoplight {
+  min-width: 13px;
+  min-height: 13px;
+  padding: 0;
+  margin: 0;
+  border-radius: 999px;
   background-image: none;
-  color: rgba(0,0,0,0.72);
+  box-shadow: inset 0 1px rgba(255,255,255,0.22);
 }
-.ai-desktop-window windowcontrols button.close {
+window.ai-desktop-window headerbar button.mac-stoplight.mac-close {
   background-color: #ff5f57;
-  border: 1px solid #de504b;
+  border: 1px solid #df514e;
 }
-.ai-desktop-window windowcontrols button.minimize {
+window.ai-desktop-window headerbar button.mac-stoplight.mac-minimize {
   background-color: #febc2e;
-  border: 1px solid #dea523;
+  border: 1px solid #dba224;
 }
-.ai-desktop-window windowcontrols button.maximize {
+window.ai-desktop-window headerbar button.mac-stoplight.mac-maximize {
   background-color: #28c840;
-  border: 1px solid #1caa35;
+  border: 1px solid #1fae37;
 }
-.ai-desktop-window windowcontrols button image {
-  opacity: 0;
+window.ai-desktop-window headerbar button.mac-stoplight:hover {
+  box-shadow: 0 0 0 2px rgba(180,180,180,0.40);
 }
-.ai-desktop-window windowcontrols button:hover image,
-.ai-desktop-window windowcontrols button:focus-visible image {
-  opacity: 1;
+window.ai-desktop-window headerbar button.mac-stoplight:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
 }
 """
 
@@ -125,43 +128,127 @@ window.ai-desktop-window headerbar {
 """
 
 CYBERPUNK = """
-.ai-desktop,
-window.ai-desktop-window {
-  background-color: #121522;
-  color: #eef4ff;
+/* Deliberately distinct from Adwaita Dark: angular retro-terminal panels,
+   cyan/magenta borders, thin neon glow and monospace/pixel-font fallback. */
+window.ai-desktop-window.cyberpunk,
+.ai-desktop.cyberpunk,
+window.ai-desktop-window.cyberpunk toolbarview {
+  background-color: #080c16;
+  color: #ebfdff;
 }
-window.ai-desktop-window headerbar {
-  background-color: #121522;
-  color: #eef4ff;
-  box-shadow: none;
+window.ai-desktop-window.cyberpunk headerbar {
+  background-color: #111125;
+  color: #00f5ff;
+  font-family: "Press Start 2P", "Pixeloid Sans", monospace;
+  font-weight: 700;
+  border-bottom: 2px solid #00f5ff;
+  box-shadow: 0 3px 12px rgba(0,245,255,0.35);
+  border-radius: 0;
 }
-.ai-desktop entry {
-  background-color: #1e2333;
-  color: #f2f7ff;
-  border: 1px solid #50dce3;
-  box-shadow: none;
+window.ai-desktop-window.cyberpunk headerbar button:not(.mac-stoplight),
+window.ai-desktop-window.cyberpunk headerbar dropdown > button {
+  color: #ecfcff;
+  background-color: #1c1737;
+  background-image: none;
+  border: 1px solid #ff36ba;
+  border-radius: 0;
+  box-shadow: 0 0 6px rgba(255,54,186,0.36);
 }
-.ai-desktop listbox {
-  background-color: #1c2130;
-  color: #f2f7ff;
-  border: 1px solid #3a405c;
+.ai-desktop.cyberpunk {
+  font-family: "Pixeloid Sans", "DejaVu Sans Mono", monospace;
 }
-.ai-desktop listbox row:selected {
-  background-color: #303551;
-  color: #f5faff;
+.ai-desktop.cyberpunk .title-1 {
+  font-family: "Press Start 2P", "Pixeloid Sans", monospace;
+  font-weight: 800;
+  color: #00f5ff;
+  text-shadow: 0 0 10px rgba(0,245,255,0.6);
 }
-.ai-desktop textview,
-.ai-desktop textview text {
-  background-color: #1c2130;
-  color: #eef4ff;
+.ai-desktop.cyberpunk .dim-label {
+  color: #9ab5d0;
 }
-.ai-desktop button.suggested-action {
-  background-color: #b62d7e;
+.ai-desktop.cyberpunk entry,
+.ai-desktop.cyberpunk textview,
+.ai-desktop.cyberpunk textview text {
+  color: #e9fdff;
+  background-color: #0a1428;
+  background-image: none;
+  border: 1px solid #00f5ff;
+  border-radius: 0;
+  box-shadow: inset 0 0 0 1px rgba(0,245,255,0.16),
+              0 0 10px rgba(0,245,255,0.30);
+  font-family: monospace;
+}
+.ai-desktop.cyberpunk entry:focus-within {
+  border-color: #ff36ba;
+  box-shadow: 0 0 12px rgba(255,54,186,0.55);
+}
+.ai-desktop.cyberpunk scrolledwindow,
+.ai-desktop.cyberpunk listbox,
+.ai-desktop.cyberpunk box,
+.ai-desktop.cyberpunk stack {
+  border-radius: 0;
+}
+.ai-desktop.cyberpunk listbox {
+  color: #e9fdff;
+  background-color: #0c1427;
+  border: 1px solid #00f5ff;
+  box-shadow: 0 0 10px rgba(0,245,255,0.18);
+}
+.ai-desktop.cyberpunk listbox row {
+  border-radius: 0;
+  border-bottom: 1px solid rgba(0,245,255,0.20);
+}
+.ai-desktop.cyberpunk listbox row:selected {
+  background-color: #2e1440;
   color: #ffffff;
-  border: 1px solid #ed69bd;
+  border-left: 3px solid #ff36ba;
 }
-.ai-desktop button.suggested-action:hover {
-  background-color: #d53696;
+.ai-desktop.cyberpunk button,
+.ai-desktop.cyberpunk dropdown > button {
+  color: #e9fdff;
+  background-color: #15182e;
+  background-image: none;
+  border: 1px solid #00f5ff;
+  border-radius: 0;
+  box-shadow: 0 0 8px rgba(0,245,255,0.20);
+  font-family: monospace;
+  font-weight: 700;
+}
+.ai-desktop.cyberpunk button:hover,
+.ai-desktop.cyberpunk dropdown > button:hover {
+  background-color: #261b47;
+  border-color: #ff36ba;
+  box-shadow: 0 0 12px rgba(255,54,186,0.45);
+}
+.ai-desktop.cyberpunk button.suggested-action {
+  color: #080c16;
+  background-color: #00f5ff;
+  border: 2px solid #00f5ff;
+  border-radius: 0;
+  box-shadow: 0 0 16px rgba(0,245,255,0.60);
+}
+.ai-desktop.cyberpunk button.suggested-action:hover {
+  color: #ffffff;
+  background-color: #7c135e;
+  border-color: #ff36ba;
+  box-shadow: 0 0 17px rgba(255,54,186,0.72);
+}
+.ai-desktop.cyberpunk checkbutton check {
+  background-color: #0a1428;
+  border: 1px solid #ff36ba;
+  border-radius: 0;
+}
+.ai-desktop.cyberpunk checkbutton check:checked {
+  background-color: #ff36ba;
+}
+.ai-desktop.cyberpunk progressbar trough {
+  background-color: #15182e;
+  border: 1px solid #00f5ff;
+  border-radius: 0;
+}
+.ai-desktop.cyberpunk progressbar progress {
+  background-color: #ff36ba;
+  border-radius: 0;
 }
 """
 
