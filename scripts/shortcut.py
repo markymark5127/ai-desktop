@@ -70,7 +70,7 @@ def apply() -> None:
     with os.fdopen(fd, "w", encoding="utf-8") as output:
         json.dump({"custom-keybindings": original, "switch-input-source": switch}, output)
     try:
-        _set_string(CUSTOM, "name", "AI Desktop")
+        _set_string(CUSTOM, "name", "Mutsu Search")
         _set_string(CUSTOM, "command", str(launcher))
         _set_string(CUSTOM, "binding", "<Super>space")
         _set_array(MEDIA, "custom-keybindings", [*original, PATH])
