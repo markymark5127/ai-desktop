@@ -17,6 +17,7 @@ This is **not a macOS clone**, a new desktop environment, or an AI chatbot paste
 3. **Safe repairs:** permissions for consequential actions, user-facing explanation, execution verification, an auditable history, and rollback when technically supported. No unrestricted root shell from a model.
 4. **Gaming is already there:** preserve Bazzite's supported Steam, Proton, Gamescope and vendor GPU variant capabilities rather than inventing a gaming stack.
 5. **No surprises:** updates should be atomic and recoverable; iPhone limitations are explicitly explained, never disguised as fully functioning Mac Continuity.
+6. **Two forms, one computer:** convertibles automatically shift from a MacBook-like desktop to an iPad-like app-grid Home when a reliable tablet posture signal is present, with manual override, touch-friendly scaling and reversible changes. See [Adaptive Desktop](ADAPTIVE_DESKTOP.md).
 
 ## Expected desktop behavior
 
@@ -33,8 +34,15 @@ This is **not a macOS clone**, a new desktop environment, or an AI chatbot paste
 | macOS migration | Explain equivalent Linux apps and how to import local files/browser/bookmarks | Medium |
 | Gaming | Steam game import, Proton guidance, controller setup and launch experiences | High |
 | Troubleshooting help | Newelle via inference only initially, AI Desktop action broker for approved fixes | High |
+| Convertible tablet mode | Hardware tablet-switch detection, tablet-first Show Applications Home, touch gestures, maximized apps, larger controls/text and reversible desktop restore; manual fallback | High |
 
 **Extension caveat:** GNOME extensions must be tested against each GNOME Shell release shipped in the base image. Do not assume an extension that supports GNOME 49 supports GNOME 50; pin/test versions in the future image and give users a no-extension recovery mode.
+
+## Adaptive Desktop: MacBook to iPad-like mode (future flagship feature)
+
+On supported convertible hardware (such as Lenovo Yoga), folding the keyboard back should automatically reveal a tablet-style **Home** based on the GNOME application grid, with swipe-up navigation, touch targets, responsive larger fonts/icons and apps maximized by default. GNOME's traditional desktop remains available as a secondary destination. Unfolding returns to the familiar Mac-style desktop with a persistent dock, without closing existing applications.
+
+Use trustworthy libinput tablet-mode switch signals where available; a touchscreen, detached Bluetooth keyboard or rotation event alone is not sufficient evidence. Provide manual Always Desktop / Always Tablet / Automatic controls and restore accessible user preferences after the transition. GNOME Shell integration is required to own Home and gestures, and its existing bottom-edge on-screen keyboard gesture must not be broken. This feature is **not implemented** in the current prototype. Full specification: [Adaptive Desktop](ADAPTIVE_DESKTOP.md).
 
 ## Phone integration reality (must be explained during onboarding)
 
@@ -62,8 +70,9 @@ See [ONBOARDING.md](ONBOARDING.md) for exactly what works, what remains manual, 
 6. Configure headless Newelle as an **optional backend**, with privacy/cost disclosure for cloud use; ensure Spotlight and ordinary navigation still work without it.
 7. Optionally pair a phone via GSConnect/KDE Connect; show OS-specific capability chart.
 8. Optional Mac migration guide (browser data, documents, music/photos, passwords, app alternatives).
-9. Test graphics/controller basics and offer Steam sign-in/gaming mode on supported devices.
-10. Show recovery entry points and a clear **Undo/Revert** path for supported changes.
+9. On touchscreen/convertible machines, explain planned Automatic/Tablet/Desktop posture modes and ensure the finished distro provides a reliable manual mode switch when hardware signals are absent.
+10. Test graphics/controller basics and offer Steam sign-in/gaming mode on supported devices.
+11. Show recovery entry points and a clear **Undo/Revert** path for supported changes.
 
 No Apple ID or sensitive credential should be requested by the distro just to perform basic onboarding.
 
@@ -79,6 +88,7 @@ In a **Fedora GNOME VM** (for GUI/search/testing) and later **Bazzite GNOME on p
 - A mis-selected audio sink can be diagnosed and fixed after user confirmation, then verified.
 - A Steam/Proton/controller failure can be explained without pretending repair succeeded.
 - Nontechnical testers can revert appearance/shortcut changes without opening the terminal.
+- A physical convertible enters touch-first app-grid Home when folded, uses bottom-edge Home navigation, and returns to its windowed desktop when unfolded. The mode can always be changed manually.
 - VM success does **not** stand in for GPU/Proton/native gaming reliability.
 
 ## Engineering/build packaging decision
