@@ -286,6 +286,19 @@ window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry:focus 
   outline: none;
   box-shadow: none;
 }
+window.spotlight-window .spotlight-searchbar menubutton.spotlight-settings-button > button {
+  min-width: 30px;
+  min-height: 30px;
+  margin: 0 3px;
+  padding: 1px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+}
+window.spotlight-window .spotlight-searchbar menubutton.spotlight-settings-button > button:hover {
+  background-color: rgba(127, 127, 127, 0.16);
+}
 window.spotlight-window .ai-desktop.spotlight-shell .spotlight-results,
 window.spotlight-window .ai-desktop.spotlight-shell .spotlight-response {
   padding-bottom: 4px;
