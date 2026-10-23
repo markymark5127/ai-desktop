@@ -1,4 +1,4 @@
-# Testing AI Desktop inside Windows (VMware + Fedora GNOME)
+# Testing Mutsu OS inside Windows (VMware + Fedora GNOME)
 
 This is the recommended **development** environment. It lets you validate
 the launcher, keyboard shortcut, themes, Newelle integration, and basic Linux
@@ -36,7 +36,7 @@ python3 -c "import gi; gi.require_version('Gtk', '4.0'); gi.require_version('Adw
 This VM setup uses host-installed GTK/GObject rather than trying to pip-install
 PyGObject on Windows.
 
-## 3. Pull AI Desktop and exercise it offline
+## 3. Pull Mutsu OS and exercise it offline
 
 ```bash
 git clone https://github.com/markymark5127/ai-desktop.git
@@ -56,7 +56,7 @@ steps. To re-open it later, press Ctrl+, in the search bar (or click the small p
 [ONBOARDING.md](ONBOARDING.md) for the regression checklist and exact privacy
 boundaries.
 
-- Launch the regular AI Desktop window and verify it is **only a translucent search field**, not a large chat app, with no permanent titlebar or transcript. See [SPOTLIGHT_UI.md](SPOTLIGHT_UI.md).
+- Launch the regular Mutsu OS window and verify it is **only a translucent search field**, not a large chat app, with no permanent titlebar or transcript. See [SPOTLIGHT_UI.md](SPOTLIGHT_UI.md).
 - Search for a GNOME application by name. Type a few letters; matches expand below the field; press Enter and verify the app starts and Spotlight closes.
 - Open preferences (gear / Ctrl+,), select **Built-in (offline)**, and try "my sound is not working" with Ctrl+Enter; verify the result appears below the field only on request.
 - Change the appearance between **Japandi**, **Cyberpunk**, and **System**, using Spotlight preferences or the setup wizard. Check that the bar remains compact/translucent; Japandi should retain rounded edges and Cyberpunk should have angular neon outlines. Cyberpunk should show square neon-outlined controls; Japandi should retain its original soft rounded controls.
@@ -103,12 +103,12 @@ bash scripts/run-dev.sh --check-newelle
 bash scripts/run-dev.sh
 ```
 
-The API model is configured inside Newelle, but AI Desktop remains the only
-window for normal use. Enable AI Desktop's Newelle provider and ask a
+The API model is configured inside Newelle, but Mutsu OS remains the only
+window for normal use. Enable Mutsu OS's Newelle provider and ask a
 non-sensitive question, for example "What audio devices are available?"
 
 If Newelle uses a model on the host computer, networking and API exposure
-need a separate security design; the current AI Desktop adapter **only**
+need a separate security design; the current Mutsu OS adapter **only**
 accepts loopback inside the VM. Do not weaken the bind address to expose its
 privileged GUI API over the LAN.
 
@@ -131,7 +131,7 @@ privileged GUI API over the LAN.
 - [ ] Revoking model sharing does not affect installed app searches or built-in offline diagnostics
 - [ ] Newelle --check-newelle and --test-newelle distinguish API availability from working inference (test requires opt-in)
 - [ ] Offline diagnostics work when Newelle is stopped
-- [ ] `bash scripts/restart-dev.sh` stops any old hidden AI Desktop Python instance without stopping Newelle, then launches the latest code
+- [ ] `bash scripts/restart-dev.sh` stops any old hidden Mutsu OS Python instance without stopping Newelle, then launches the latest code
 - [ ] Spotlight gear → Setup & keyboard settings activates the GNOME app action and opens the full wizard
 - [ ] `bash scripts/run-dev.sh --setup` opens the wizard even while the updated Spotlight process is already running
 - [ ] Closing setup via window close or Finish returns to the same Spotlight launcher
