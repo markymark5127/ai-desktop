@@ -14,6 +14,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import ProxyHandler, Request, build_opener
 
 from .tools import ToolError
+from .onboarding import model_sharing_allowed
 
 
 class NewelleError(ToolError):
@@ -154,6 +155,11 @@ def test_newelle() -> str:
     This is never called automatically on startup or on each keystroke.
     Configured cloud models may receive the harmless test phrase.
     """
+    if not model_sharing_allowed():
+        raise NewelleError(
+            "Model sharing is disabled. Enable the optional permission "
+            "in Spotlight Settings before sending a test prompt."
+        )
     connection = check_newelle()
     complete_newelle(
         "This is a harmless connection test. Respond with a short acknowledgement.",
