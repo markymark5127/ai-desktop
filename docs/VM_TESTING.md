@@ -121,7 +121,10 @@ privileged GUI API over the LAN.
 - [ ] Super+Space activates the window and can be reverted
 - [ ] Clicking another app/desktop hides Spotlight, but clicking its settings or privacy dialog does not
 - [ ] Enter on unmatched query asks AI; Enter on app result launches; nothing is sent while typing
-- [ ] Newelle --check-newelle and --test-newelle distinguish API availability from working inference
+- [ ] Model sharing defaults OFF for a new user and older configurations, blocking Newelle/Ollama/cloud inference without a popup
+- [ ] Set model-sharing checkbox in setup or Settings, ask several questions without any per-query privacy popup, revoke and verify later AI calls are blocked
+- [ ] Revoking model sharing does not affect installed app searches or built-in offline diagnostics
+- [ ] Newelle --check-newelle and --test-newelle distinguish API availability from working inference (test requires opt-in)
 - [ ] Offline diagnostics work when Newelle is stopped
 - [ ] Newelle headless user service reconnects after VM reboot
 - [ ] Approved action requires an actual click; declining makes no change
