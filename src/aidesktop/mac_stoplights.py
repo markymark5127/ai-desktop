@@ -42,7 +42,13 @@ def install_stoplights(window: Gtk.Window, header: Gtk.HeaderBar) -> Gtk.Box:
         button.set_hexpand(False)
         button.set_vexpand(False)
         button.set_tooltip_text(title)
-        button.update_property([Gtk.AccessibleProperty.LABEL], [title])
+        # Accessible.update_property has slightly different GI overrides
+        # across GTK4 versions. A tooltip still identifies each control if
+        # a particular binding does not expose the property helper.
+        try:
+            button.update_property([Gtk.AccessibleProperty.LABEL], [title])
+        except (AttributeError, TypeError, ValueError):
+            pass
         button.connect("clicked", lambda _button, action=callback: action())
         controls.append(button)
 
