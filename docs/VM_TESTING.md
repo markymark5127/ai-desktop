@@ -126,7 +126,9 @@ privileged GUI API over the LAN.
 - [ ] Revoking model sharing does not affect installed app searches or built-in offline diagnostics
 - [ ] Newelle --check-newelle and --test-newelle distinguish API availability from working inference (test requires opt-in)
 - [ ] Offline diagnostics work when Newelle is stopped
-- [ ] Spotlight gear → Setup & keyboard settings opens the full wizard instead of silently hiding search
+- [ ] `bash scripts/restart-dev.sh` stops any old hidden AI Desktop Python instance without stopping Newelle, then launches the latest code
+- [ ] Spotlight gear → Setup & keyboard settings activates the GNOME app action and opens the full wizard
+- [ ] `bash scripts/run-dev.sh --setup` opens the wizard even while the updated Spotlight process is already running
 - [ ] Closing setup via window close or Finish returns to the same Spotlight launcher
 - [ ] Changing model-sharing permission in setup is reflected in Spotlight preferences after return
 - [ ] An intentional wizard construction error surfaces a visible message and traceback instead of disappearing
