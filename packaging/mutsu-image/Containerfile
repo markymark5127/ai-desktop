@@ -1,0 +1,19 @@
+# Mutsu OS branded Bazzite GNOME derivative (EXPERIMENTAL).
+# Run from repository root with:
+#   podman build -f packaging/mutsu-image/Containerfile -t mutsu-os:dev .
+#
+# Not an installer or a safe automatic rebase. Builds a new image layer, never
+# edits /usr on your running Bazzite machine. Pin your current compatible
+# image digest or tag for reproducibility before publishing.
+ARG BASE_IMAGE=ghcr.io/ublue-os/bazzite-gnome:stable
+FROM ${BASE_IMAGE}
+
+COPY assets/icons/ /tmp/mutsu-brand-assets/icons/
+COPY assets/wallpapers/ /tmp/mutsu-brand-assets/wallpapers/
+COPY packaging/mutsu-image/install-branding.sh /tmp/mutsu-install-branding.sh
+RUN bash /tmp/mutsu-install-branding.sh && \
+    rm -rf /tmp/mutsu-brand-assets /tmp/mutsu-install-branding.sh
+
+LABEL org.opencontainers.image.title="Mutsu OS (experimental image)" \
+      org.opencontainers.image.description="Mutsu OS branding layer derived from Bazzite GNOME" \
+      org.opencontainers.image.source="https://github.com/markymark5127/ai-desktop"
