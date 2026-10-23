@@ -26,6 +26,7 @@ from .themes import (
     SPOTLIGHT_HIGH_CONTRAST, load_theme, save_theme,
 )
 from .keyboard_profiles import shortcut_label, get_profile
+from .onboarding import model_sharing_allowed, set_model_sharing_allowed
 
 
 CHOICES = [
@@ -56,7 +57,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.targets: list[AppResult | None] = []
         self.busy = False
         self._ever_active = False
-        self._privacy_dialog_open = False
+        self._syncing_model_permission = False
         self._pending_dismiss = False
         self._launching = False
         self.add_css_class("ai-desktop-window")
@@ -180,6 +181,20 @@ class AssistantWindow(Adw.ApplicationWindow):
             [item[0] for item in CHOICES]
         )
         menu.append(self.choice)
+        self.model_permission = Gtk.CheckButton(
+            label="Allow questions and diagnostics to be sent to the AI model"
+        )
+        self.model_permission.set_active(model_sharing_allowed())
+        self.model_permission.connect("toggled", self._on_model_permission_changed)
+        menu.append(self.model_permission)
+        privacy_description = Gtk.Label(
+            label="Optional. Newelle may use a cloud provider. Turn this off "
+                  "anytime to stop future model requests.",
+            xalign=0,
+        )
+        privacy_description.set_wrap(True)
+        privacy_description.add_css_class("dim-label")
+        menu.append(privacy_description)
         menu.append(Gtk.Label(label="Appearance", xalign=0))
         self.theme_choice = Gtk.DropDown.new_from_strings(
             [label for label, _name in THEME_LABELS]
@@ -206,6 +221,7 @@ class AssistantWindow(Adw.ApplicationWindow):
             "Sends a short, non-personal test prompt to Newelle's selected model"
         )
         self.model_test_button.connect("clicked", self._test_newelle)
+        self.model_test_button.set_sensitive(model_sharing_allowed())
         menu.append(self.model_test_button)
         self.settings.set_child(menu)
         self.choice.connect("notify::selected", self._on_provider_changed)
@@ -234,7 +250,7 @@ class AssistantWindow(Adw.ApplicationWindow):
             activated_once=self._ever_active,
             is_active=self.is_active(),
             is_visible=self.get_visible(),
-            modal_dialog=self._privacy_dialog_open,
+            modal_dialog=False,
             settings_open=self.settings.get_visible(),
         ):
             # Hide instead of destroy, so background inference and approval
@@ -256,7 +272,36 @@ class AssistantWindow(Adw.ApplicationWindow):
     def _on_provider_changed(self, *_unused) -> None:
         self._update_results()
 
+    def _on_model_permission_changed(self, button: Gtk.CheckButton) -> None:
+        if self._syncing_model_permission:
+            return
+        allowed = button.get_active()
+        try:
+            set_model_sharing_allowed(allowed)
+        except (OSError, ValueError):
+            self._sync_model_permission()
+            self.model_status.set_text(
+                "Could not save the permission. No new model access was granted."
+            )
+            return
+        self.model_test_button.set_sensitive(allowed)
+        self._update_results()
+
+    def _sync_model_permission(self) -> None:
+        self._syncing_model_permission = True
+        try:
+            allowed = model_sharing_allowed()
+            self.model_permission.set_active(allowed)
+            self.model_test_button.set_sensitive(allowed)
+        finally:
+            self._syncing_model_permission = False
+
     def _test_newelle(self, *_unused) -> None:
+        if not model_sharing_allowed():
+            self.model_status.set_text(
+                "Enable the model-sharing checkbox before testing model replies."
+            )
+            return
         self.model_test_button.set_sensitive(False)
         self.model_status.set_text("Checking API and test inference…")
 
@@ -304,6 +349,8 @@ class AssistantWindow(Adw.ApplicationWindow):
             self._show_text("Appearance changed, but it could not be saved.")
 
     def _show_settings(self) -> None:
+        # The wizard can change this preference while Spotlight is hidden.
+        self._sync_model_permission()
         self.shortcut_hint.set_label(
             f"Spotlight: {shortcut_label(get_profile())}  ·  "
             "Enter: open/ask  ·  Esc: close"
@@ -465,32 +512,17 @@ class AssistantWindow(Adw.ApplicationWindow):
         provider = self._provider()
         self.pending = None
         self._launching = False
-        if provider in ("newelle", "openai", "anthropic"):
-            self._privacy_dialog_open = True
-            dialog = Gtk.MessageDialog(
-                transient_for=self, modal=True,
-                message_type=Gtk.MessageType.QUESTION,
-                buttons=Gtk.ButtonsType.NONE,
-                text="Share this question with the selected model?",
+        if provider != "builtin" and not model_sharing_allowed():
+            self._show_text(
+                "AI model requests are switched off. To ask the selected "
+                "assistant, open the gear icon and check 'Allow questions "
+                "and diagnostics to be sent to the AI model'. "
+                "Installed-app search and built-in checks still work."
             )
-            dialog.props.secondary_text = (
-                "Newelle may use a local or cloud model. Prompts and diagnostic "
-                "results can leave this computer, depending on its configuration. "
-                "Avoid sharing passwords or personal information."
-            )
-            dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
-            dialog.add_button("Continue", Gtk.ResponseType.OK)
-
-            def decide(dlg, response_id):
-                dlg.destroy()
-                self._privacy_dialog_open = False
-                if response_id == Gtk.ResponseType.OK:
-                    self._execute(lambda: self.agent.ask(query, provider))
-
-            dialog.connect("response", decide)
-            dialog.present()
-        else:
-            self._execute(lambda: self.agent.ask(query, provider))
+            return
+        # User already opted in via setup/Settings. Do not interrupt every
+        # question; the agent re-checks persisted consent before inference.
+        self._execute(lambda: self.agent.ask(query, provider))
 
     def _execute(self, operation) -> None:
         self._busy(True)
