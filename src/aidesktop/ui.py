@@ -13,6 +13,7 @@ from .agent import Agent, AgentResponse, PendingAction  # noqa: E402
 from .search import AppResult, list_applications, search_applications  # noqa: E402
 from .tools import run_tool  # noqa: E402
 from .themes import THEME_LABELS, STYLES, SCHEMES, load_theme, save_theme  # noqa: E402
+from .mac_stoplights import install_stoplights  # noqa: E402
 from .keyboard_profiles import (
     PROFILES as KEYBOARD_PROFILES,
     KeyboardError,
@@ -63,7 +64,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         )
 
         header = Gtk.HeaderBar()
-        header.set_decoration_layout("close,minimize,maximize:")
+        install_stoplights(self, header)
         header.set_title_widget(Gtk.Label(label="Ask your computer"))
         self.choice = Gtk.DropDown.new_from_strings([item[0] for item in CHOICES])
         header.pack_end(self.choice)
