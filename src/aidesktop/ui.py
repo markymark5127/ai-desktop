@@ -14,7 +14,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 
 from .agent import Agent, AgentResponse, PendingAction
 from .search import AppResult, list_applications, search_applications
@@ -298,7 +298,7 @@ class AssistantWindow(Adw.ApplicationWindow):
                     label=app.description[:90], xalign=0
                 )
                 subtitle.add_css_class("dim-label")
-                subtitle.set_ellipsize(3)  # Pango.EllipsizeMode.END
+                subtitle.set_ellipsize(Pango.EllipsizeMode.END)
                 labels.append(subtitle)
             content.append(labels)
             row.set_child(content)
