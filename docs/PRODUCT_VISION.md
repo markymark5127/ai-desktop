@@ -1,4 +1,4 @@
-# Product vision: a Mac-familiar gaming desktop
+# Mutsu OS product vision: a Mac-familiar gaming desktop
 
 **North star:** A long-time Mac user should be able to install the OS, immediately recognize how to navigate it, connect their phone, launch Steam games, and solve routine problems without learning Linux commands. **Super + Space is the everyday control center, and the helper is Linux training wheels rather than AI hype.** See [Helper Experience](HELPER_EXPERIENCE.md).
 
@@ -24,7 +24,7 @@ This is **not a macOS clone**, a new desktop environment, or an AI chatbot paste
 | Mac expectation | Practical GNOME/Linux implementation | Priority |
 | --- | --- | --- |
 | Dock, running-app indicators | Configurable Dash to Dock (GNOME extension): always visible by default, bottom initial position, optional left/right/top and auto-hide; Show Applications dock icon opens Launchpad-like grid | High |
-| Spotlight on Command-Space | AI Desktop Super-Space launcher, app/file search and optional natural language | High |
+| Spotlight on Command-Space | Mutsu OS Super-Space launcher, app/file search and optional natural language | High |
 | Finder with file previews | GNOME Files (Nautilus) and GNOME Sushi Quick Look where supported | High |
 | Mission Control/Spaces | GNOME Overview, workspaces, gestures, intentional keyboard mapping | High |
 | Easy split windows | Built-in GNOME half snapping; test an extension such as Smart Tiling/Tiling Assistant for quarters and assisted layouts | High |
@@ -33,7 +33,7 @@ This is **not a macOS clone**, a new desktop environment, or an AI chatbot paste
 | Mac-style coherent interface | App-scoped Japandi/Cyberpunk already available; future matching shell/dock/wallpaper/icons | Medium |
 | macOS migration | Explain equivalent Linux apps and how to import local files/browser/bookmarks | Medium |
 | Gaming | Steam game import, Proton guidance, controller setup and launch experiences | High |
-| Troubleshooting help | Newelle via inference only initially, AI Desktop action broker for approved fixes | High |
+| Troubleshooting help | Newelle via inference only initially, Mutsu OS action broker for approved fixes | High |
 | Convertible tablet mode | Hardware tablet-switch detection, tablet-first Show Applications Home, touch gestures, maximized apps, larger controls/text and reversible desktop restore; manual fallback | High |
 
 **Extension caveat:** GNOME extensions must be tested against each GNOME Shell release shipped in the base image. Do not assume an extension that supports GNOME 49 supports GNOME 50; pin/test versions in the future image and give users a no-extension recovery mode.
