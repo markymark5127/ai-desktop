@@ -29,7 +29,7 @@ from .newelle_client import NewelleError, check_newelle
 from .onboarding import (
     LEARNING_STYLES, PHONE_OPTIONS, get_learning_style, helper_intro,
     load_preferences, mark_setup_done, save_preferences,
-    model_sharing_allowed, set_model_sharing_allowed,
+    model_sharing_allowed, set_model_sharing_allowed, MODEL_SHARING_LABEL,
 )
 from .search import search_applications
 from .themes import THEME_LABELS, SCHEMES, STYLES, load_theme, save_theme
@@ -527,10 +527,7 @@ class SetupWizard(Adw.ApplicationWindow):
             "diagnostics. Newelle can use a local or cloud model; cloud models "
             "may transfer that information off this computer.",
         )
-        self.model_sharing_choice = Gtk.CheckButton(
-            label="Allow AI Desktop to send my questions and diagnostic details "
-                  "to the selected AI model"
-        )
+        self.model_sharing_choice = Gtk.CheckButton(label=MODEL_SHARING_LABEL)
         self.model_sharing_choice.set_active(model_sharing_allowed())
         self.model_sharing_choice.connect("toggled", self._model_sharing_changed)
         page.append(self.model_sharing_choice)
