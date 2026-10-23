@@ -7,8 +7,14 @@ from aidesktop.tools import ToolError
 
 
 class AgentTests(unittest.TestCase):
-    def test_invalid_json_cannot_execute(self):
-        agent = Agent(inference=lambda *_: "not json")
+    def test_plain_text_answer_from_model_is_readable_but_cannot_execute(self):
+        agent = Agent(inference=lambda *_: "You can check the audio output in Settings.")
+        answer = agent.ask("Why is there no audio?", "local")
+        self.assertIn("audio output", answer.message)
+        self.assertIsNone(answer.pending)
+
+    def test_malformed_action_json_never_executes(self):
+        agent = Agent(inference=lambda *_: '{"kind":"tool","name":"run_shell",')
         self.assertIn("invalid", agent.ask("fix everything", "local").message.lower())
 
     def test_unknown_tool_cannot_execute(self):
