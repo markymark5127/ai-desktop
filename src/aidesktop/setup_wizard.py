@@ -19,6 +19,7 @@ from .keyboard_profiles import (
     PROFILES, KeyboardError, apply_profile_layout, get_profile,
     restore_previous_layout, set_profile, shortcut_label,
 )
+from .dock import DockError, POSITIONS, apply_dock, restore_dock, dock_status
 from .newelle_client import NewelleError, check_newelle
 from .onboarding import (
     LEARNING_STYLES, PHONE_OPTIONS, get_learning_style, helper_intro,
@@ -31,7 +32,7 @@ from .tools import ToolError, run_tool
 
 GSCONNECT_ID = "gsconnect@andyholmes.github.io"
 NEWELLE_SETUP_URL = "https://github.com/markymark5127/ai-desktop/blob/main/docs/NEWELLE_SETUP.md"
-STEPS = ("Welcome", "Appearance & keyboard", "Your helper", "AI connection", "Phone pairing", "Gaming & desktop")
+STEPS = ("Welcome", "Appearance & keyboard", "Mac-style dock", "Your helper", "AI connection", "Phone pairing", "Gaming & desktop")
 
 
 class SetupWizard(Adw.ApplicationWindow):
@@ -71,7 +72,7 @@ class SetupWizard(Adw.ApplicationWindow):
         self.stack.set_transition_duration(180)
 
         for idx, make_page in enumerate(
-            (self._welcome, self._appearance, self._helper, self._model,
+            (self._welcome, self._appearance, self._dock, self._helper, self._model,
              self._phone, self._gaming)
         ):
             child = make_page()
@@ -299,6 +300,110 @@ class SetupWizard(Adw.ApplicationWindow):
         dialog.connect("response", response)
         dialog.present()
 
+    def _dock(self) -> Gtk.Box:
+        page = self._page(
+            "Your dock, always within reach.",
+            "Keep your favorite apps and a Launchpad-style Applications button "
+            "visible without opening the workspace overview.",
+        )
+        self._paragraph(
+            page,
+            "GNOME's Dash to Dock extension powers this feature. It must be "
+            "installed and enabled before applying settings. No system files "
+            "or extensions will be installed automatically.",
+        )
+        self._paragraph(page, "Dock position")
+        self.dock_position = Gtk.DropDown.new_from_strings(
+            [name.title() for name in POSITIONS]
+        )
+        page.append(self.dock_position)
+        self.dock_always_visible = Gtk.CheckButton(
+            label="Always show dock (default)"
+        )
+        self.dock_always_visible.set_active(True)
+        page.append(self.dock_always_visible)
+        self._paragraph(
+            page,
+            "Show Applications (the app grid, like Launchpad) will appear in "
+            "the dock. This is separate from Spotlight (Super + Space). "
+            "Activities/Overview remains available for workspaces even if "
+            "you later choose to hide its top-left button.",
+        )
+        self.dock_status_label = Gtk.Label(
+            label="Dock extension status not checked yet.", xalign=0
+        )
+        self.dock_status_label.set_wrap(True)
+        page.append(self.dock_status_label)
+
+        check = Gtk.Button(label="Check dock extension")
+        check.connect("clicked", self._check_dock)
+        page.append(check)
+        install_guide = Gtk.Button(label="Find Dash to Dock (GNOME Extensions)")
+        install_guide.connect(
+            "clicked",
+            lambda *_: self._open_url("https://extensions.gnome.org/extension/307/dash-to-dock/"),
+        )
+        page.append(install_guide)
+        apply_button = Gtk.Button(label="Apply Mac-style dock…")
+        apply_button.add_css_class("suggested-action")
+        apply_button.connect("clicked", self._confirm_dock)
+        page.append(apply_button)
+        restore = Gtk.Button(label="Restore original dock settings")
+        restore.connect("clicked", lambda *_: self._run_background(restore_dock))
+        page.append(restore)
+        activities = Gtk.Button(label="Hide top-left Activities button (optional)")
+        activities.connect(
+            "clicked",
+            lambda *_: self._open_url("https://extensions.gnome.org/extension/3843/just-perfection/"),
+        )
+        page.append(activities)
+        self._paragraph(
+            page,
+            "Use the Just Perfection extension's Activities Button visibility "
+            "setting to remove the top-left entry. It does not disable "
+            "workspaces or the Super-key overview. Extension versions must "
+            "be tested against your GNOME/Bazzite release.",
+        )
+        return page
+
+    def _check_dock(self, *_unused):
+        self.dock_status_label.set_text("Checking Dash to Dock…")
+
+        def worker():
+            try:
+                message = dock_status()
+            except DockError as exc:
+                message = "Dock unavailable: " + str(exc)
+            GLib.idle_add(self.dock_status_label.set_text, message)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _confirm_dock(self, *_unused):
+        position = POSITIONS[self.dock_position.get_selected()]
+        visible = self.dock_always_visible.get_active()
+        dialog = Gtk.MessageDialog(
+            transient_for=self, modal=True,
+            message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.NONE,
+            text="Apply the Mac-style dock layout?",
+        )
+        dialog.format_secondary_text(
+            f"Position: {position.title()}. "
+            f"Always visible: {'Yes' if visible else 'No (auto-hide)'}. "
+            "The Applications button will be enabled. This requires an "
+            "already-enabled Dash to Dock extension. A backup is saved, "
+            "and you can restore the previous settings."
+        )
+        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        dialog.add_button("Apply", Gtk.ResponseType.OK)
+
+        def confirm(dlg, result):
+            dlg.destroy()
+            if result == Gtk.ResponseType.OK:
+                self._run_background(lambda: apply_dock(position, visible))
+
+        dialog.connect("response", confirm)
+        dialog.present()
+
     def _helper(self) -> Gtk.Box:
         page = self._page(
             "Your computer comes with a helping hand.",
@@ -503,8 +608,9 @@ class SetupWizard(Adw.ApplicationWindow):
         self._paragraph(
             page,
             "GNOME can snap a window to either side by dragging it to an edge. "
-            "Improved quarter tiling, a macOS-style dock and GNOME Shell polish "
-            "are future distro integrations, not yet installed by this wizard.",
+            "The setup wizard can now configure an installed Dash to Dock extension "
+            "for a persistent Mac-style dock. Quarter tiling and polished "
+            "Shell integration remain future work.",
         )
         self._paragraph(
             page,
@@ -532,7 +638,7 @@ class SetupWizard(Adw.ApplicationWindow):
         def worker():
             try:
                 output = operation()
-            except (KeyboardError, ToolError, OSError, ValueError) as exc:
+            except (KeyboardError, DockError, ToolError, OSError, ValueError) as exc:
                 output = f"Couldn't complete that action: {exc}"
             GLib.idle_add(self.status.set_text, output)
 
