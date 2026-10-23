@@ -14,7 +14,7 @@ familiar to someone coming from macOS Spotlight.
 - Type an installed app name to see a small list of up to **five** matching
   applications under the field. **Enter** opens the selected app, closes the
   launcher after the desktop reports the launch request, and does not call AI.
-- If there is no matching application, **Ask AI** is the selected result and ordinary **Enter** invokes the chosen assistant. An Ask AI option is also available underneath app matches. Nothing is sent while typing. Answers expand below the field only on request. A special Ctrl+Enter shortcut is no longer needed.
+- If there is no matching application, **Ask AI** appears as a full-sized selected row (not a tiny footer) and ordinary **Enter** invokes the chosen assistant. An Ask AI option is also available underneath app matches. Nothing is sent while typing. Answers expand below the field only on request. A special Ctrl+Enter shortcut is no longer needed.
 - **One-time opt-in:** the AI connection step of setup and Spotlight Settings
   offer a checkbox to allow questions/diagnostics to be sent to the chosen
   model. This permission defaults OFF and can be revoked at any time. Once
