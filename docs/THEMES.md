@@ -12,7 +12,7 @@ its styling can change independently.
 | Cyberpunk | `#080C16` | `#0A1428` | Neon cyan `#00F5FF`, magenta `#FF36BA` | Sharp square edges, glowing outlines, retro monospace/pixel-inspired typography |
 | System | GNOME default | GNOME default | GNOME default | Unmodified libadwaita |
 
-Use the **Appearance** dropdown in the title bar to switch. The selected theme
+Use the **Appearance** choice inside the Spotlight search field's small preferences popover (or in the setup wizard) to switch. The selected theme
 is saved as `~/.config/ai-desktop/appearance.json` (or under
 `$XDG_CONFIG_HOME`).
 
@@ -25,9 +25,7 @@ selection, and a monospace/typewriter feel. A real bitmap/pixel font is
 optional and is **not bundled**; GTK falls back to locally available monospace.
 The Linux OS-wide GTK/Qt/GNOME Shell styling is still a separate project.
 
-The stoplight controls have been rebuilt as fixed-size, centered **13-pixel
-Gtk.Buttons** with direct close/minimize/maximize actions, rather than applying
-circular backgrounds to GNOME's inherently taller default window controls.
+The full **setup wizard** uses fixed-size, centered **13-pixel Gtk.Buttons** with direct close/minimize/maximize actions. The everyday **Spotlight launcher is intentionally borderless** with no window controls, so it resembles macOS Spotlight instead of a full app.
 
 ## Implementation
 
@@ -53,3 +51,8 @@ never impair a newcomer's ability to troubleshoot their computer.
 ## Window buttons and phone QR
 
 AI Desktop applies its stoplight CSS only to its own launcher/wizard. The setup wizard can optionally apply a reversible GNOME-wide left-side button placement; applications with independent titlebars may ignore it. Phone pairing now uses offline, scannable official-store QR codes. See [Window and phone setup](WINDOW_AND_PHONE_SETUP.md).
+
+
+## Minimal translucent Spotlight surface
+
+Spotlight now opens as a small undecorated text field with optional results and AI replies beneath it. Its per-theme CSS provides translucency, distinct Japandi/Cyberpunk treatments and a high-contrast opaque fallback. Settings and provider choices live in a hidden popover (gear icon or Ctrl+,). This does not yet provide system-compositor background blur or exact Mac overlay positioning. See [Spotlight UI](SPOTLIGHT_UI.md).
