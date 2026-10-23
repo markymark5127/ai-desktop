@@ -15,7 +15,7 @@ if [[ -s "$icon_source" ]]; then
   mkdir -p "$icon_dir"
   cp "$icon_source" "$icon_dir/$icon_name.svg"
   icon_value="$icon_name"
-  printf 'Installed Mutsu OS Search icon from %s\\n' "$icon_source"
+  printf 'Installed Mutsu OS Search icon from %s\n' "$icon_source"
 else
   printf 'Mutsu SVG not uploaded yet; keeping the generic search icon.\n'
 fi
