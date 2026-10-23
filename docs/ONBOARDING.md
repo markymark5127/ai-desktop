@@ -28,11 +28,11 @@ For a headless check of locally saved user options:
 | Page | Currently implemented | Still needs platform/product development |
 | --- | --- | --- |
 | Welcome | Local installed-app search exercise; explains keyboard-first usage | Full indexed file and Settings search |
-| Appearance and keyboard | Japandi/Cyberpunk/System, PC/Mac shortcut label, real key-event test, optional confirmed US XKB source application and Restore | Per-device Apple keyboard mapping |
+| Appearance and keyboard | Full-bleed Japandi/Cyberpunk/System, red/yellow/green buttons left, reversible left-side controls for compatible GNOME apps, PC/Mac shortcuts, real key-event test, optional US XKB source and Restore | Per-device Apple keyboard mapping, OS-wide matched colors for third-party titlebars |
 | Mac-style dock | Configure installed/enabled Dash to Dock: four positions, persistent/auto-hide, Show Applications icon, confirmation and Restore | Automatic compatible extension installation; hide Activities automatically; OS-image defaults |
 | Your helper | Three persisted teaching preferences used when constructing the assistant prompt | Graphical per-task explanations, general repair verification and rollback |
 | AI connection | User-initiated check of authenticated loopback Newelle GUI API; links to setup guide | Automatic installation/provider onboarding with usable provider selection |
-| Phone pairing | iPhone/Android/skip choice; inspect GSConnect availability; explicit button to open its preferences | In-wizard pairing UI and functional phone diagnostics |
+| Phone pairing | iPhone/Android/skip choice with **offline app-store QR codes** for KDE Connect; inspect GSConnect availability; open its preferences | Actual in-wizard pairing and phone diagnostics |
 | Gaming and desktop | Shows whether Steam is installed; one-click explicit open if found; tiling guidance | Full Bazzite integration, Steam/Proton controller diagnostics and quarter-tiling extensions |
 
 **No promise of full AirDrop, Universal Clipboard, SMS, iMessage, or always-on
@@ -41,6 +41,12 @@ iPhone sync.** KDE Connect on iOS is limited by iOS background and sandbox rules
 **No app installs or root commands are performed** by the wizard. Dash to Dock settings are changed only after selecting Apply and confirming, and the previous dock configuration is backed up. Hiding Activities is still manual through a compatible Just Perfection extension. It does not
 automatically replace GNOME shortcut bindings, modify the XKB layout, pair a
 phone, or initialize Newelle without user input.
+
+## Window appearance and phone-app QR codes
+
+The wizard and launcher now fill the entire window in Japandi and Cyberpunk, without the prior white margin. Both display left-side red/yellow/green titlebar controls. On the Appearance step, a separately confirmed option changes the user GNOME button arrangement for other compatible applications and preserves a Restore backup. Other apps may retain their own decorations and colors.
+
+The Phone step draws locally bundled QR codes for the official KDE Connect listings in Apple's App Store or Google Play. It does not call an online QR service or transmit phone data. This installs the *phone app*, while GSConnect remains the desktop integration. See [WINDOW_AND_PHONE_SETUP.md](WINDOW_AND_PHONE_SETUP.md).
 
 ## Mac-style dock
 
