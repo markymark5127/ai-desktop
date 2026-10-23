@@ -20,6 +20,11 @@ from .keyboard_profiles import (
     restore_previous_layout, set_profile, shortcut_label,
 )
 from .dock import DockError, POSITIONS, apply_dock, restore_dock, dock_status
+from .phone_download import PHONE_APPS, qr_matrix, app_info
+from .window_controls import (
+    WindowLayoutError, apply_mac_layout, restore_previous_layout as restore_window_layout,
+    describe_layout,
+)
 from .newelle_client import NewelleError, check_newelle
 from .onboarding import (
     LEARNING_STYLES, PHONE_OPTIONS, get_learning_style, helper_intro,
@@ -46,13 +51,18 @@ class SetupWizard(Adw.ApplicationWindow):
         self.status.set_wrap(True)
         self.status.add_css_class("dim-label")
 
-        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        root.set_margin_top(18)
-        root.set_margin_bottom(18)
-        root.set_margin_start(24)
-        root.set_margin_end(24)
+        # Paint the entire toplevel. Margins on root left the underlying white
+        # Adwaita window exposed around Japandi in the original wizard.
+        self.add_css_class("ai-desktop-window")
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         root.add_css_class("ai-desktop")
         self.set_content(root)
+
+        body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        body.set_margin_top(12)
+        body.set_margin_bottom(18)
+        body.set_margin_start(24)
+        body.set_margin_end(24)
 
         self.css = Gtk.CssProvider()
         Gtk.StyleContext.add_provider_for_display(
@@ -60,12 +70,14 @@ class SetupWizard(Adw.ApplicationWindow):
         )
 
         header = Gtk.HeaderBar()
+        header.set_decoration_layout("close,minimize,maximize:")
         header.set_title_widget(Gtk.Label(label="Getting started"))
         root.append(header)
+        root.append(body)
 
         self.progress = Gtk.Label(xalign=0)
         self.progress.add_css_class("dim-label")
-        root.append(self.progress)
+        body.append(self.progress)
 
         self.stack = Gtk.Stack()
         self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
@@ -81,9 +93,9 @@ class SetupWizard(Adw.ApplicationWindow):
         wrapper.set_vexpand(True)
         wrapper.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         wrapper.set_child(self.stack)
-        root.append(wrapper)
+        body.append(wrapper)
 
-        root.append(self.status)
+        body.append(self.status)
 
         buttons = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
         self.back = Gtk.Button(label="Back")
@@ -102,7 +114,7 @@ class SetupWizard(Adw.ApplicationWindow):
         self.next.add_css_class("suggested-action")
         self.next.connect("clicked", self._go_next)
         buttons.append(self.next)
-        root.append(buttons)
+        body.append(buttons)
 
         self._apply_theme(load_theme())
         self._show(0)
@@ -194,6 +206,21 @@ class SetupWizard(Adw.ApplicationWindow):
         page.append(self.theme_choice)
         self.theme_choice.connect("notify::selected", self._theme_selected)
 
+        self._paragraph(
+            page,
+            "Window controls: macOS-style red, yellow and green buttons appear "
+            "on the left of AI Desktop. You can also move controls to the left "
+            "in other GNOME apps (their colors may still follow their theme).",
+        )
+        window_actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        use_mac = Gtk.Button(label="Use left-side buttons in GNOME…")
+        use_mac.connect("clicked", self._confirm_window_layout)
+        window_actions.append(use_mac)
+        undo_mac = Gtk.Button(label="Restore original buttons")
+        undo_mac.connect("clicked", lambda *_: self._run_background(restore_window_layout))
+        window_actions.append(undo_mac)
+        page.append(window_actions)
+
         self._paragraph(page, "Which keyboard are you using?")
         self.keyboard_choice = Gtk.DropDown.new_from_strings(
             [label for label, _ in PROFILES]
@@ -239,6 +266,31 @@ class SetupWizard(Adw.ApplicationWindow):
             "swap Ctrl+C/Ctrl+V or your terminal controls. Applying a layout is optional.",
         )
         return page
+
+    def _confirm_window_layout(self, *_unused):
+        dialog = Gtk.MessageDialog(
+            transient_for=self, modal=True,
+            message_type=Gtk.MessageType.QUESTION,
+            buttons=Gtk.ButtonsType.NONE,
+            text="Move GNOME window controls to the top left?",
+        )
+        dialog.format_secondary_text(
+            "This changes your user account's GNOME window-button arrangement "
+            "to Close, Minimize and Maximize on the left. It affects compatible "
+            "GNOME applications, not every third-party app. AI Desktop itself "
+            "uses the red/yellow/green stoplight style. The original GNOME "
+            "layout is backed up and can be restored here."
+        )
+        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
+        dialog.add_button("Apply", Gtk.ResponseType.OK)
+
+        def finish(dlg, result):
+            dlg.destroy()
+            if result == Gtk.ResponseType.OK:
+                self._run_background(apply_mac_layout)
+
+        dialog.connect("response", finish)
+        dialog.present()
 
     def _theme_selected(self, *_unused):
         theme = THEME_LABELS[self.theme_choice.get_selected()][1]
@@ -508,6 +560,19 @@ class SetupWizard(Adw.ApplicationWindow):
         self.phone_details = Gtk.Label(xalign=0)
         self.phone_details.set_wrap(True)
         page.append(self.phone_details)
+        # The QR is produced entirely offline and stays crisp regardless of
+        # theme. GSConnect runs on the Linux desktop; scan this to install
+        # KDE Connect on the phone (the actual pairing happens separately).
+        self.qr_caption = Gtk.Label(xalign=0)
+        self.qr_caption.set_wrap(True)
+        page.append(self.qr_caption)
+        self.phone_qr = Gtk.DrawingArea()
+        self.phone_qr.set_content_width(208)
+        self.phone_qr.set_content_height(208)
+        self.phone_qr.set_size_request(208, 208)
+        self.phone_qr.set_halign(Gtk.Align.CENTER)
+        self.phone_qr.set_draw_func(self._draw_phone_qr)
+        page.append(self.phone_qr)
         self._phone_selected(persist=False)
 
         self.gsconnect_status = Gtk.Label(label="GSConnect not checked yet.", xalign=0)
@@ -527,6 +592,29 @@ class SetupWizard(Adw.ApplicationWindow):
         )
         return page
 
+    def _draw_phone_qr(self, _area, cr, width, height):
+        if not self.phone_qr.get_visible():
+            return
+        selected = PHONE_OPTIONS[self.phone_choice.get_selected()][1]
+        if selected not in PHONE_APPS:
+            return
+        matrix = qr_matrix(selected)
+        count = len(matrix)
+        # Integer module sizes preserve sharp QR edges at fractional scales.
+        scale = max(1, min(width, height) // count)
+        edge = count * scale
+        left = (width - edge) // 2
+        top = (height - edge) // 2
+        cr.set_source_rgb(1, 1, 1)
+        cr.rectangle(0, 0, width, height)
+        cr.fill()
+        cr.set_source_rgb(0, 0, 0)
+        for y, row in enumerate(matrix):
+            for x, dark in enumerate(row):
+                if dark:
+                    cr.rectangle(left + x * scale, top + y * scale, scale, scale)
+        cr.fill()
+
     def _phone_selected(self, *_unused, persist=True):
         value = PHONE_OPTIONS[self.phone_choice.get_selected()][1]
         descriptions = {
@@ -542,6 +630,16 @@ class SetupWizard(Adw.ApplicationWindow):
             "later": "You can set up GSConnect at any time in GNOME later.",
         }
         self.phone_details.set_text(descriptions[value])
+        active = value in PHONE_APPS
+        self.phone_qr.set_visible(active)
+        if active:
+            self.qr_caption.set_text(
+                "Scan this QR code with your phone to install " + app_info(value)["label"]
+            )
+            self.phone_qr.set_tooltip_text(app_info(value)["label"])
+            self.phone_qr.queue_draw()
+        else:
+            self.qr_caption.set_text("Phone setup skipped — no app download needed.")
         if persist:
             try:
                 save_preferences(phone=value)
@@ -638,7 +736,7 @@ class SetupWizard(Adw.ApplicationWindow):
         def worker():
             try:
                 output = operation()
-            except (KeyboardError, DockError, ToolError, OSError, ValueError) as exc:
+            except (KeyboardError, WindowLayoutError, DockError, ToolError, OSError, ValueError) as exc:
                 output = f"Couldn't complete that action: {exc}"
             GLib.idle_add(self.status.set_text, output)
 
