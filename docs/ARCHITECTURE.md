@@ -1,4 +1,4 @@
-# Architecture and security constraints
+# Mutsu OS prototype architecture and security constraints
 
 ## Design
 
