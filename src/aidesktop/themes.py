@@ -367,6 +367,18 @@ window.spotlight-window .ai-desktop.spotlight-shell .spotlight-ask-title {
 window.spotlight-window .ai-desktop.spotlight-shell .spotlight-ask-subtitle {
   font-size: 12px;
 }
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-chips {
+  background: transparent;
+  border: none;
+}
+window.spotlight-window .ai-desktop.spotlight-shell button.spotlight-chip {
+  min-height: 29px;
+  min-width: 0;
+  padding: 4px 11px;
+  font-size: 12px;
+  background-image: none;
+  box-shadow: none;
+}
 window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: -2px;
@@ -449,6 +461,15 @@ window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list 
 window.spotlight-window .ai-desktop.spotlight-shell.japandi .spotlight-section-heading {
   color: #646a5c;
 }
+window.spotlight-window .ai-desktop.spotlight-shell.japandi button.spotlight-chip {
+  background-color: rgba(243, 239, 231, 0.75);
+  border: 1px solid rgba(104, 117, 97, 0.27);
+  border-radius: 999px;
+  color: #303832;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi button.spotlight-chip:hover {
+  background-color: rgba(81, 107, 92, 0.14);
+}
 window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row.spotlight-section-row {
   border-radius: 0;
 }
@@ -496,6 +517,17 @@ window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk .spotlight-section
   letter-spacing: 2px;
   text-transform: uppercase;
   font-family: monospace;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk button.spotlight-chip {
+  background-color: rgba(0, 245, 255, 0.04);
+  border: 1px solid #00f5ff;
+  border-radius: 0;
+  color: #00f5ff;
+  font-family: monospace;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk button.spotlight-chip:hover {
+  border-color: #ff36ba;
+  color: #ff36ba;
 }
 """,
 }
