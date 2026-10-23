@@ -32,6 +32,7 @@ from .onboarding import (
 )
 from .search import search_applications
 from .themes import THEME_LABELS, SCHEMES, STYLES, load_theme, save_theme
+from .mac_stoplights import install_stoplights
 from .tools import ToolError, run_tool
 
 
@@ -72,7 +73,7 @@ class SetupWizard(Adw.ApplicationWindow):
         )
 
         header = Gtk.HeaderBar()
-        header.set_decoration_layout("close,minimize,maximize:")
+        install_stoplights(self, header)
         header.set_title_widget(Gtk.Label(label="Getting started"))
         toolbar.add_top_bar(header)
         root.append(body)
@@ -95,6 +96,9 @@ class SetupWizard(Adw.ApplicationWindow):
         wrapper.set_vexpand(True)
         wrapper.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         wrapper.set_child(self.stack)
+        self.page_scroller = wrapper
+        # Reset vertical scroll when a new step finishes sliding into view.
+        self.stack.connect("notify::transition-running", self._on_step_transition)
         body.append(wrapper)
 
         body.append(self.status)
@@ -744,9 +748,21 @@ class SetupWizard(Adw.ApplicationWindow):
 
         threading.Thread(target=worker, daemon=True).start()
 
+    def _reset_page_scroll(self) -> bool:
+        adjustment = self.page_scroller.get_vadjustment()
+        adjustment.set_value(adjustment.get_lower())
+        return GLib.SOURCE_REMOVE
+
+    def _on_step_transition(self, stack, _param) -> None:
+        if not stack.get_transition_running():
+            GLib.idle_add(self._reset_page_scroll)
+
     def _show(self, index: int):
         self.index = index
         self.stack.set_visible_child_name(f"step-{index}")
+        self._reset_page_scroll()
+        # After GTK recalculates the size of the new step, reset again.
+        GLib.idle_add(self._reset_page_scroll)
         self.progress.set_text(f"Step {index + 1} of {len(STEPS)} · {STEPS[index]}")
         self.back.set_sensitive(index > 0)
         self.next.set_label("Finish" if index == len(STEPS) - 1 else "Continue")
