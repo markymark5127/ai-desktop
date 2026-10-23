@@ -121,6 +121,9 @@ privileged GUI API over the LAN.
 - [ ] Super+Space activates the window and can be reverted
 - [ ] Clicking another app/desktop closes an idle Spotlight, and the next shortcut opens a fresh working launcher; an in-flight AI request hides without losing its response
 - [ ] Japandi installed-app and AI-only results have no white list/viewport; AI-only appears as a full-sized row without a tiny footer
+- [ ] Filename search shows only real local Documents/Downloads/Pictures hits under Files, and opens selected files via GNOME default handler
+- [ ] Two AI suggestion chips prefill a prompt without sending anything until Enter
+- [ ] Selecting Japandi or Cyberpunk uses the uploaded Mutsu 4K wallpaper, while selecting System restores the previous user wallpaper (if not manually edited)
 - [ ] Reopening Spotlight or the wizard repeatedly does not stack stale CSS providers or recolor results
 - [ ] Enter on unmatched query asks AI; Enter on app result launches; nothing is sent while typing
 - [ ] Model sharing defaults OFF for a new user and older configurations, blocking Newelle/Ollama/cloud inference without a popup
