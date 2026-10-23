@@ -24,10 +24,31 @@ class DockError(Exception):
     pass
 
 
+def _schema_dir() -> Path | None:
+    """User-installed GNOME extensions may ship schemas outside system paths."""
+    bases = (
+        Path.home() / ".local/share/gnome-shell/extensions",
+        Path("/usr/share/gnome-shell/extensions"),
+        Path("/usr/local/share/gnome-shell/extensions"),
+    )
+    for root in bases:
+        for extension_id in EXTENSION_IDS:
+            folder = root / extension_id / "schemas"
+            if (folder / "gschemas.compiled").is_file():
+                return folder
+    return None
+
+
 def _command(*args: str) -> str:
+    env = None
+    if args and args[0] == "gsettings":
+        folder = _schema_dir()
+        if folder is not None:
+            env = {**os.environ, "GSETTINGS_SCHEMA_DIR": str(folder)}
     try:
         result = subprocess.run(
-            args, capture_output=True, text=True, check=False, timeout=6
+            args, capture_output=True, text=True, check=False, timeout=6,
+            env=env,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise DockError("Cannot read GNOME dock settings in this session.") from exc
