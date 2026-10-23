@@ -15,13 +15,13 @@ familiar to someone coming from macOS Spotlight.
   applications under the field. **Enter** opens the selected app, closes the
   launcher after the desktop reports the launch request, and does not call AI.
 - If you type a question, press **Enter** with no app match, or use
-  **Ctrl+Enter** to explicitly ask the AI. The result appears in an expandable,
+  **Ctrl+Enter** (or Command+Enter on an Apple keyboard) to explicitly ask the AI. The result appears in an expandable,
   height-limited answer section below the search field.
 - AI-proposed changes still show **Apply change / Decline** controls, and
   cloud-capable providers still require privacy consent per request. Actions
   remain bounded by the project's approved tool catalog.
-- **Escape** closes Spotlight. Arrow keys select application results.
-- A subtle settings icon inside the bar (or **Ctrl+,**) opens provider and
+- **Escape** closes Spotlight. Arrow keys select application results. Returning from an answer to search resets the window to its compact natural height.
+- A subtle settings icon inside the bar (or **Ctrl+,** / **Command+,**) opens provider and
   appearance choices plus a **Setup & keyboard settings…** entry. The full
   original setup wizard remains a separate window via `--setup`.
 
