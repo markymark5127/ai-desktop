@@ -20,6 +20,14 @@ class BrandingTests(unittest.TestCase):
         self.assertEqual(AI_NAME, "Mutsu AI")
         self.assertEqual(WELCOME_TITLE, "Welcome to Mutsu OS")
 
+    def test_mutsu_ai_svg_is_optional_and_local(self):
+        from aidesktop.branding import icon_source
+        self.assertIsNone(icon_source("../not-allowed.svg"))
+        self.assertIsNone(icon_source("https://untrusted.example/logo.svg"))
+        ui = (ROOT / "src/aidesktop/ui.py").read_text()
+        self.assertIn('icon_source("mutsu-ai.svg", "mutsu-logo-symbol.svg")', ui)
+        self.assertIn('Gtk.Image.new_from_icon_name(icon_name)', ui)
+
     def test_brand_is_used_for_launcher_and_wizard(self):
         ui = (ROOT / "src/aidesktop/ui.py").read_text()
         wizard = (ROOT / "src/aidesktop/setup_wizard.py").read_text()
