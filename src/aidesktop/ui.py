@@ -21,6 +21,7 @@ from .agent import Agent, AgentResponse, PendingAction
 from .search import AppResult, list_applications
 from .search_routing import route_query, should_hide_on_focus_loss
 from .file_search import FileResult, list_local_files, search_local_files
+from .wallpaper import WallpaperError, apply_theme_wallpaper
 from .newelle_client import NewelleError, test_newelle
 from .tools import run_tool
 from .themes import (
@@ -213,6 +214,10 @@ class AssistantWindow(Adw.ApplicationWindow):
             [label for label, _name in THEME_LABELS]
         )
         menu.append(self.theme_choice)
+        self.wallpaper_status = Gtk.Label(label="", xalign=0)
+        self.wallpaper_status.add_css_class("dim-label")
+        self.wallpaper_status.set_wrap(True)
+        menu.append(self.wallpaper_status)
         self.setup_button = Gtk.Button(label="Setup & keyboard settings…")
         # Let Gio.Application own navigation so this also works from a menu
         # and can be invoked without relying on popover/window focus.
@@ -394,7 +399,16 @@ class AssistantWindow(Adw.ApplicationWindow):
         try:
             save_theme(theme)
         except OSError:
-            self._show_text("Appearance changed, but it could not be saved.")
+            self.wallpaper_status.set_text(
+                "Appearance changed, but your preference could not be saved."
+            )
+            return
+        try:
+            self.wallpaper_status.set_text(apply_theme_wallpaper(theme))
+        except WallpaperError as exc:
+            self.wallpaper_status.set_text(
+                f"Launcher theme applied. GNOME wallpaper unchanged: {exc}"
+            )
 
     def _show_settings(self) -> None:
         # The wizard can change this preference while Spotlight is hidden.
