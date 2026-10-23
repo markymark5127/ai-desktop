@@ -22,7 +22,7 @@ This is **not a macOS clone**, a new desktop environment, or an AI chatbot paste
 
 | Mac expectation | Practical GNOME/Linux implementation | Priority |
 | --- | --- | --- |
-| Dock, running-app indicators | Evaluate Dash to Dock (GNOME extension), bottom position, optional auto-hide | High |
+| Dock, running-app indicators | Configurable Dash to Dock (GNOME extension): always visible by default, bottom initial position, optional left/right/top and auto-hide; Show Applications dock icon opens Launchpad-like grid | High |
 | Spotlight on Command-Space | AI Desktop Super-Space launcher, app/file search and optional natural language | High |
 | Finder with file previews | GNOME Files (Nautilus) and GNOME Sushi Quick Look where supported | High |
 | Mission Control/Spaces | GNOME Overview, workspaces, gestures, intentional keyboard mapping | High |
@@ -72,7 +72,7 @@ No Apple ID or sensitive credential should be requested by the distro just to pe
 In a **Fedora GNOME VM** (for GUI/search/testing) and later **Bazzite GNOME on physical hardware**:
 
 - A Mac user can find Files, Settings, Browser, Steam and a downloaded file in seconds.
-- Dock and overview make it clear which app is running and how to move between windows/workspaces.
+- Dock is visible on the normal desktop without opening the Overview, with a one-click Show Applications grid button; Overview and workspaces remain available separately.
 - Super-Space search is predictable and faster than a language model for ordinary navigation.
 - Two or four windows can be tiled with discoverable keyboard/mouse actions.
 - Phone pairing is explained, with iPhone limitations visible before setup.
