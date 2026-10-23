@@ -14,15 +14,35 @@ class ThemeTests(unittest.TestCase):
         self.assertEqual(set(STYLES), set(SCHEMES))
         # The system palette remains GNOME-native, while AI Desktop still
         # provides its own traffic-light title controls.
-        self.assertIn("windowcontrols button.close", STYLES["system"])
+        self.assertIn("button.mac-stoplight", STYLES["system"])
         self.assertNotIn("#f3efe7", STYLES["system"])
         for name in ("japandi", "cyberpunk"):
             self.assertIn(".ai-desktop", STYLES[name])
             self.assertIn("window.ai-desktop-window", STYLES[name])
-            self.assertIn("windowcontrols button.close", STYLES[name])
+            self.assertIn("button.mac-stoplight", STYLES[name])
             self.assertIn("entry", STYLES[name])
             self.assertIn("textview", STYLES[name])
             self.assertIn("button.suggested-action", STYLES[name])
+
+    def test_cyberpunk_is_neon_and_square_not_just_dark_adwaita(self):
+        neon = STYLES["cyberpunk"]
+        self.assertIn("#00f5ff", neon)
+        self.assertIn("#ff36ba", neon)
+        self.assertIn("border-radius: 0;", neon)
+        self.assertIn("font-family: monospace;", neon)
+        self.assertIn("box-shadow", neon)
+        # Japandi stays soft and independently scoped, without Cyberpunk's styles.
+        calm = STYLES["japandi"]
+        self.assertIn("#f3efe7", calm)
+        self.assertIn("border-radius: 12px;", calm)
+        self.assertNotIn("#00f5ff", calm)
+
+    def test_stoplights_are_real_compact_circular_buttons(self):
+        for theme in STYLES.values():
+            self.assertIn("min-width: 13px;", theme)
+            self.assertIn("min-height: 13px;", theme)
+            self.assertIn("border-radius: 999px;", theme)
+            self.assertIn("button.mac-stoplight", theme)
 
     def test_persist_and_reload_theme(self):
         with tempfile.TemporaryDirectory() as tmp:
