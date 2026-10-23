@@ -24,6 +24,18 @@
 - Structured provider-native tool calls, redaction, sensitive-data minimization.
 - Test suite against real/virtual Linux failure scenarios.
 
+## Adaptive Desktop on convertibles (planned; flagship OS feature)
+
+See [Adaptive Desktop design and implementation specification](ADAPTIVE_DESKTOP.md). This is **not yet implemented** in the assistant, welcome wizard, GNOME extension or Bazzite image.
+
+- Detect real convertible/tablet posture from kernel/libinput tablet switches when supported; distinguish orientation from posture; add manual mode toggle and safe fallback.
+- Implement a GNOME Shell-owned touch-first **Home/app grid**, invoked when folded; traditional desktop remains available but secondary.
+- Design bottom-edge swipe to Home, hold for multitasking, and app/window navigation without breaking GNOME's existing bottom-edge on-screen keyboard gesture.
+- Maximize launched apps by default where appropriate; retain running windows, notifications, OSK, rotation lock and accessible shell controls.
+- Add responsive larger icons, text and touch targets with separate touch presets layered over Japandi/Cyberpunk/System; honor accessibility preferences.
+- Restore laptop dock/window/scale behavior when unfolding without overwriting changed user settings; handle suspend/resume and unreliable switches.
+- Evaluate Touchshell/TouchUp as GNOME-version-pinned prototypes, avoiding conflicting gesture extensions; test on actual Yoga-class hardware rather than assuming VM detection.
+
 ## Mac-familiar desktop experience (cross-cutting milestones)
 - Design for Mac-to-Linux migration and Steam/Proton gaming; see [Product vision](PRODUCT_VISION.md).
 - Reversible Mac dock configurator now implemented for an already enabled Dash to Dock GNOME extension (Bottom/Left/Right/Top, always-on default, Show Applications/Launchpad grid). The install wizard page is included. See [DOCK.md](DOCK.md).
