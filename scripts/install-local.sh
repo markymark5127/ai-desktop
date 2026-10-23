@@ -8,8 +8,8 @@ chmod +x "$HOME/.local/bin/ai-desktop"
 cat > "$HOME/.local/share/applications/io.github.markymark5127.AIDesktop.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=AI Desktop
-Comment=Natural-language GNOME troubleshooting assistant
+Name=Mutsu Search
+Comment=Mutsu OS Spotlight-style application, file and AI search
 Exec=$HOME/.local/bin/ai-desktop
 Icon=system-search-symbolic
 Terminal=false
