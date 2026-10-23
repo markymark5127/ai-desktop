@@ -56,7 +56,9 @@ class SetupWizard(Adw.ApplicationWindow):
         self.add_css_class("ai-desktop-window")
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         root.add_css_class("ai-desktop")
-        self.set_content(root)
+        toolbar = Adw.ToolbarView()
+        self.set_content(toolbar)
+        toolbar.set_content(root)
 
         body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
         body.set_margin_top(12)
@@ -72,7 +74,7 @@ class SetupWizard(Adw.ApplicationWindow):
         header = Gtk.HeaderBar()
         header.set_decoration_layout("close,minimize,maximize:")
         header.set_title_widget(Gtk.Label(label="Getting started"))
-        root.append(header)
+        toolbar.add_top_bar(header)
         root.append(body)
 
         self.progress = Gtk.Label(xalign=0)
