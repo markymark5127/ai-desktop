@@ -28,6 +28,8 @@ familiar to someone coming from macOS Spotlight.
   appearance choices plus a **Setup & keyboard settings…** entry. The full
   original setup wizard remains a separate window via `--setup`.
 
+The search results no longer render an opaque default Gtk.ListBox, GtkViewport or scroll container; Japandi selection uses soft sage, while Cyberpunk uses an angular magenta/cyan highlight. This style change also removes old window-level CSS providers on close, preventing stacked-outdated themes after re-opening the wizard or launcher. These changes require VM validation.
+
 ### Translucency and placement limitations
 
 The background uses alpha-composited GTK4 CSS rather than an opaque top-level
