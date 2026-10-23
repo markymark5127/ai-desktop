@@ -42,6 +42,21 @@ iPhone sync.** KDE Connect on iOS is limited by iOS background and sandbox rules
 automatically replace GNOME shortcut bindings, modify the XKB layout, pair a
 phone, or initialize Newelle without user input.
 
+## Installer and recent wizard polish
+
+For a user-level install with a reversible Spotlight shortcut, run
+`bash scripts/install-desktop-experience.sh --with-shortcut` from the cloned
+repository. More steps for GNOME extensions and Newelle are in
+[INSTALL_ON_BAZZITE.md](INSTALL_ON_BAZZITE.md).
+
+Changing setup steps now resets the shared scroll container to the top, both
+before and after the animated page transition. The Gtk.Stack uses the active
+page's height rather than retaining the tallest step.
+
+The Mac traffic lights are separate fixed-size 13px functional controls. The
+Cyberpunk theme has neon outlines, square corners and a retro font treatment;
+Japandi's original rounded design is unchanged.
+
 ## Window appearance and phone-app QR codes
 
 The wizard and launcher now fill the entire window in Japandi and Cyberpunk, without the prior white margin. Both display left-side red/yellow/green titlebar controls. On the Appearance step, a separately confirmed option changes the user GNOME button arrangement for other compatible applications and preserves a Restore backup. Other apps may retain their own decorations and colors.
