@@ -1,28 +1,29 @@
-"""GNOME/libadwaita launcher: local search is instant; AI work runs off-thread."""
+"""Compact Spotlight-style GNOME launcher.
+
+The everyday surface is a single translucent search field. Local app matches
+and AI responses expand underneath only when requested. Settings remain in a
+small optional popover and the complete welcome wizard stays separate.
+This is a regular GTK4 window, not yet a GNOME Shell overlay/layer surface.
+"""
 
 from __future__ import annotations
 
 import threading
+
 import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from .agent import Agent, AgentResponse, PendingAction  # noqa: E402
-from .search import AppResult, list_applications, search_applications  # noqa: E402
-from .tools import run_tool  # noqa: E402
-from .themes import THEME_LABELS, STYLES, SCHEMES, load_theme, save_theme  # noqa: E402
-from .mac_stoplights import install_stoplights  # noqa: E402
-from .keyboard_profiles import (
-    PROFILES as KEYBOARD_PROFILES,
-    KeyboardError,
-    apply_profile_layout,
-    get_profile,
-    restore_previous_layout,
-    set_profile,
-    shortcut_label,
-)  # noqa: E402
+from .agent import Agent, AgentResponse, PendingAction
+from .search import AppResult, list_applications, search_applications
+from .tools import run_tool
+from .themes import (
+    THEME_LABELS, STYLES, SCHEMES, SPOTLIGHT_STYLES,
+    SPOTLIGHT_HIGH_CONTRAST, load_theme, save_theme,
+)
+from .keyboard_profiles import shortcut_label, get_profile
 
 
 CHOICES = [
@@ -35,28 +36,29 @@ CHOICES = [
 
 
 class AssistantWindow(Adw.ApplicationWindow):
+    """Small undecorated launcher; results/diagnostics appear only on demand."""
+
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
-        self.set_title("AI Desktop")
-        self.set_default_size(760, 540)
+        self.set_title("AI Desktop Spotlight")
+        self.set_default_size(640, -1)
+        self.set_decorated(False)
         self.agent = Agent()
         self.pending: PendingAction | None = None
         self.catalog: list[AppResult] = list_applications()
         self.matches: list[AppResult] = []
         self.busy = False
-
+        self._launching = False
         self.add_css_class("ai-desktop-window")
+        self.add_css_class("spotlight-window")
+
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         root.add_css_class("ai-desktop")
+        root.add_css_class("spotlight-shell")
         self.theme_root = root
-        toolbar = Adw.ToolbarView()
-        self.set_content(toolbar)
-        toolbar.set_content(root)
-        body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        body.set_margin_top(12)
-        body.set_margin_bottom(16)
-        body.set_margin_start(20)
-        body.set_margin_end(20)
+        # Adw.ApplicationWindow uses set_content(), not GtkWindow.set_child().
+        self.set_content(root)
+
         self._theme_provider = Gtk.CssProvider()
         Gtk.StyleContext.add_provider_for_display(
             self.get_display(),
@@ -64,100 +66,126 @@ class AssistantWindow(Adw.ApplicationWindow):
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
 
-        header = Gtk.HeaderBar()
-        install_stoplights(self, header)
-        header.set_title_widget(Gtk.Label(label="Ask your computer"))
-        self.choice = Gtk.DropDown.new_from_strings([item[0] for item in CHOICES])
-        header.pack_end(self.choice)
-        self.setup_button = Gtk.Button(label="Setup")
-        self.setup_button.set_tooltip_text("Reopen the Mac-to-Linux welcome guide")
-        self.setup_button.connect("clicked", self._open_setup)
-        header.pack_start(self.setup_button)
-        self.theme_choice = Gtk.DropDown.new_from_strings([label for label, _ in THEME_LABELS])
-        header.pack_start(self.theme_choice)
-        toolbar.add_top_bar(header)
-        root.append(body)
-
         self.entry = Gtk.Entry()
-        self.entry.set_placeholder_text("Search apps, or describe what you need…")
-        self.entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic")
+        self.entry.add_css_class("spotlight-entry")
+        self.entry.set_placeholder_text("Search apps or ask your computer…")
+        self.entry.set_icon_from_icon_name(
+            Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic"
+        )
+        self.entry.set_icon_from_icon_name(
+            Gtk.EntryIconPosition.SECONDARY, "preferences-system-symbolic"
+        )
+        self.entry.set_icon_tooltip_text(
+            Gtk.EntryIconPosition.SECONDARY, "Preferences (Ctrl+,)"
+        )
+        self.entry.connect("icon-press", self._on_entry_icon)
         self.entry.connect("changed", self._on_search_changed)
         self.entry.connect("activate", self._on_submit)
         keys = Gtk.EventControllerKey()
         keys.connect("key-pressed", self._on_key)
         self.entry.add_controller(keys)
-        body.append(self.entry)
+        root.append(self.entry)
 
+        self.results_section = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=0
+        )
+        self.results_section.add_css_class("spotlight-results")
+        self.results_section.set_visible(False)
+        self.results_section.append(Gtk.Separator())
         self.results = Gtk.ListBox()
-        self.results.add_css_class("boxed-list")
+        self.results.add_css_class("spotlight-list")
         self.results.set_selection_mode(Gtk.SelectionMode.SINGLE)
         self.results.connect("row-activated", self._on_result_activated)
         search_scroll = Gtk.ScrolledWindow()
-        search_scroll.set_min_content_height(80)
-        search_scroll.set_max_content_height(225)
+        search_scroll.set_policy(
+            Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC
+        )
+        search_scroll.set_max_content_height(260)
         search_scroll.set_propagate_natural_height(True)
         search_scroll.set_child(self.results)
-        self.search_scroll = search_scroll
-        body.append(search_scroll)
+        self.results_section.append(search_scroll)
+        root.append(self.results_section)
 
-        self.hint = Gtk.Label(label="Enter opens an app  •  Ctrl+Enter asks AI  •  Esc closes")
-        self.hint.set_xalign(0)
-        self.hint.add_css_class("dim-label")
-        body.append(self.hint)
-
-        keyboard_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        keyboard_row.append(Gtk.Label(label="Keyboard"))
-        self.keyboard_choice = Gtk.DropDown.new_from_strings(
-            [label for label, _name in KEYBOARD_PROFILES]
+        # An answer isn't a permanent conversation pane. It only expands after
+        # the user explicitly asks for help or an operation returns a result.
+        self.response_section = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL, spacing=8
         )
-        self.keyboard_choice.set_selected(
-            next(i for i, (_label, name) in enumerate(KEYBOARD_PROFILES) if name == get_profile())
+        self.response_section.add_css_class("spotlight-response")
+        self.response_section.set_visible(False)
+        self.response_section.append(Gtk.Separator())
+
+        response_scroll = Gtk.ScrolledWindow()
+        response_scroll.set_policy(
+            Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC
         )
-        self.keyboard_choice.connect("notify::selected", self._on_keyboard_changed)
-        keyboard_row.append(self.keyboard_choice)
-        self.keyboard_apply = Gtk.Button(label="Apply layout to GNOME")
-        self.keyboard_apply.connect("clicked", self._confirm_keyboard_apply)
-        keyboard_row.append(self.keyboard_apply)
-        self.keyboard_restore = Gtk.Button(label="Restore layout")
-        self.keyboard_restore.connect("clicked", self._restore_keyboard_layout)
-        keyboard_row.append(self.keyboard_restore)
-        body.append(keyboard_row)
-        self._update_keyboard_hint()
-
-        self.go = Gtk.Button(label="Ask assistant")
-        self.go.add_css_class("suggested-action")
-        self.go.connect("clicked", lambda *_: self._ask_ai())
-        body.append(self.go)
-
-        scroller = Gtk.ScrolledWindow()
-        scroller.set_vexpand(True)
+        response_scroll.set_max_content_height(220)
+        response_scroll.set_propagate_natural_height(True)
         self.output = Gtk.TextView()
+        self.output.add_css_class("spotlight-output")
         self.output.set_editable(False)
         self.output.set_cursor_visible(False)
         self.output.set_wrap_mode(Gtk.WrapMode.WORD_CHAR)
-        self.output.set_top_margin(12)
-        self.output.set_left_margin(12)
-        self.output.set_right_margin(12)
-        self.output.set_bottom_margin(12)
-        scroller.set_child(self.output)
-        body.append(scroller)
-        self._show_text("Search installed applications instantly, or ask the assistant to diagnose a problem.\nRead-only checks work without AI or internet access.")
+        self.output.set_left_margin(14)
+        self.output.set_right_margin(14)
+        self.output.set_top_margin(8)
+        self.output.set_bottom_margin(8)
+        response_scroll.set_child(self.output)
+        self.response_section.append(response_scroll)
 
-        actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        self.approve_button = Gtk.Button(label="Approve action")
+        approval = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        approval.add_css_class("spotlight-approval")
+        self.approve_button = Gtk.Button(label="Apply change")
         self.approve_button.add_css_class("suggested-action")
-        self.approve_button.set_visible(False)
         self.approve_button.connect("clicked", self._on_approve)
-        actions.append(self.approve_button)
+        self.approve_button.set_visible(False)
+        approval.append(self.approve_button)
         self.cancel_button = Gtk.Button(label="Decline")
-        self.cancel_button.set_visible(False)
         self.cancel_button.connect("clicked", self._on_decline)
-        actions.append(self.cancel_button)
-        body.append(actions)
-        self._update_results()
+        self.cancel_button.set_visible(False)
+        approval.append(self.cancel_button)
+        self.response_section.append(approval)
+        root.append(self.response_section)
+
+        # Secondary icon / Ctrl+, is the only settings entry point in the bar.
+        # Provider, theme, setup, and keyboard options no longer clutter search.
+        self.settings = Gtk.Popover()
+        self.settings.set_has_arrow(False)
+        self.settings.set_autohide(True)
+        self.settings.set_position(Gtk.PositionType.BOTTOM)
+        self.settings.set_parent(self.entry)
+        menu = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        menu.set_margin_top(14)
+        menu.set_margin_bottom(14)
+        menu.set_margin_start(16)
+        menu.set_margin_end(16)
+        label = Gtk.Label(label="Assistant provider", xalign=0)
+        menu.append(label)
+        self.choice = Gtk.DropDown.new_from_strings(
+            [item[0] for item in CHOICES]
+        )
+        menu.append(self.choice)
+        menu.append(Gtk.Label(label="Appearance", xalign=0))
+        self.theme_choice = Gtk.DropDown.new_from_strings(
+            [label for label, _name in THEME_LABELS]
+        )
+        menu.append(self.theme_choice)
+        self.setup_button = Gtk.Button(label="Setup & keyboard settings…")
+        self.setup_button.connect("clicked", self._open_setup)
+        menu.append(self.setup_button)
+        self.shortcut_hint = Gtk.Label(
+            label=f"Spotlight: {shortcut_label(get_profile())}  ·  "
+                  "Enter: open  ·  Ctrl+Enter: ask  ·  Esc: close"
+        )
+        self.shortcut_hint.add_css_class("dim-label")
+        self.shortcut_hint.set_wrap(True)
+        menu.append(self.shortcut_hint)
+        self.settings.set_child(menu)
+
         active_theme = load_theme()
         self.theme_choice.set_selected(
-            next(i for i, (_, name) in enumerate(THEME_LABELS) if name == active_theme)
+            next(i for i, (_, name) in enumerate(THEME_LABELS)
+                 if name == active_theme)
         )
         self._apply_theme(active_theme)
         self.theme_choice.connect("notify::selected", self._on_theme_changed)
@@ -170,17 +198,19 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.add_css_class(theme)
         self.theme_root.add_css_class(theme)
         style_manager = Adw.StyleManager.get_default()
-        # High contrast has priority over decorative themes for accessibility.
         accessible = style_manager.get_high_contrast()
-        css = "" if accessible else STYLES[theme]
+        css = (
+            SPOTLIGHT_HIGH_CONTRAST if accessible
+            else STYLES[theme] + "\n" + SPOTLIGHT_STYLES[theme]
+        )
         self._theme_provider.load_from_data(css.encode("utf-8"))
         scheme = "default" if accessible else SCHEMES[theme]
-        if scheme == "light":
-            style_manager.set_color_scheme(Adw.ColorScheme.FORCE_LIGHT)
-        elif scheme == "dark":
-            style_manager.set_color_scheme(Adw.ColorScheme.FORCE_DARK)
-        else:
-            style_manager.set_color_scheme(Adw.ColorScheme.DEFAULT)
+        schemes = {
+            "light": Adw.ColorScheme.FORCE_LIGHT,
+            "dark": Adw.ColorScheme.FORCE_DARK,
+            "default": Adw.ColorScheme.DEFAULT,
+        }
+        style_manager.set_color_scheme(schemes[scheme])
 
     def _on_theme_changed(self, *_unused) -> None:
         theme = THEME_LABELS[self.theme_choice.get_selected()][1]
@@ -188,155 +218,143 @@ class AssistantWindow(Adw.ApplicationWindow):
         try:
             save_theme(theme)
         except OSError:
-            self._show_text("Theme applied for this session, but preference could not be saved.")
+            self._show_text("Appearance changed, but it could not be saved.")
 
-    def _keyboard_profile(self) -> str:
-        return KEYBOARD_PROFILES[self.keyboard_choice.get_selected()][1]
+    def _on_entry_icon(self, _entry, position) -> None:
+        if position == Gtk.EntryIconPosition.SECONDARY:
+            self._show_settings()
 
-    def _update_keyboard_hint(self) -> None:
-        shortcut = shortcut_label(self._keyboard_profile())
-        self.hint.set_label(
-            f"Spotlight: {shortcut}  •  Enter opens app  •  Ctrl+Enter asks AI  •  Esc closes"
+    def _show_settings(self) -> None:
+        self.shortcut_hint.set_label(
+            f"Spotlight: {shortcut_label(get_profile())}  ·  "
+            "Enter: open  ·  Ctrl+Enter: ask  ·  Esc: close"
         )
-
-    def _on_keyboard_changed(self, *_unused) -> None:
-        profile = self._keyboard_profile()
-        self._update_keyboard_hint()
-        try:
-            set_profile(profile)
-        except OSError:
-            self._show_text("Keyboard profile selected for this session but could not be saved.")
-
-    def _confirm_keyboard_apply(self, *_unused) -> None:
-        profile = self._keyboard_profile()
-        dialog = Gtk.MessageDialog(
-            transient_for=self, modal=True,
-            message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.NONE,
-            text="Apply the selected US keyboard layout to GNOME?",
-        )
-        dialog.format_secondary_text(
-            "This will make the selected English (US) layout your first input source. "
-            "Other language layouts will be kept and the original configuration saved. "
-            "The physical Command key normally works as Super already; this does not "
-            "force a modifier-key swap. You can restore the previous layouts here."
-        )
-        dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
-        dialog.add_button("Apply", Gtk.ResponseType.OK)
-
-        def confirm(dlg, response_id):
-            dlg.destroy()
-            if response_id == Gtk.ResponseType.OK:
-                self._execute(lambda: self._keyboard_action(lambda: apply_profile_layout(profile)))
-
-        dialog.connect("response", confirm)
-        dialog.present()
-
-    @staticmethod
-    def _keyboard_action(operation) -> AgentResponse:
-        try:
-            return AgentResponse(operation())
-        except (KeyboardError, OSError, ValueError) as exc:
-            return AgentResponse(f"Keyboard change was not completed: {exc}")
-
-    def _restore_keyboard_layout(self, *_unused) -> None:
-        self._execute(lambda: self._keyboard_action(restore_previous_layout))
+        self.settings.popup()
 
     def _open_setup(self, *_unused) -> None:
         from .setup_wizard import SetupWizard
+        self.settings.popdown()
+        self.hide()
         wizard = SetupWizard(self.get_application(), on_done=self.present)
         wizard.present()
 
-    def _show_text(self, text: str) -> None:
-        self.output.get_buffer().set_text(text)
+    def _show_text(self, message: str) -> None:
+        self.results_section.set_visible(False)
+        self.output.get_buffer().set_text(message)
+        self.response_section.set_visible(True)
+        self.queue_resize()
 
     def _provider(self) -> str:
         return CHOICES[self.choice.get_selected()][1]
 
     def _busy(self, busy: bool) -> None:
         self.busy = busy
-        self.go.set_sensitive(not busy)
         self.entry.set_sensitive(not busy)
         self.choice.set_sensitive(not busy)
         self.approve_button.set_sensitive(not busy)
-        self.keyboard_choice.set_sensitive(not busy)
-        self.keyboard_apply.set_sensitive(not busy)
-        self.keyboard_restore.set_sensitive(not busy)
+        self.cancel_button.set_sensitive(not busy)
 
     def _on_search_changed(self, *_unused) -> None:
+        self.response_section.set_visible(False)
+        self.pending = None
+        self.approve_button.set_visible(False)
+        self.cancel_button.set_visible(False)
         self._update_results()
 
     def _update_results(self) -> None:
         query = self.entry.get_text().strip()
         if query.lower().startswith(("open ", "launch ")):
-            query = query.split(" ", 1)[1]
-        if query.lower().startswith("ask ") or len(query.split()) > 4 or "?" in query:
+            query = query.split(" ", 1)[1].strip()
+        if not query or query.lower().startswith("ask ") or "?" in query or len(query.split()) > 4:
             self.matches = []
         else:
-            self.matches = search_applications(query, apps=self.catalog)
+            self.matches = search_applications(
+                query, limit=5, apps=self.catalog
+            )
+
         while child := self.results.get_row_at_index(0):
             self.results.remove(child)
+
         for app in self.matches:
             row = Gtk.ListBoxRow()
-            content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-            content.set_margin_top(9)
-            content.set_margin_bottom(9)
-            content.set_margin_start(10)
-            content.set_margin_end(10)
+            content = Gtk.Box(
+                orientation=Gtk.Orientation.HORIZONTAL, spacing=12
+            )
+            content.set_margin_top(8)
+            content.set_margin_bottom(8)
+            content.set_margin_start(14)
+            content.set_margin_end(14)
             image = Gtk.Image.new_from_icon_name(app.icon)
-            image.set_pixel_size(26)
+            image.set_pixel_size(24)
             content.append(image)
-            labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            labels = Gtk.Box(
+                orientation=Gtk.Orientation.VERTICAL, spacing=2
+            )
             name = Gtk.Label(label=app.name, xalign=0)
             labels.append(name)
             if app.description:
-                subtitle = Gtk.Label(label=app.description[:110], xalign=0)
+                subtitle = Gtk.Label(
+                    label=app.description[:90], xalign=0
+                )
                 subtitle.add_css_class("dim-label")
+                subtitle.set_ellipsize(3)  # Pango.EllipsizeMode.END
                 labels.append(subtitle)
             content.append(labels)
             row.set_child(content)
             self.results.append(row)
-        self.search_scroll.set_visible(bool(self.matches))
+
+        self.results_section.set_visible(bool(self.matches))
         if self.matches:
             self.results.select_row(self.results.get_row_at_index(0))
+        self.queue_resize()
 
     def _on_key(self, _controller, keyval, _keycode, state) -> bool:
         if keyval == Gdk.KEY_Escape:
-            self.close()
+            if self.settings.get_visible():
+                self.settings.popdown()
+            else:
+                self.close()
             return True
-        if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter) and state & Gdk.ModifierType.CONTROL_MASK:
-            self._ask_ai()
-            return True
+        if state & Gdk.ModifierType.CONTROL_MASK:
+            if keyval == Gdk.KEY_comma:
+                self._show_settings()
+                return True
+            if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
+                self._ask_ai()
+                return True
         if keyval in (Gdk.KEY_Down, Gdk.KEY_Up) and self.matches:
             current = self.results.get_selected_row()
-            index = current.get_index() if current else 0
+            idx = current.get_index() if current else 0
             delta = 1 if keyval == Gdk.KEY_Down else -1
-            new_index = max(0, min(index + delta, len(self.matches) - 1))
-            self.results.select_row(self.results.get_row_at_index(new_index))
+            idx = max(0, min(idx + delta, len(self.matches) - 1))
+            self.results.select_row(self.results.get_row_at_index(idx))
             return True
         return False
 
     def _on_submit(self, *_unused) -> None:
-        text = self.entry.get_text().strip()
-        if not text:
+        query = self.entry.get_text().strip()
+        if not query:
             return
-        if self.matches and not text.lower().startswith("ask "):
-            selected = self.results.get_selected_row()
-            index = selected.get_index() if selected else 0
-            self._open_app(self.matches[index])
+        if self.matches and not query.lower().startswith("ask "):
+            row = self.results.get_selected_row()
+            idx = row.get_index() if row else 0
+            self._open_app(self.matches[idx])
         else:
             self._ask_ai()
 
     def _on_result_activated(self, _list_box, row) -> None:
-        index = row.get_index()
-        if 0 <= index < len(self.matches):
-            self._open_app(self.matches[index])
+        idx = row.get_index()
+        if 0 <= idx < len(self.matches):
+            self._open_app(self.matches[idx])
 
     def _open_app(self, app: AppResult) -> None:
-        # Activating the search result is itself an explicit user launch request.
         self.pending = None
-        self.approve_button.set_visible(False)
-        self.cancel_button.set_visible(False)
-        self._execute(lambda: AgentResponse(run_tool("launch_application", {"desktop_id": app.desktop_id})))
+        self._launching = True
+        self._execute(
+            lambda: AgentResponse(
+                run_tool("launch_application", {"desktop_id": app.desktop_id})
+            )
+        )
 
     def _ask_ai(self) -> None:
         query = self.entry.get_text().strip()
@@ -348,18 +366,18 @@ class AssistantWindow(Adw.ApplicationWindow):
             return
         provider = self._provider()
         self.pending = None
-        self.approve_button.set_visible(False)
-        self.cancel_button.set_visible(False)
+        self._launching = False
         if provider in ("newelle", "openai", "anthropic"):
             dialog = Gtk.MessageDialog(
-                transient_for=self, modal=True, message_type=Gtk.MessageType.QUESTION,
+                transient_for=self, modal=True,
+                message_type=Gtk.MessageType.QUESTION,
                 buttons=Gtk.ButtonsType.NONE,
-                text="Allow the selected model to receive this request?",
+                text="Share this question with the selected model?",
             )
             dialog.format_secondary_text(
-                "Newelle may use a local or cloud model. Your prompt and diagnostic "
-                "results can leave this computer depending on the configured provider. "
-                "Do not continue with sensitive information."
+                "Newelle may use a local or cloud model. Prompts and diagnostic "
+                "results can leave this computer, depending on its configuration. "
+                "Avoid sharing passwords or personal information."
             )
             dialog.add_button("Cancel", Gtk.ResponseType.CANCEL)
             dialog.add_button("Continue", Gtk.ResponseType.OK)
@@ -378,13 +396,13 @@ class AssistantWindow(Adw.ApplicationWindow):
         self._busy(True)
         self._show_text("Working…")
 
-        def worker() -> None:
+        def worker():
             try:
                 response = operation()
             except Exception as exc:
                 response = AgentResponse(
                     f"Request failed ({type(exc).__name__}). "
-                    "Check application availability or provider settings."
+                    "Check app availability or provider settings."
                 )
             GLib.idle_add(self._on_result, response)
 
@@ -392,6 +410,11 @@ class AssistantWindow(Adw.ApplicationWindow):
 
     def _on_result(self, response: AgentResponse) -> bool:
         self._busy(False)
+        if self._launching and response.message.startswith("Launch requested for"):
+            self._launching = False
+            self.close()
+            return GLib.SOURCE_REMOVE
+        self._launching = False
         self.pending = response.pending
         self._show_text(response.message)
         self.approve_button.set_visible(response.pending is not None)
@@ -410,7 +433,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.pending = None
         self.approve_button.set_visible(False)
         self.cancel_button.set_visible(False)
-        self._show_text("Action declined. No change was made.")
+        self._show_text("Action declined. No settings were changed.")
 
 
 class AssistantApp(Adw.Application):
