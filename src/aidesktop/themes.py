@@ -89,7 +89,7 @@ window.ai-desktop-window {
   background-color: #f3efe7;
   color: #303832;
 }
-.ai-desktop headerbar {
+window.ai-desktop-window headerbar {
   background-color: #f3efe7;
   color: #303832;
   box-shadow: none;
@@ -130,7 +130,7 @@ window.ai-desktop-window {
   background-color: #121522;
   color: #eef4ff;
 }
-.ai-desktop headerbar {
+window.ai-desktop-window headerbar {
   background-color: #121522;
   color: #eef4ff;
   box-shadow: none;
