@@ -207,6 +207,10 @@ class AssistantWindow(Adw.ApplicationWindow):
         # Let Gio.Application own navigation so this also works from a menu
         # and can be invoked without relying on popover/window focus.
         self.setup_button.set_action_name("app.open-setup")
+        # Fallback for unusual popover/action-dispatch combinations. The
+        # _opening_setup latch makes both paths safely idempotent if GTK emits
+        # clicked and activates the action during the same pointer release.
+        self.setup_button.connect("clicked", self._open_setup)
         menu.append(self.setup_button)
         self.shortcut_hint = Gtk.Label(
             label=f"Spotlight: {shortcut_label(get_profile())}  ·  "
