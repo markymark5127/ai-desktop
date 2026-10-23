@@ -23,7 +23,7 @@ familiar to someone coming from macOS Spotlight.
 - AI-proposed changes still show **Apply change / Decline** controls, even
   when model permission has been approved. Actions remain bounded by
   the project's approved tool catalog.
-- **Escape** closes Spotlight. Clicking another application or the desktop hides it automatically; the settings popover is exempt. The hidden window remains alive for in-flight AI work and is reused when the shortcut reopens it. Arrow keys select app or AI results, and a new search collapses the previous answer.
+- **Escape** closes Spotlight. Clicking another application or the desktop **closes an idle launcher** so later Super+Space launches a fresh process; an in-flight AI request or pending approval hides temporarily instead of being abandoned. The settings popover is exempt. Arrow keys select app or AI results, and a new search collapses the previous answer.
 - A subtle settings icon inside the bar (or **Ctrl+,** / **Command+,**) opens provider and
   appearance choices plus a **Setup & keyboard settings…** entry. The full
   original setup wizard remains a separate window via `--setup`.
