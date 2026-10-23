@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# User-session installation of the current AI Desktop experience.
+# User-session installation of the Mutsu OS desktop prototype.
 # Intentionally DOES NOT write to /usr, install GNOME extensions or modify
 # kernel/system images. It is safe on rpm-ostree/Bazzite GNOME.
 set -euo pipefail
@@ -19,7 +19,7 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 
 if ! python3 -c 'import gi; gi.require_version("Gtk","4.0"); gi.require_version("Adw","1"); from gi.repository import Gtk, Adw' >/dev/null 2>&1; then
-  printf 'Missing GTK4, libadwaita or PyGObject. Install the GNOME Python bindings before using AI Desktop.\n' >&2
+  printf 'Missing GTK4, libadwaita or PyGObject. Install the GNOME Python bindings before using Mutsu OS Search.\n' >&2
   exit 1
 fi
 
@@ -27,7 +27,7 @@ bash "$repo_dir/scripts/install-local.sh"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/ai-desktop"
 if (( want_shortcut )); then
   if [[ -f "$state_dir/gnome-shortcut.json" ]]; then
-    printf 'Super+Space shortcut already has an AI Desktop backup; leaving the existing setting alone.\n'
+    printf 'Super+Space shortcut already has a Mutsu OS backup; leaving the existing setting alone.\n'
   else
     python3 "$repo_dir/scripts/shortcut.py" --apply
   fi
@@ -35,7 +35,7 @@ fi
 
 cat <<'INSTRUCTIONS'
 
-AI Desktop is installed in your USER session, without changing Bazzite's OS image.
+Mutsu OS Search is installed in your USER session, without changing Bazzite's OS image.
 
 Run or re-open the setup wizard:
   ~/.local/bin/ai-desktop --setup
@@ -47,7 +47,7 @@ Restore it:
 
 For a permanent Mac-style dock and hiding the top-left Activities button:
   Open Extension Manager, install/enable Dash to Dock and (optionally) Just Perfection.
-  Configure dock position/always visible on the AI Desktop setup wizard's dock page.
+  Configure dock position/always visible on the Mutsu OS setup wizard's dock page.
   Hide only the Activities button in Just Perfection; keep the GNOME Overview available.
 
 For optional headless Newelle:
@@ -60,7 +60,7 @@ GSConnect/KDE Connect:
   Choose iPhone/Android on the wizard's Phone page, scan the app-store QR,
   and open GSConnect preferences to pair your phone.
 
-The Cyberpunk/Japandi appearance currently styles AI Desktop's two windows,
+The Cyberpunk/Japandi appearance styles the Mutsu Search and setup windows,
 not every GNOME/Flatpak application. A custom Bazzite system image remains
 a separate build milestone.
 INSTRUCTIONS
