@@ -28,7 +28,8 @@ For a headless check of locally saved user options:
 | Page | Currently implemented | Still needs platform/product development |
 | --- | --- | --- |
 | Welcome | Local installed-app search exercise; explains keyboard-first usage | Full indexed file and Settings search |
-| Appearance and keyboard | Japandi/Cyberpunk/System, PC/Mac shortcut label, real key-event test, optional confirmed US XKB source application and Restore | Per-device Apple keyboard mapping, installed custom desktop dock |
+| Appearance and keyboard | Japandi/Cyberpunk/System, PC/Mac shortcut label, real key-event test, optional confirmed US XKB source application and Restore | Per-device Apple keyboard mapping |
+| Mac-style dock | Configure installed/enabled Dash to Dock: four positions, persistent/auto-hide, Show Applications icon, confirmation and Restore | Automatic compatible extension installation; hide Activities automatically; OS-image defaults |
 | Your helper | Three persisted teaching preferences used when constructing the assistant prompt | Graphical per-task explanations, general repair verification and rollback |
 | AI connection | User-initiated check of authenticated loopback Newelle GUI API; links to setup guide | Automatic installation/provider onboarding with usable provider selection |
 | Phone pairing | iPhone/Android/skip choice; inspect GSConnect availability; explicit button to open its preferences | In-wizard pairing UI and functional phone diagnostics |
@@ -37,9 +38,13 @@ For a headless check of locally saved user options:
 **No promise of full AirDrop, Universal Clipboard, SMS, iMessage, or always-on
 iPhone sync.** KDE Connect on iOS is limited by iOS background and sandbox rules.
 
-**No app installs or root commands are performed** by the wizard. It does not
+**No app installs or root commands are performed** by the wizard. Dash to Dock settings are changed only after selecting Apply and confirming, and the previous dock configuration is backed up. Hiding Activities is still manual through a compatible Just Perfection extension. It does not
 automatically replace GNOME shortcut bindings, modify the XKB layout, pair a
 phone, or initialize Newelle without user input.
+
+## Mac-style dock
+
+The wizard now has a separate dock step with Bottom (default), Left, Right or Top, a persistent dock checkbox, check/install guidance, an explicit Apply action, Restore and a link to Just Perfection for optionally hiding Activities. A GNOME Shell extension must already be installed and enabled. See [DOCK.md](DOCK.md) for all settings and VM test requirements.
 
 ## Keyboard profiles
 
