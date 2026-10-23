@@ -8,7 +8,7 @@
 ## Phase 1: genuinely helpful desktop assistant
 - Offline instant app search and natural-language queries (app search implemented; indexed file search pending).
 - Desktop application discovery by friendly name (implemented in search UI; agent tool exposes IDs internally).
-- GNOME Shell overlay still pending; opt-in, reversible Super+Space GSettings binding implemented.
+- Compact undecorated, translucent Spotlight GTK launcher **implemented** (conditional app results and AI answers; preferences hidden). Exact GNOME Shell overlay positioning, native blur, fullscreen behavior and robust desktop-keybinding focus integration are still pending; reversible Super+Space shortcut already implemented. See [Spotlight UI](SPOTLIGHT_UI.md).
 - Japandi/Cyberpunk/System theme selector and saved launcher preference implemented; OS-wide styling still pending.
 - Standard US vs Mac US keyboard profile selector, displayed Super-key shortcut labels, opt-in reversible GNOME XKB source selection (implemented). Next: guided physical-key test and optional shortcut emulation, without globally swapping Ctrl/Cmd.
 - **First-run wizard prototype now implemented:** launch on first run/--setup; skippable and reopenable from launcher. Includes app-search exercise, theme, Mac/PC keyboard and live key test, helper, optional Newelle check, GSConnect availability/pairing guidance, Steam detection. See [Onboarding](ONBOARDING.md).
