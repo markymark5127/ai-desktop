@@ -30,16 +30,34 @@ class SpotlightLifecycleTests(unittest.TestCase):
         self.assertIn("self.hide()", source)
         self.assertIn("self.close()", source)
 
-    def test_ai_only_row_is_full_size_and_no_divider(self):
+    def test_search_groups_and_ai_result_remain_keyboard_selectable(self):
         constructor = method_source(UI, "AssistantWindow", "__init__")
         update = method_source(UI, "AssistantWindow", "_update_results")
+        heading = method_source(UI, "AssistantWindow", "_append_heading")
+        key = method_source(UI, "AssistantWindow", "_on_key")
         self.assertIn("self.results_divider = Gtk.Separator()", constructor)
         self.assertIn('search_scroll.add_css_class("spotlight-scroll")', constructor)
-        self.assertIn("content.set_size_request(-1, 62)", update)
-        self.assertIn("row.add_css_class(\"spotlight-ask-row\")", update)
-        self.assertIn("self.results_divider.set_visible(not ai_only)", update)
-        self.assertIn('self.results_section.add_css_class("spotlight-ai-only")', update)
-        self.assertIn("self.results.select_row(self.results.get_row_at_index(0))", update)
+        self.assertIn("self.files_catalog: list[FileResult]", constructor)
+        self.assertIn('self._append_heading("Top Results")', update)
+        self.assertIn('self._append_heading("Files")', update)
+        self.assertIn('self._append_heading("AI Suggestions")', update)
+        self.assertIn('"Ask Mutsu AI"', update)
+        self.assertIn("self.results_divider.set_visible(False)", update)
+        self.assertIn("self.selectable_indices[0]", update)
+        self.assertIn("self.selectable_indices", key)
+        self.assertIn("row.set_selectable(False)", heading)
+        self.assertIn("row.set_activatable(False)", heading)
+
+    def test_local_file_search_is_off_main_typing_path(self):
+        constructor = method_source(UI, "AssistantWindow", "__init__")
+        start = method_source(UI, "AssistantWindow", "_begin_file_scan")
+        update = method_source(UI, "AssistantWindow", "_update_results")
+        open_file = method_source(UI, "AssistantWindow", "_open_file")
+        self.assertIn("GLib.idle_add(self._begin_file_scan)", constructor)
+        self.assertIn("threading.Thread(target=worker", start)
+        self.assertIn("search_local_files(", update)
+        self.assertNotIn("list_local_files()", update)
+        self.assertIn("Gio.AppInfo.launch_default_for_uri", open_file)
 
     def test_recreated_windows_remove_old_display_css(self):
         for path, klass, provider in (
