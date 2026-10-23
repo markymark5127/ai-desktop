@@ -31,7 +31,7 @@ For a headless check of locally saved user options:
 | Appearance and keyboard | Full-bleed Japandi/Cyberpunk/System, red/yellow/green buttons left, reversible left-side controls for compatible GNOME apps, PC/Mac shortcuts, real key-event test, optional US XKB source and Restore | Per-device Apple keyboard mapping, OS-wide matched colors for third-party titlebars |
 | Mac-style dock | Configure installed/enabled Dash to Dock: four positions, persistent/auto-hide, Show Applications icon, confirmation and Restore | Automatic compatible extension installation; hide Activities automatically; OS-image defaults |
 | Your helper | Three persisted teaching preferences used when constructing the assistant prompt | Graphical per-task explanations, general repair verification and rollback |
-| AI connection | User-initiated check of authenticated loopback Newelle GUI API; links to setup guide | Automatic installation/provider onboarding with usable provider selection |
+| AI connection | Optional unchecked-by-default **Allow sending questions and diagnostics to the selected AI model** checkbox; user-initiated Newelle API check and setup guide | Automatic installation/provider onboarding with usable provider selection |
 | Phone pairing | iPhone/Android/skip choice with **offline app-store QR codes** for KDE Connect; inspect GSConnect availability; open its preferences | Actual in-wizard pairing and phone diagnostics |
 | Gaming and desktop | Shows whether Steam is installed; one-click explicit open if found; tiling guidance | Full Bazzite integration, Steam/Proton controller diagnostics and quarter-tiling extensions |
 | Adaptive Desktop / tablet posture | **Not implemented** — planned mode choice in future onboarding | Automatic detection, app-grid Home, swipe-to-Home, larger touch UI, maximized apps and safe switch back |
@@ -100,6 +100,22 @@ change tool allowlists, permissions, actions needing user approval, or privilege
 access. Existing actions still require explicit consent. Newelle continues to
 serve inference through the limited /v1/chat/completions endpoint.
 
+## Model-sharing permission
+
+The AI connection page now includes an optional **unchecked-by-default** checkbox
+allowing questions and relevant diagnostic details to be sent to the selected
+AI model. Newelle can connect to locally hosted or cloud models. When enabled,
+pressing Enter on **Ask AI** no longer presents a confirmation every time.
+When disabled, app search and built-in offline diagnostics remain available,
+but inference requests are blocked. The same checkbox in Spotlight's gear-icon
+Settings can revoke permission. Local Ollama also honors this preference.
+
+This is a **model data-sharing permission only**: it never authorizes automated
+system changes, bypasses tool allowlists or turns on unattended troubleshooting.
+Turning it off stops future model requests, not requests already sent or in
+flight. The permission is saved in the user-private onboarding.json file and
+defaults to false even for users upgrading from earlier versions.
+
 ## Persistence and privacy
 
 User preferences are stored at:
@@ -108,7 +124,8 @@ User preferences are stored at:
 - \`$XDG_CONFIG_HOME/ai-desktop/appearance.json\`.
 
 The first file contains only the setup status, teaching preference, and chosen
-phone type. All are created as user-private files with atomic writes.
+phone type, and an explicit boolean model-sharing permission (false by default).
+All are created as user-private files with atomic writes.
 The optional XKB input-source backup is in
 \`$XDG_STATE_HOME/ai-desktop/keyboard-sources-backup.json\` (fallback ~/.local/state).
 
