@@ -73,6 +73,10 @@ class SetupWizard(Adw.ApplicationWindow):
         Gtk.StyleContext.add_provider_for_display(
             self.get_display(), self.css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
         )
+        # CSS providers added for the display survive window closure unless
+        # explicitly removed. Without cleanup, reopening Spotlight can leave
+        # old themes overriding new window/list styling.
+        self.connect("close-request", self._remove_theme_provider)
 
         header = Gtk.HeaderBar()
         install_stoplights(self, header)
@@ -128,6 +132,12 @@ class SetupWizard(Adw.ApplicationWindow):
 
         self._apply_theme(load_theme())
         self._show(0)
+
+    def _remove_theme_provider(self, *_unused) -> bool:
+        Gtk.StyleContext.remove_provider_for_display(
+            self.get_display(), self.css
+        )
+        return False
 
     @staticmethod
     def _page(title: str, summary: str) -> Gtk.Box:
