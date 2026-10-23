@@ -30,7 +30,7 @@ if [[ -e "$unit" ]]; then
 fi
 cat > "$unit" <<'EOF'
 [Unit]
-Description=Headless Newelle backend for AI Desktop
+Description=Headless Newelle backend for Mutsu OS
 Documentation=https://newelle.qsk.me/docs/Creating-Interfaces
 After=graphical-session.target
 
