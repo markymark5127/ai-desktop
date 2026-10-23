@@ -48,7 +48,7 @@ The device wizard should detect connection problems and present accurate trouble
 
 ## First-run wizard (prototype implemented; platform integrations pending)
 
-A working, skippable/reopenable GTK wizard now guides appearance, Mac/PC keyboards and modifier-key testing, the troubleshooting-buddy learning styles, optional headless Newelle status, GSConnect pairing guidance and detected Steam availability. It does **not** yet install/configure dock or tiling extensions, pair a phone automatically, install AI providers, or create a Bazzite image.
+A working, skippable/reopenable GTK wizard now guides appearance, a configurable existing GNOME dock, Mac/PC keyboards and modifier-key testing, optional GNOME-wide left title buttons, the troubleshooting-buddy learning styles, optional headless Newelle status, offline QR phone-app downloads/GSConnect pairing guidance and detected Steam availability. It does **not** automatically install dock extensions, configure tiling, pair a phone, install AI providers or create a Bazzite image.
 
 See [ONBOARDING.md](ONBOARDING.md) for exactly what works, what remains manual, and the VM regression checks.
 
