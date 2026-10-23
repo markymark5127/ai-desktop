@@ -58,7 +58,9 @@ boundaries.
 
 - Search for a GNOME application by name. Type a few letters; press Enter.
 - Try "my sound is not working" with **Built-in (offline)** selected.
-- Change the appearance between **Japandi**, **Cyberpunk**, and **System**, checking that none exposes an unthemed white border.
+- Change the appearance between **Japandi**, **Cyberpunk**, and **System**, checking that none exposes an unthemed white border. Cyberpunk should show square neon-outlined controls; Japandi should retain its original soft rounded controls.
+- Scroll to the bottom of a long wizard page, select **Continue**, then **Back**; each new page should start at the top (including after the slide transition).
+- Check that the colored Mac titlebar controls are **small true circles** and that close, minimize and maximize work.
 - Verify left-side colored stoplight controls on both setup and launcher; apply/revert the GNOME-wide button-layout option and inspect Files/Settings.
 - In the Phone step select iPhone and Android and scan the local QR codes; verify the official KDE Connect store listings. Choosing Later hides the QR; see [Window and phone setup](WINDOW_AND_PHONE_SETUP.md).
 - In the Mac-style dock step, check for Dash to Dock. If present and enabled, apply Bottom + Always show, verify dock visibility and the Show Applications grid, test the Left/Right/Top positions, then Restore; see [DOCK.md](DOCK.md).
