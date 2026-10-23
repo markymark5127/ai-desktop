@@ -44,13 +44,15 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.matches: list[AppResult] = []
         self.busy = False
 
-        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
-        root.set_margin_top(16)
-        root.set_margin_bottom(16)
-        root.set_margin_start(20)
-        root.set_margin_end(20)
+        self.add_css_class("ai-desktop-window")
+        root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         root.add_css_class("ai-desktop")
         self.set_content(root)
+        body = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
+        body.set_margin_top(12)
+        body.set_margin_bottom(16)
+        body.set_margin_start(20)
+        body.set_margin_end(20)
         self._theme_provider = Gtk.CssProvider()
         Gtk.StyleContext.add_provider_for_display(
             self.get_display(),
@@ -59,6 +61,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         )
 
         header = Gtk.HeaderBar()
+        header.set_decoration_layout("close,minimize,maximize:")
         header.set_title_widget(Gtk.Label(label="Ask your computer"))
         self.choice = Gtk.DropDown.new_from_strings([item[0] for item in CHOICES])
         header.pack_end(self.choice)
@@ -69,6 +72,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.theme_choice = Gtk.DropDown.new_from_strings([label for label, _ in THEME_LABELS])
         header.pack_start(self.theme_choice)
         root.append(header)
+        root.append(body)
 
         self.entry = Gtk.Entry()
         self.entry.set_placeholder_text("Search apps, or describe what you need…")
@@ -78,7 +82,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         keys = Gtk.EventControllerKey()
         keys.connect("key-pressed", self._on_key)
         self.entry.add_controller(keys)
-        root.append(self.entry)
+        body.append(self.entry)
 
         self.results = Gtk.ListBox()
         self.results.add_css_class("boxed-list")
@@ -90,12 +94,12 @@ class AssistantWindow(Adw.ApplicationWindow):
         search_scroll.set_propagate_natural_height(True)
         search_scroll.set_child(self.results)
         self.search_scroll = search_scroll
-        root.append(search_scroll)
+        body.append(search_scroll)
 
         self.hint = Gtk.Label(label="Enter opens an app  •  Ctrl+Enter asks AI  •  Esc closes")
         self.hint.set_xalign(0)
         self.hint.add_css_class("dim-label")
-        root.append(self.hint)
+        body.append(self.hint)
 
         keyboard_row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
         keyboard_row.append(Gtk.Label(label="Keyboard"))
@@ -113,13 +117,13 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.keyboard_restore = Gtk.Button(label="Restore layout")
         self.keyboard_restore.connect("clicked", self._restore_keyboard_layout)
         keyboard_row.append(self.keyboard_restore)
-        root.append(keyboard_row)
+        body.append(keyboard_row)
         self._update_keyboard_hint()
 
         self.go = Gtk.Button(label="Ask assistant")
         self.go.add_css_class("suggested-action")
         self.go.connect("clicked", lambda *_: self._ask_ai())
-        root.append(self.go)
+        body.append(self.go)
 
         scroller = Gtk.ScrolledWindow()
         scroller.set_vexpand(True)
@@ -132,7 +136,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.output.set_right_margin(12)
         self.output.set_bottom_margin(12)
         scroller.set_child(self.output)
-        root.append(scroller)
+        body.append(scroller)
         self._show_text("Search installed applications instantly, or ask the assistant to diagnose a problem.\nRead-only checks work without AI or internet access.")
 
         actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -145,7 +149,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.cancel_button.set_visible(False)
         self.cancel_button.connect("clicked", self._on_decline)
         actions.append(self.cancel_button)
-        root.append(actions)
+        body.append(actions)
         self._update_results()
         active_theme = load_theme()
         self.theme_choice.set_selected(
