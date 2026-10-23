@@ -9,12 +9,25 @@ its styling can change independently.
 | Theme | Background | Main surface | Accent | Character |
 | --- | --- | --- | --- | --- |
 | Japandi (default) | `#F3EFE7` | `#FFFCF6` | `#516B5C` | Warm paper, charcoal, muted sage |
-| Cyberpunk | `#121522` | `#1C2130` | `#B62D7E`, cyan border `#50DCE3` | Dark indigo, magenta and cyan |
+| Cyberpunk | `#080C16` | `#0A1428` | Neon cyan `#00F5FF`, magenta `#FF36BA` | Sharp square edges, glowing outlines, retro monospace/pixel-inspired typography |
 | System | GNOME default | GNOME default | GNOME default | Unmodified libadwaita |
 
 Use the **Appearance** dropdown in the title bar to switch. The selected theme
 is saved as `~/.config/ai-desktop/appearance.json` (or under
 `$XDG_CONFIG_HOME`).
+
+## Two deliberately different visual languages
+
+**Japandi** keeps its existing rounded, soft neutral surfaces and green
+accents. **Cyberpunk** now uses rectangular inputs/panels, 0px-radius
+controls, neon outlines, brighter hover/focus glows, cyan headings, magenta
+selection, and a monospace/typewriter feel. A real bitmap/pixel font is
+optional and is **not bundled**; GTK falls back to locally available monospace.
+The Linux OS-wide GTK/Qt/GNOME Shell styling is still a separate project.
+
+The stoplight controls have been rebuilt as fixed-size, centered **13-pixel
+Gtk.Buttons** with direct close/minimize/maximize actions, rather than applying
+circular backgrounds to GNOME's inherently taller default window controls.
 
 ## Implementation
 
