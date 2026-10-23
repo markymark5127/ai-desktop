@@ -60,6 +60,19 @@ class ThemeTests(unittest.TestCase):
         self.assertIn("#00f5ff", SPOTLIGHT_STYLES["cyberpunk"])
         self.assertIn("background-color: #101010", SPOTLIGHT_HIGH_CONTRAST)
 
+    def test_spotlight_list_never_uses_an_opaque_generic_gtk_surface(self):
+        for name, style in SPOTLIGHT_STYLES.items():
+            with self.subTest(theme=name):
+                self.assertIn("scrolledwindow.spotlight-scroll", style)
+                self.assertIn("scrolledwindow.spotlight-scroll > viewport", style)
+                self.assertIn("listbox.spotlight-list", style)
+                self.assertIn("row.spotlight-ask-row", style)
+                self.assertIn("background: transparent;", style)
+                self.assertIn("row:selected", style)
+        self.assertIn("rgba(81, 107, 92, 0.18)", SPOTLIGHT_STYLES["japandi"])
+        self.assertIn("border-radius: 12px;", SPOTLIGHT_STYLES["japandi"])
+        self.assertIn("border-left: 3px solid #ff36ba;", SPOTLIGHT_STYLES["cyberpunk"])
+
     def test_persist_and_reload_theme(self):
         with tempfile.TemporaryDirectory() as tmp:
             with patch.dict(os.environ, {"XDG_CONFIG_HOME": tmp}):
