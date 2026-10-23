@@ -288,7 +288,7 @@ class SetupWizard(Adw.ApplicationWindow):
             buttons=Gtk.ButtonsType.NONE,
             text="Move GNOME window controls to the top left?",
         )
-        dialog.format_secondary_text(
+        dialog.props.secondary_text = (
             "This changes your user account's GNOME window-button arrangement "
             "to Close, Minimize and Maximize on the left. It affects compatible "
             "GNOME applications, not every third-party app. AI Desktop itself "
@@ -350,7 +350,7 @@ class SetupWizard(Adw.ApplicationWindow):
             message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.NONE,
             text="Apply this US keyboard layout?",
         )
-        dialog.format_secondary_text(
+        dialog.props.secondary_text = (
             "This changes GNOME's preferred input source while preserving your "
             "existing languages and a backup for Restore. It does not globally "
             "reassign Command, Ctrl, or Alt."
@@ -452,7 +452,7 @@ class SetupWizard(Adw.ApplicationWindow):
             message_type=Gtk.MessageType.QUESTION, buttons=Gtk.ButtonsType.NONE,
             text="Apply the Mac-style dock layout?",
         )
-        dialog.format_secondary_text(
+        dialog.props.secondary_text = (
             f"Position: {position.title()}. "
             f"Always visible: {'Yes' if visible else 'No (auto-hide)'}. "
             "The Applications button will be enabled. This requires an "
