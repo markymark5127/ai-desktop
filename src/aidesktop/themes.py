@@ -306,10 +306,41 @@ window.spotlight-window .ai-desktop.spotlight-shell .spotlight-response {
 window.spotlight-window .ai-desktop.spotlight-shell .spotlight-approval {
   padding: 2px 12px 9px;
 }
+/* GTK4's ListBox, its implicit viewport, and rows can each paint a
+   separate Adwaita surface. Reset ALL layers so the results inherit the
+   themed translucent Spotlight panel instead of forming a white rectangle. */
+window.spotlight-window .ai-desktop.spotlight-shell scrolledwindow.spotlight-scroll,
+window.spotlight-window .ai-desktop.spotlight-shell scrolledwindow.spotlight-scroll > viewport,
 window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list,
 window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row {
-  border: 0;
+  background: transparent;
+  background-image: none;
+  border: none;
   box-shadow: none;
+}
+window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list {
+  padding: 3px 1px 5px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row {
+  margin: 2px 0;
+  min-height: 46px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row.spotlight-ask-row {
+  min-height: 70px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-ai-only {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-ask-title {
+  font-weight: 600;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-ask-subtitle {
+  font-size: 12px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
 }
 window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output,
 window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output text {
@@ -334,12 +365,16 @@ window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry,
 window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output {
   color: #ffffff;
 }
-window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list {
-  background-color: transparent;
+window.spotlight-window .ai-desktop.spotlight-shell scrolledwindow.spotlight-scroll,
+window.spotlight-window .ai-desktop.spotlight-shell scrolledwindow.spotlight-scroll > viewport,
+window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list,
+window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row:not(:selected) {
+  background: transparent;
   color: #f8f9fc;
 }
-window.spotlight-window .ai-desktop.spotlight-shell listbox row:selected {
+window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row:selected {
   background-color: rgba(255,255,255,0.18);
+  border-radius: 10px;
 }
 """,
     "japandi": SPOTLIGHT_COMMON + """
@@ -358,14 +393,29 @@ window.spotlight-window .ai-desktop.spotlight-shell.japandi textview.spotlight-o
   color: #303832;
   box-shadow: none;
 }
-window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list {
+window.spotlight-window .ai-desktop.spotlight-shell.japandi scrolledwindow.spotlight-scroll,
+window.spotlight-window .ai-desktop.spotlight-shell.japandi scrolledwindow.spotlight-scroll > viewport,
+window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list,
+window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list row:not(:selected) {
   background: transparent;
+  background-image: none;
   border: none;
   color: #303832;
 }
-window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox row:selected {
-  background-color: rgba(81, 107, 92, 0.17);
-  border-radius: 10px;
+window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list row {
+  border-radius: 12px;
+  color: #303832;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list row:hover:not(:selected) {
+  background: rgba(81, 107, 92, 0.08);
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list row:selected {
+  background-color: rgba(81, 107, 92, 0.18);
+  color: #263b2d;
+  border-radius: 12px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list row:selected label {
+  color: #263b2d;
 }
 """,
     "cyberpunk": SPOTLIGHT_COMMON + """
@@ -386,12 +436,22 @@ window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk textview.spotlight
   box-shadow: none;
   font-family: monospace;
 }
-window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list {
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk scrolledwindow.spotlight-scroll,
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk scrolledwindow.spotlight-scroll > viewport,
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list,
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list row:not(:selected) {
   background: transparent;
   border: none;
   color: #ebfdff;
 }
-window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox row:selected {
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list row {
+  border-radius: 0;
+  color: #ebfdff;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list row:hover:not(:selected) {
+  background-color: rgba(0, 245, 255, 0.10);
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list row:selected {
   background-color: rgba(255, 54, 186, 0.25);
   border-left: 3px solid #ff36ba;
   border-radius: 0;
