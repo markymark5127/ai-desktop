@@ -119,7 +119,9 @@ privileged GUI API over the LAN.
 - [ ] Enter opens an app; Ctrl+Enter uses the selected AI backend
 - [ ] Both design themes display readable text and useful selection contrast
 - [ ] Super+Space activates the window and can be reverted
-- [ ] Clicking another app/desktop hides Spotlight, but clicking its settings or privacy dialog does not
+- [ ] Clicking another app/desktop closes an idle Spotlight, and the next shortcut opens a fresh working launcher; an in-flight AI request hides without losing its response
+- [ ] Japandi installed-app and AI-only results have no white list/viewport; AI-only appears as a full-sized row without a tiny footer
+- [ ] Reopening Spotlight or the wizard repeatedly does not stack stale CSS providers or recolor results
 - [ ] Enter on unmatched query asks AI; Enter on app result launches; nothing is sent while typing
 - [ ] Model sharing defaults OFF for a new user and older configurations, blocking Newelle/Ollama/cloud inference without a popup
 - [ ] Set model-sharing checkbox in setup or Settings, ask several questions without any per-query privacy popup, revoke and verify later AI calls are blocked
