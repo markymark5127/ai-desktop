@@ -34,6 +34,7 @@ from .onboarding import (
 from .search import search_applications
 from .themes import THEME_LABELS, SCHEMES, STYLES, load_theme, save_theme
 from .wallpaper import WallpaperError, apply_theme_wallpaper
+from .branding import PRODUCT_NAME, WELCOME_TITLE
 from .mac_stoplights import install_stoplights
 from .tools import ToolError, run_tool
 
@@ -47,7 +48,7 @@ class SetupWizard(Adw.ApplicationWindow):
     def __init__(self, application: Adw.Application, on_done):
         super().__init__(application=application)
         self.on_done = on_done
-        self.set_title("Welcome to Mutsu OS")
+        self.set_title(WELCOME_TITLE)
         self.set_default_size(740, 610)
         self.index = 0
         self.status = Gtk.Label(xalign=0)
@@ -81,7 +82,7 @@ class SetupWizard(Adw.ApplicationWindow):
 
         header = Gtk.HeaderBar()
         install_stoplights(self, header)
-        header.set_title_widget(Gtk.Label(label="Getting started"))
+        header.set_title_widget(Gtk.Label(label=f"{PRODUCT_NAME} · Getting started"))
         toolbar.add_top_bar(header)
         root.append(body)
 
@@ -182,7 +183,7 @@ class SetupWizard(Adw.ApplicationWindow):
 
     def _welcome(self) -> Gtk.Box:
         page = self._page(
-            "A familiar place to play.",
+            f"Welcome to {PRODUCT_NAME}.",
             "A Mac-familiar desktop, PC gaming, and a helping hand whenever Linux feels unfamiliar.",
         )
         self._paragraph(
@@ -235,7 +236,7 @@ class SetupWizard(Adw.ApplicationWindow):
         self._paragraph(
             page,
             "Window controls: macOS-style red, yellow and green buttons appear "
-            "on the left of Mutsu windows. You can also move controls to the left "
+            f"on the left of {PRODUCT_NAME} windows. You can also move controls to the left "
             "in other GNOME apps (their colors may still follow their theme).",
         )
         window_actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
