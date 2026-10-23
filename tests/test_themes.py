@@ -65,7 +65,9 @@ class ThemeTests(unittest.TestCase):
             with self.subTest(theme=name):
                 self.assertIn("scrolledwindow.spotlight-scroll", style)
                 self.assertIn("scrolledwindow.spotlight-scroll > viewport", style)
-                self.assertIn("listbox.spotlight-list", style)
+                self.assertIn("list.spotlight-list", style)
+                self.assertNotIn("listbox.spotlight-list", style)
+                self.assertIn("spotlight-section-heading", style)
                 self.assertIn("row.spotlight-ask-row", style)
                 self.assertIn("background: transparent;", style)
                 self.assertIn("row:selected", style)
