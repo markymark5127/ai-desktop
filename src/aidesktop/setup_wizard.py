@@ -47,7 +47,7 @@ class SetupWizard(Adw.ApplicationWindow):
     def __init__(self, application: Adw.Application, on_done):
         super().__init__(application=application)
         self.on_done = on_done
-        self.set_title("Welcome to AI Desktop")
+        self.set_title("Welcome to Mutsu OS")
         self.set_default_size(740, 610)
         self.index = 0
         self.status = Gtk.Label(xalign=0)
@@ -235,7 +235,7 @@ class SetupWizard(Adw.ApplicationWindow):
         self._paragraph(
             page,
             "Window controls: macOS-style red, yellow and green buttons appear "
-            "on the left of AI Desktop. You can also move controls to the left "
+            "on the left of Mutsu windows. You can also move controls to the left "
             "in other GNOME apps (their colors may still follow their theme).",
         )
         window_actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
@@ -303,7 +303,7 @@ class SetupWizard(Adw.ApplicationWindow):
         dialog.props.secondary_text = (
             "This changes your user account's GNOME window-button arrangement "
             "to Close, Minimize and Maximize on the left. It affects compatible "
-            "GNOME applications, not every third-party app. AI Desktop itself "
+            "GNOME applications, not every third-party app. Mutsu Search itself "
             "uses the red/yellow/green stoplight style. The original GNOME "
             "layout is backed up and can be restored here."
         )
