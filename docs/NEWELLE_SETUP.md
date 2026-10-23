@@ -36,7 +36,11 @@ a separately installed Flatpak in headless GUI-API mode, not as a fork.
 
        bash scripts/run-dev.sh --check-newelle
 
-   Expected output includes "Newelle connected" with the selected model.
+   Expected output includes "Newelle connected" with the selected model. This **only checks API availability**, not working inference. Verify the selected model really answers by running:
+
+       bash scripts/run-dev.sh --test-newelle
+
+   You can also use Spotlight's settings (gear icon) → **Test Newelle connection + reply**. This sends only a generic non-personal test prompt; Newelle may pass it to a configured cloud model.
 
 6. After confirming that works, stop the manually running backend and install
    the autostarting **user service**, with no root privileges:
@@ -86,10 +90,20 @@ will discover the selected provider and apply finer-grained privacy rules.
   run configure-newelle-key.sh.
 - HTTP 401: the locally stored key does not match Newelle's configured key.
 - Connection refused: start the gui-api interface and check host/port.
-- API responds but assistant gives invalid JSON: choose a model with reliable
-  structured-instruction following or return to built-in tools.
+- Ordinary Newelle text replies now appear as an informational answer. Malformed JSON tool/action plans remain rejected.
+- HTTP 400/422: check Newelle's selected model and provider; HTTP 404: check the GUI API interface and port.
+- If Spotlight shows **Built-in (offline)** instead of Newelle, change its provider in the gear-icon preferences.
 - Port customized: export AIDESKTOP_NEWELLE_PORT before launching AI Desktop.
 - Inspect service logs: journalctl --user -u ai-desktop-newelle -n 100 --no-pager
 
 No Bazzite image or self-contained ISO is shipped yet. These steps are for
 testing the assistant as part of a GNOME session.
+
+### Quick check when Spotlight cannot talk to Newelle
+
+Run these commands in the same Linux session as AI Desktop:
+
+    bash scripts/run-dev.sh --check-newelle
+    bash scripts/run-dev.sh --test-newelle
+
+If only the first works, Newelle's HTTP server is present but the model cannot generate replies. Try a normal message inside Newelle itself and inspect its service: `systemctl --user status ai-desktop-newelle.service` and `journalctl --user -u ai-desktop-newelle -n 60 --no-pager`. Don't paste your API key into logs or chat.
