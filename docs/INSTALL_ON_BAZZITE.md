@@ -1,4 +1,4 @@
-# Install the AI Desktop experience on Bazzite GNOME
+# Install the Mutsu OS desktop prototype on Bazzite GNOME
 
 This is a **user-level prototype install**, not yet a separately installable
 Bazzite-derived OS image. Everything in the repository that has an actual
@@ -6,7 +6,7 @@ working integration can be enabled on an existing Bazzite GNOME machine or
 Fedora GNOME VM. No rebase, package layering, root access or custom ISO is
 required to install the launcher.
 
-## 1. Install AI Desktop and its keyboard shortcut
+## 1. Install Mutsu OS and its keyboard shortcut
 
 Run inside a GNOME session:
 
@@ -21,7 +21,7 @@ If you have not cloned the repo:
     cd ai-desktop
     bash scripts/install-desktop-experience.sh --with-shortcut
 
-The installer checks GTK4/PyGObject/libadwaita, creates an **AI Desktop**
+The installer checks GTK4/PyGObject/libadwaita, creates an **Mutsu OS**
 app-menu entry and user launcher under ~/.local/bin, then binds Super+Space
 (opt-in, because it replaces GNOME's input-source switching shortcut).
 Do not delete or relocate the cloned repository: the launcher points at
@@ -46,7 +46,7 @@ In **Appearance & keyboard**:
 - Choose **Japandi**, **Cyberpunk**, or **System**. Japandi stays soft/rounded.
   Cyberpunk uses angular neon cyan/magenta outlines, darker pixel/terminal
   styling and a monospace fallback. Its optional pixel font is not bundled.
-- AI Desktop's own upper-left window controls are 13px circles and do not
+- Mutsu OS's own upper-left window controls are 13px circles and do not
   depend on changing GNOME's global style.
 - If you want other *compatible GNOME apps* to move their window buttons to
   the left, click **Use left-side buttons in GNOME…** and approve. Use
@@ -109,7 +109,7 @@ Then from ~/ai-desktop:
     bash scripts/run-dev.sh --check-newelle
 
 Do **not** grant Newelle unrestricted terminal, D-Bus or home-directory access
-just to make the prototype work. AI Desktop uses model inference only and
+just to make the prototype work. Mutsu OS uses model inference only and
 retains its own system-action approvals.
 
 ## 6. Update, test, or remove
