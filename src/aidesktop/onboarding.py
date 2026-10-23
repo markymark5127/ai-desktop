@@ -23,6 +23,7 @@ PHONE_OPTIONS = (
     ("I'll do this later", "later"),
 )
 STATES = {"pending", "completed", "skipped"}
+MODEL_SHARING_LABEL = "Allow AI model sharing"
 
 DEFAULTS = {
     "status": "pending",
