@@ -1,6 +1,6 @@
 # Appearance and theme design
 
-AI Desktop uses **GNOME + libadwaita**, not an independently maintained
+Mutsu OS uses **GNOME + libadwaita**, not an independently maintained
 desktop environment. The Spotlight-like launcher stays keyboard-first while
 its styling can change independently.
 
@@ -70,7 +70,7 @@ never impair a newcomer's ability to troubleshoot their computer.
 
 ## Window buttons and phone QR
 
-AI Desktop applies its stoplight CSS only to its own launcher/wizard. The setup wizard can optionally apply a reversible GNOME-wide left-side button placement; applications with independent titlebars may ignore it. Phone pairing now uses offline, scannable official-store QR codes. See [Window and phone setup](WINDOW_AND_PHONE_SETUP.md).
+Mutsu OS applies its stoplight CSS only to its own launcher/wizard. The setup wizard can optionally apply a reversible GNOME-wide left-side button placement; applications with independent titlebars may ignore it. Phone pairing now uses offline, scannable official-store QR codes. See [Window and phone setup](WINDOW_AND_PHONE_SETUP.md).
 
 
 ## Minimal translucent Spotlight surface
