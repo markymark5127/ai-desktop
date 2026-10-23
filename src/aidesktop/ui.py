@@ -48,6 +48,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.add_css_class("ai-desktop-window")
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         root.add_css_class("ai-desktop")
+        self.theme_root = root
         toolbar = Adw.ToolbarView()
         self.set_content(toolbar)
         toolbar.set_content(root)
@@ -163,6 +164,11 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.entry.grab_focus()
 
     def _apply_theme(self, theme: str) -> None:
+        for name in ("japandi", "cyberpunk", "system"):
+            self.remove_css_class(name)
+            self.theme_root.remove_css_class(name)
+        self.add_css_class(theme)
+        self.theme_root.add_css_class(theme)
         style_manager = Adw.StyleManager.get_default()
         # High contrast has priority over decorative themes for accessibility.
         accessible = style_manager.get_high_contrast()
