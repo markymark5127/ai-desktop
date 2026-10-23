@@ -60,8 +60,13 @@ def main() -> None:
             "GNOME graphical libraries are required to launch the UI. "
             f"Try --ask for headless diagnostics. Details: {exc}"
         )
-    app = AssistantApp(force_setup=args.setup)
-    raise SystemExit(app.run(None))
+    app = AssistantApp()
+    # Gio.Application is single-instance: forward this request to the
+    # already-running primary instance as a command-line request. Without
+    # HANDLES_COMMAND_LINE, --setup on a second process just reactivated
+    # the old Spotlight and quietly ignored the force_setup constructor flag.
+    internal_argv = ["ai-desktop", "setup"] if args.setup else ["ai-desktop"]
+    raise SystemExit(app.run(internal_argv))
 
 
 if __name__ == "__main__":
