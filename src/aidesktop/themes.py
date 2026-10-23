@@ -87,42 +87,42 @@ window.ai-desktop-window headerbar button.mac-stoplight:focus-visible {
 """
 
 JAPANDI = """
-.ai-desktop,
-window.ai-desktop-window {
+.ai-desktop.japandi,
+window.ai-desktop-window.japandi {
   background-color: #f3efe7;
   color: #303832;
 }
-window.ai-desktop-window headerbar {
+window.ai-desktop-window.japandi headerbar {
   background-color: #f3efe7;
   color: #303832;
   box-shadow: none;
 }
-.ai-desktop entry {
+.ai-desktop.japandi entry {
   background-color: #fffdf9;
   color: #303832;
   border: 1px solid #c6c7b7;
   box-shadow: none;
 }
-.ai-desktop listbox {
+.ai-desktop.japandi listbox {
   background-color: #fffcf6;
   color: #303832;
   border: 1px solid #d9d7cc;
 }
-.ai-desktop listbox row:selected {
+.ai-desktop.japandi listbox row:selected {
   background-color: #dce5d9;
   color: #263b2d;
 }
-.ai-desktop textview,
-.ai-desktop textview text {
+.ai-desktop.japandi textview,
+.ai-desktop.japandi textview text {
   background-color: #fffcf6;
   color: #303832;
 }
-.ai-desktop button.suggested-action {
+.ai-desktop.japandi button.suggested-action {
   background-color: #516b5c;
   color: #ffffff;
   border: 1px solid #516b5c;
 }
-.ai-desktop button.suggested-action:hover {
+.ai-desktop.japandi button.suggested-action:hover {
   background-color: #405849;
 }
 """
