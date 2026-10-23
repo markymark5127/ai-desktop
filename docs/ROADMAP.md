@@ -26,7 +26,8 @@
 
 ## Mac-familiar desktop experience (cross-cutting milestones)
 - Design for Mac-to-Linux migration and Steam/Proton gaming; see [Product vision](PRODUCT_VISION.md).
-- Evaluate compatible Dash to Dock and tiling extensions, GNOME Overview and Sushi file previews, with version-specific Shell testing.
+- Reversible Mac dock configurator now implemented for an already enabled Dash to Dock GNOME extension (Bottom/Left/Right/Top, always-on default, Show Applications/Launchpad grid). The install wizard page is included. See [DOCK.md](DOCK.md).
+- Evaluate/automate compatible Dash to Dock and tiling extensions, GNOME Overview, Activities-label hiding via Just Perfection, and Sushi previews, with version-specific Shell testing.
 - Provide optional GSConnect device pairing. KDE Connect iOS lacks full background connectivity, iMessage/SMS and system notification mirroring; never advertise AirDrop/Continuity feature parity.
 - First-run GTK wizard prototype built with appearance, physical key test, AI connection check, phone/GSConnect guidance and installed Steam check. Still need actual pairing UI, guided local model install, file migration, dock/window tiling configuration, game diagnostics and dedicated Bazzite first-login integration.
 - Preserve a standalone GNOME install path; only create a Bazzite-derived image after real UX and native gaming QA.
