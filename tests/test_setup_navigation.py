@@ -36,6 +36,16 @@ class SetupNavigationTests(unittest.TestCase):
         self.assertIn("GLib.idle_add(self._present_setup)", callback)
         self.assertNotIn("self.hide()", callback)
 
+    def test_restart_dev_script_only_targets_aidesktop_module(self):
+        script = (
+            FILE.parents[2] / "scripts" / "restart-dev.sh"
+        ).read_text(encoding="utf-8")
+        self.assertIn('pgrep -u "$(id -u)" -f "$pattern"', script)
+        self.assertIn("aidesktop([[:space:]]|$)", script)
+        self.assertIn('exec bash "$repo_dir/scripts/run-dev.sh" "$@"', script)
+        self.assertNotIn("pkill -9", script)
+        self.assertNotIn("Newelle --", script)
+
     def test_setup_button_activates_application_action(self):
         constructor = method_source("AssistantWindow", "__init__")
         self.assertIn('self.setup_button.set_action_name("app.open-setup")', constructor)
