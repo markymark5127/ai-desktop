@@ -12,9 +12,14 @@ class ThemeTests(unittest.TestCase):
     def test_three_themes_have_scoped_gtk_css(self):
         self.assertEqual([key for _, key in THEME_LABELS], ["system", "japandi", "cyberpunk"])
         self.assertEqual(set(STYLES), set(SCHEMES))
-        self.assertEqual(STYLES["system"], "")
+        # The system palette remains GNOME-native, while AI Desktop still
+        # provides its own traffic-light title controls.
+        self.assertIn("windowcontrols button.close", STYLES["system"])
+        self.assertNotIn("#f3efe7", STYLES["system"])
         for name in ("japandi", "cyberpunk"):
             self.assertIn(".ai-desktop", STYLES[name])
+            self.assertIn("window.ai-desktop-window", STYLES[name])
+            self.assertIn("windowcontrols button.close", STYLES[name])
             self.assertIn("entry", STYLES[name])
             self.assertIn("textview", STYLES[name])
             self.assertIn("button.suggested-action", STYLES[name])
