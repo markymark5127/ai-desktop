@@ -1,4 +1,4 @@
-# AI Desktop roadmap
+# Mutsu OS development roadmap
 
 ## Phase 0: prototype (this commit)
 - Native GNOME window, bounded model-driven tool calls, CLI, tests.
@@ -13,7 +13,7 @@
 - Standard US vs Mac US keyboard profile selector, displayed Super-key shortcut labels, opt-in reversible GNOME XKB source selection (implemented). Next: guided physical-key test and optional shortcut emulation, without globally swapping Ctrl/Cmd.
 - **First-run wizard prototype now implemented:** launch on first run/--setup; skippable and reopenable from launcher. Includes app-search exercise, theme, Mac/PC keyboard and live key test, helper, optional Newelle check, GSConnect availability/pairing guidance, Steam detection. See [Onboarding](ONBOARDING.md).
 - Reframe the first-run step as **"Your computer comes with a helping hand"**, not "select an AI model"; let users test Super+Space immediately. See [Helper Experience](HELPER_EXPERIENCE.md).
-- Three user learning/explanation styles now stored and included in AI Desktop's prompt; no tool authorization or approval changes from style. Future: rich details UI, verified repair narratives.
+- Three user learning/explanation styles now stored and included in Mutsu OS's prompt; no tool authorization or approval changes from style. Future: rich details UI, verified repair narratives.
 - Newelle setup guided by documentation today; next build in-app onboarding, provider status/selection and a privacy-aware first-run wizard.
 - Develop a unified **Open / Do / Get help** omnibox with indexed file/settings/game search, deterministic typed tools, multi-step verified troubleshooting and graceful unsupported-action handling.
 - Conversation state, explanation of troubleshooting, verifiable fixes and undo.
