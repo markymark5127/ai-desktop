@@ -14,13 +14,11 @@ familiar to someone coming from macOS Spotlight.
 - Type an installed app name to see a small list of up to **five** matching
   applications under the field. **Enter** opens the selected app, closes the
   launcher after the desktop reports the launch request, and does not call AI.
-- If you type a question, press **Enter** with no app match, or use
-  **Ctrl+Enter** (or Command+Enter on an Apple keyboard) to explicitly ask the AI. The result appears in an expandable,
-  height-limited answer section below the search field.
+- If there is no matching application, **Ask AI** is the selected result and ordinary **Enter** invokes the chosen assistant. An Ask AI option is also available underneath app matches. Nothing is sent while typing. Answers expand below the field only on request. A special Ctrl+Enter shortcut is no longer needed.
 - AI-proposed changes still show **Apply change / Decline** controls, and
   cloud-capable providers still require privacy consent per request. Actions
   remain bounded by the project's approved tool catalog.
-- **Escape** closes Spotlight. Arrow keys select application results. Returning from an answer to search resets the window to its compact natural height.
+- **Escape** closes Spotlight. Clicking another application or the desktop hides it automatically; popup settings and privacy-consent dialogs are exempt. The hidden window remains alive for in-flight AI work and is reused when the shortcut reopens it. Arrow keys select app or AI results, and a new search collapses the previous answer.
 - A subtle settings icon inside the bar (or **Ctrl+,** / **Command+,**) opens provider and
   appearance choices plus a **Setup & keyboard settings…** entry. The full
   original setup wizard remains a separate window via `--setup`.
@@ -65,9 +63,7 @@ Or reopen the wizard separately:
    change selection.
 3. Press Enter on a real installed application: it should launch and the
    Spotlight window should close.
-4. Reopen, type a question and press Ctrl+Enter. For offline tests, open
-   Preferences and select **Built-in (offline)** before asking about audio,
-   disk space or network status.
+4. Reopen, type a question and press **Enter**; verify that the AI fallback is selected. For offline tests, choose **Built-in (offline)** in Preferences before asking about audio, disk space or network status.
 5. Check that the answer and any approval buttons appear **only when needed**.
 6. Type a new search: the prior response should collapse.
 7. Open Preferences with the gear icon or Ctrl+, change theme, and verify
@@ -88,3 +84,11 @@ Or reopen the wizard separately:
 - `src/aidesktop/setup_wizard.py` — full setup experience unchanged.
 
 The GNOME user-session launcher and Super+Space installer scripts are unchanged.
+
+## Test Newelle end-to-end
+
+Click the Spotlight gear icon → **Test Newelle connection + reply**. This performs both a read-only model listing and a harmless short inference request via the configured Newelle GUI API. It sends no personal diagnostics, but can use a cloud model if you selected one in Newelle. From Terminal, the equivalent command is:
+
+    bash scripts/run-dev.sh --test-newelle
+
+If this fails, follow [NEWELLE_SETUP.md](NEWELLE_SETUP.md). Normal plain-text model replies are displayed as explanations; only validated structured action plans can invoke allowed tools with approvals.
