@@ -20,6 +20,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 from .agent import Agent, AgentResponse, PendingAction
 from .search import AppResult, list_applications
 from .search_routing import route_query, should_hide_on_focus_loss
+from .file_search import FileResult, list_local_files, search_local_files
 from .newelle_client import NewelleError, test_newelle
 from .tools import run_tool
 from .themes import (
@@ -46,7 +47,7 @@ class AssistantWindow(Adw.ApplicationWindow):
 
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
-        self.set_title("AI Desktop Spotlight")
+        self.set_title("Mutsu Search")
         self.set_default_size(640, -1)
         self.set_decorated(False)
         # Gtk.Window:is-active becomes False after another app or the desktop
@@ -57,7 +58,10 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.pending: PendingAction | None = None
         self.catalog: list[AppResult] = list_applications()
         self.matches: list[AppResult] = []
-        self.targets: list[AppResult | None] = []
+        # Index filenames in a bounded background task, never on each key.
+        self.files_catalog: list[FileResult] = []
+        self.targets: list[AppResult | FileResult | str | None] = []
+        self.selectable_indices: list[int] = []
         self.busy = False
         self._ever_active = False
         self._syncing_model_permission = False
@@ -87,7 +91,7 @@ class AssistantWindow(Adw.ApplicationWindow):
 
         self.entry = Gtk.Entry()
         self.entry.add_css_class("spotlight-entry")
-        self.entry.set_placeholder_text("Search apps or ask your computer…")
+        self.entry.set_placeholder_text("Search apps, files, or ask Mutsu AI…")
         self.entry.set_icon_from_icon_name(
             Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic"
         )
@@ -126,7 +130,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         search_scroll.set_policy(
             Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC
         )
-        search_scroll.set_max_content_height(260)
+        search_scroll.set_max_content_height(430)
         search_scroll.set_propagate_natural_height(True)
         search_scroll.set_child(self.results)
         self.results_section.append(search_scroll)
@@ -250,6 +254,20 @@ class AssistantWindow(Adw.ApplicationWindow):
         self._apply_theme(active_theme)
         self.theme_choice.connect("notify::selected", self._on_theme_changed)
         self.entry.grab_focus()
+        GLib.idle_add(self._begin_file_scan)
+
+    def _begin_file_scan(self) -> bool:
+        def worker() -> None:
+            files = list_local_files()
+            GLib.idle_add(self._on_file_scan_finished, files)
+        threading.Thread(target=worker, daemon=True).start()
+        return GLib.SOURCE_REMOVE
+
+    def _on_file_scan_finished(self, files: list[FileResult]) -> bool:
+        self.files_catalog = files
+        if self.entry.get_text().strip() and self.get_visible():
+            self._update_results()
+        return GLib.SOURCE_REMOVE
 
     def _remove_theme_provider(self, *_unused) -> bool:
         Gtk.StyleContext.remove_provider_for_display(
@@ -446,82 +464,125 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.cancel_button.set_visible(False)
         self._update_results()
 
+    def _append_heading(self, title: str) -> None:
+        """Noninteractive group label inside the same scrollable results list."""
+        row = Gtk.ListBoxRow()
+        row.add_css_class("spotlight-section-row")
+        row.set_selectable(False)
+        row.set_activatable(False)
+        heading = Gtk.Label(label=title, xalign=0)
+        heading.add_css_class("spotlight-section-heading")
+        heading.set_margin_start(14)
+        heading.set_margin_end(14)
+        heading.set_margin_top(9)
+        heading.set_margin_bottom(3)
+        row.set_child(heading)
+        self.results.append(row)
+        self.targets.append("section")
+
+    def _append_result(self, row: Gtk.ListBoxRow, target) -> None:
+        self.results.append(row)
+        self.targets.append(target)
+        self.selectable_indices.append(len(self.targets) - 1)
+
+    def _make_result(
+        self, title: str, subtitle: str, icon_name: str,
+        *, css_class: str,
+    ) -> Gtk.ListBoxRow:
+        row = Gtk.ListBoxRow()
+        row.add_css_class("spotlight-result-row")
+        row.add_css_class(css_class)
+        content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+        content.set_margin_top(8)
+        content.set_margin_bottom(8)
+        content.set_margin_start(14)
+        content.set_margin_end(14)
+        icon = Gtk.Image.new_from_icon_name(icon_name)
+        icon.set_pixel_size(28)
+        content.append(icon)
+        labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=3)
+        labels.set_hexpand(True)
+        labels.set_valign(Gtk.Align.CENTER)
+        name = Gtk.Label(label=title, xalign=0)
+        name.set_ellipsize(Pango.EllipsizeMode.END)
+        labels.append(name)
+        if subtitle:
+            description = Gtk.Label(label=subtitle[:110], xalign=0)
+            description.add_css_class("dim-label")
+            description.add_css_class("spotlight-result-subtitle")
+            description.set_ellipsize(Pango.EllipsizeMode.END)
+            labels.append(description)
+        content.append(labels)
+        row.set_child(content)
+        return row
+
     def _update_results(self) -> None:
-        # Application/future-file search is purely local. The AI fallback is
-        # offered as the last row, never sent while the user is still typing.
-        route = route_query(self.entry.get_text(), self.catalog, limit=5)
+        query = self.entry.get_text().strip()
+        route = route_query(query, self.catalog, limit=4)
         self.matches = list(route.apps)
         self.targets = []
+        self.selectable_indices = []
+        file_matches = []
+        if query and not query.casefold().startswith("ask ") and "?" not in query:
+            file_matches = search_local_files(
+                query, self.files_catalog, limit=4
+            )
         while child := self.results.get_row_at_index(0):
             self.results.remove(child)
 
-        for app in self.matches:
-            row = Gtk.ListBoxRow()
-            content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-            content.set_margin_top(8)
-            content.set_margin_bottom(8)
-            content.set_margin_start(14)
-            content.set_margin_end(14)
-            image = Gtk.Image.new_from_icon_name(app.icon)
-            image.set_pixel_size(24)
-            content.append(image)
-            labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
-            labels.append(Gtk.Label(label=app.name, xalign=0))
-            if app.description:
-                subtitle = Gtk.Label(label=app.description[:90], xalign=0)
-                subtitle.add_css_class("dim-label")
-                subtitle.set_ellipsize(Pango.EllipsizeMode.END)
-                labels.append(subtitle)
-            content.append(labels)
-            row.set_child(content)
-            self.results.append(row)
-            self.targets.append(app)
+        if self.matches:
+            self._append_heading("Top Results")
+            for app in self.matches:
+                self._append_result(
+                    self._make_result(
+                        app.name, app.description or "Application",
+                        app.icon, css_class="spotlight-app-row"
+                    ), app
+                )
+
+        if file_matches:
+            self._append_heading("Files")
+            for file in file_matches:
+                suffix = file.path.suffix.casefold()
+                icon_name = (
+                    "folder-symbolic" if file.is_dir else
+                    "image-x-generic-symbolic" if suffix in (
+                        ".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"
+                    ) else "text-x-generic-symbolic"
+                )
+                self._append_result(
+                    self._make_result(
+                        file.name, file.subtitle, icon_name,
+                        css_class="spotlight-file-row"
+                    ), file
+                )
 
         if route.offer_ai:
-            row = Gtk.ListBoxRow()
-            row.add_css_class("spotlight-ask-row")
-            content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-            content.add_css_class("spotlight-ask-content")
-            # An AI-only search should be a full, selectable result — not a
-            # collapsed line of footer text under an empty list.
-            content.set_size_request(-1, 62)
-            content.set_margin_top(4)
-            content.set_margin_bottom(4)
-            content.set_margin_start(14)
-            content.set_margin_end(14)
-            icon = Gtk.Image.new_from_icon_name("dialog-question-symbolic")
-            icon.set_pixel_size(28)
-            content.append(icon)
+            self._append_heading("AI Suggestions")
             chosen = self._provider()
-            provider_name = dict((key, label) for label, key in CHOICES).get(
+            provider = dict((key, label) for label, key in CHOICES).get(
                 chosen, "assistant"
+            ).replace(" (recommended)", "")
+            row = self._make_result(
+                "Ask Mutsu AI",
+                f"Via {provider} · {route.query[:75]}",
+                "dialog-question-symbolic",
+                css_class="spotlight-ask-row",
             )
-            provider_name = provider_name.replace(" (recommended)", "")
-            labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
-            labels.set_valign(Gtk.Align.CENTER)
-            labels.set_hexpand(True)
-            heading = Gtk.Label(label=f"Ask {provider_name}", xalign=0)
-            heading.add_css_class("spotlight-ask-title")
-            labels.append(heading)
-            subtitle = Gtk.Label(label=route.query[:90], xalign=0)
-            subtitle.add_css_class("dim-label")
-            subtitle.add_css_class("spotlight-ask-subtitle")
-            subtitle.set_ellipsize(Pango.EllipsizeMode.END)
-            labels.append(subtitle)
-            content.append(labels)
-            row.set_child(content)
-            self.results.append(row)
-            self.targets.append(None)
+            self._append_result(row, None)
 
-        ai_only = route.offer_ai and not self.matches
-        self.results_divider.set_visible(not ai_only)
+        any_results = bool(self.selectable_indices)
+        ai_only = route.offer_ai and not self.matches and not file_matches
+        self.results_divider.set_visible(False)
         if ai_only:
             self.results_section.add_css_class("spotlight-ai-only")
         else:
             self.results_section.remove_css_class("spotlight-ai-only")
-        self.results_section.set_visible(bool(self.targets))
-        if self.targets:
-            self.results.select_row(self.results.get_row_at_index(0))
+        self.results_section.set_visible(any_results)
+        if self.selectable_indices:
+            self.results.select_row(
+                self.results.get_row_at_index(self.selectable_indices[0])
+            )
         self._relayout()
 
     def _on_key(self, _controller, keyval, _keycode, state) -> bool:
@@ -537,12 +598,20 @@ class AssistantWindow(Adw.ApplicationWindow):
                 and keyval == Gdk.KEY_comma):
             self._show_settings()
             return True
-        if keyval in (Gdk.KEY_Down, Gdk.KEY_Up) and self.targets:
+        if keyval in (Gdk.KEY_Down, Gdk.KEY_Up) and self.selectable_indices:
             current = self.results.get_selected_row()
-            idx = current.get_index() if current else 0
+            index = current.get_index() if current else -1
+            try:
+                position = self.selectable_indices.index(index)
+            except ValueError:
+                position = 0
             delta = 1 if keyval == Gdk.KEY_Down else -1
-            idx = max(0, min(idx + delta, len(self.targets) - 1))
-            self.results.select_row(self.results.get_row_at_index(idx))
+            position = max(
+                0, min(position + delta, len(self.selectable_indices) - 1)
+            )
+            self.results.select_row(
+                self.results.get_row_at_index(self.selectable_indices[position])
+            )
             return True
         return False
 
@@ -552,19 +621,35 @@ class AssistantWindow(Adw.ApplicationWindow):
             return
         row = self.results.get_selected_row()
         idx = row.get_index() if row else 0
-        if 0 <= idx < len(self.targets) and self.targets[idx] is not None:
-            self._open_app(self.targets[idx])
+        if 0 <= idx < len(self.targets):
+            self._activate_target(self.targets[idx])
         else:
             self._ask_ai()
 
     def _on_result_activated(self, _list_box, row) -> None:
         idx = row.get_index()
         if 0 <= idx < len(self.targets):
-            app = self.targets[idx]
-            if app is not None:
-                self._open_app(app)
-            else:
-                self._ask_ai()
+            self._activate_target(self.targets[idx])
+
+    def _activate_target(self, target) -> None:
+        if isinstance(target, AppResult):
+            self._open_app(target)
+        elif isinstance(target, FileResult):
+            self._open_file(target)
+        elif target is None:
+            self._ask_ai()
+
+    def _open_file(self, file: FileResult) -> None:
+        try:
+            # Only a path in the verified filename catalog can arrive here.
+            # Gio chooses the registered handler, not an arbitrary shell.
+            if not file.path.exists() or file.path.is_symlink():
+                raise FileNotFoundError(file.name)
+            Gio.AppInfo.launch_default_for_uri(file.path.as_uri(), None)
+        except (OSError, GLib.Error) as exc:
+            self._show_text(f"Could not open {file.name}: {exc}")
+        else:
+            self.close()
 
     def _open_app(self, app: AppResult) -> None:
         self.pending = None
