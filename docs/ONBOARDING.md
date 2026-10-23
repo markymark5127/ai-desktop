@@ -1,8 +1,8 @@
 # First-run setup: Mac-familiar GNOME + Linux troubleshooting buddy
 
-The first-run wizard is now part of AI Desktop's GTK4/libadwaita app. It is
+The first-run wizard is now part of Mutsu OS's GTK4/libadwaita app. It is
 **not** the Linux disk-partitioning/installation screen. It launches the first
-time a user opens AI Desktop and can be skipped or reopened later.
+time a user opens Mutsu OS and can be skipped or reopened later.
 
 ## Run it
 
@@ -134,7 +134,7 @@ the wizard remains manually reopenable. The OS does not request an Apple ID.
 
 ## Test checklist for your Windows VM
 
-1. In a clean Fedora GNOME guest, launch AI Desktop; the first-run wizard opens.
+1. In a clean Fedora GNOME guest, launch Mutsu OS; the first-run wizard opens.
 2. Search for Files/Settings in Welcome; results are immediate with no model.
 3. Choose Cyberpunk, restart and verify the saved appearance.
 4. Select Mac keyboard; press Command (if available) in the key-test field.
