@@ -1,7 +1,8 @@
 """Per-user first-run onboarding preferences, independent from GNOME/GTK.
 
-Preferences only alter explanations and onboarding UI. They NEVER grant the
-assistant tools, privileges, cloud-upload consent or automatic repair rights.
+Onboarding stores a user-controlled opt-in for sending questions/diagnostics
+to configured local or cloud AI models. It NEVER grants model tool privileges
+or permission for system-changing actions. The opt-in defaults to off.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ DEFAULTS = {
     "status": "pending",
     "learning_style": "guided",
     "phone": "later",
+    "model_sharing": False,
 }
 
 
@@ -35,7 +37,7 @@ def preferences_path() -> Path:
     return base / "ai-desktop" / "onboarding.json"
 
 
-def _validated(value: dict) -> dict[str, str]:
+def _validated(value: dict) -> dict[str, str | bool]:
     if not isinstance(value, dict):
         raise ValueError("Onboarding preferences must be an object")
     data = {**DEFAULTS, **value}
@@ -49,10 +51,12 @@ def _validated(value: dict) -> dict[str, str]:
     for key, allowed in valid.items():
         if not isinstance(data[key], str) or data[key] not in allowed:
             raise ValueError(f"Invalid onboarding option: {key}")
+    if not isinstance(data["model_sharing"], bool):
+        raise ValueError("Model sharing consent must be a boolean")
     return data
 
 
-def load_preferences() -> dict[str, str]:
+def load_preferences() -> dict[str, str | bool]:
     try:
         with preferences_path().open("r", encoding="utf-8") as stream:
             return _validated(json.load(stream))
@@ -60,7 +64,7 @@ def load_preferences() -> dict[str, str]:
         return DEFAULTS.copy()
 
 
-def save_preferences(**updates: str) -> dict[str, str]:
+def save_preferences(**updates: str | bool) -> dict[str, str | bool]:
     updated = _validated({**load_preferences(), **updates})
     path = preferences_path()
     path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -86,7 +90,24 @@ def mark_setup_done(*, skipped: bool = False) -> None:
 
 
 def get_learning_style() -> str:
-    return load_preferences()["learning_style"]
+    return str(load_preferences()["learning_style"])
+
+
+def model_sharing_allowed() -> bool:
+    """Persistent, explicit permission to send content to a model.
+
+    Older onboarding files lack this setting: they default to False.
+    Malformed settings also fail closed. Merely selecting a provider never
+    grants consent.
+    """
+    return load_preferences()["model_sharing"] is True
+
+
+def set_model_sharing_allowed(allowed: bool) -> None:
+    """Persist opt-in/opt-out before the UI claims the choice was saved."""
+    if not isinstance(allowed, bool):
+        raise ValueError("Model sharing consent must be a boolean")
+    save_preferences(model_sharing=allowed)
 
 
 def helper_intro(style: str) -> str:
