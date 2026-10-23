@@ -17,7 +17,7 @@ if [[ -s "$icon_source" ]]; then
   icon_value="$icon_name"
   printf 'Installed Mutsu OS Search icon from %s\\n' "$icon_source"
 else
-  printf 'Mutsu SVG not uploaded yet; keeping the generic search icon.\\n'
+  printf 'Mutsu SVG not uploaded yet; keeping the generic search icon.\n'
 fi
 cat > "$HOME/.local/share/applications/io.github.markymark5127.AIDesktop.desktop" <<EOF
 [Desktop Entry]
