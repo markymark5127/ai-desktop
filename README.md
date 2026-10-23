@@ -38,6 +38,21 @@ It does **not** yet automatically install Newelle, pair a phone, configure a Mac
 
 See [First-run onboarding](docs/ONBOARDING.md) for the implemented steps, privacy boundaries, and VM test checklist. For the latest theme, titlebar and QR-code details see [Window and phone setup](docs/WINDOW_AND_PHONE_SETUP.md).
 
+## Install on Bazzite GNOME (user session)
+
+If you already cloned the project on a Bazzite GNOME machine or Fedora GNOME VM:
+
+    cd ~/ai-desktop
+    git pull
+    bash scripts/install-desktop-experience.sh --with-shortcut
+    ~/.local/bin/ai-desktop --setup
+
+This installs the desktop application entry and reversible Super+Space binding
+for your **user account**, without modifying Bazzite's atomic base image.
+See [Full Bazzite installation steps](docs/INSTALL_ON_BAZZITE.md) to enable
+the existing GNOME dock, GSConnect pairing and optional Newelle backend.
+**It is not a whole-OS theme or a finished custom distribution yet.**
+
 ## Test on Windows before installing Linux
 
 Follow [Windows VM testing](docs/VM_TESTING.md) for the recommended VMware Workstation Pro + Fedora Workstation GNOME workflow, snapshot strategy, and graphical/AI test checklist. The first VM test validates **desktop behavior**, not native GPU performance.
@@ -118,7 +133,8 @@ Select the desired provider in the window. Each cloud request requires a privacy
 ## Repository layout
 
 - src/aidesktop/ui.py — GNOME keyboard-first window, app suggestions, approval dialogs
-- src/aidesktop/themes.py — edge-to-edge Japandi/Cyberpunk styles and Mac stoplight buttons
+- src/aidesktop/themes.py — original Japandi and new neon/squared Cyberpunk styles
+- src/aidesktop/mac_stoplights.py — compact Mac-style accessible window action buttons
 - src/aidesktop/keyboard_profiles.py — Mac/PC US profile settings and optional reversible GNOME layout
 - src/aidesktop/onboarding.py — secure per-user first-run status, phone choice and learning style
 - src/aidesktop/setup_wizard.py — GTK welcome, dock, keyboard test, Newelle check, GSConnect guidance and Steam overview
@@ -132,7 +148,7 @@ Select the desired provider in the window. Each cloud request requires a privacy
 - src/aidesktop/newelle_client.py — authenticated loopback-only Newelle model adapter
 - src/aidesktop/tools.py — restricted Linux diagnostics/actions
 - tests/ — headless tests (also run via GitHub Actions)
-- scripts/ — dev launcher, GNOME desktop integration, and optional Newelle systemd user service
+- scripts/ — dev launcher, GNOME user-session installer, desktop integration and optional Newelle systemd user service
 - docs/ARCHITECTURE.md — trust boundaries and future security work
 
 ## Safety boundaries
@@ -165,7 +181,7 @@ Full detail: [Keyboard setup / physical Command key behavior](docs/KEYBOARD_PROF
 
 ## Appearance
 
-Select **Japandi**, **Cyberpunk** or **System** in the launcher's title bar. Japandi is the first-run default. The selected look persists across launches. AI Desktop's theme paints its full window, including the headerbar, and its left-side titlebar buttons resemble Mac stoplights; these app-scoped colors don't recolor other applications. See [Theme design](docs/THEMES.md).
+Select **Japandi**, **Cyberpunk** or **System** in the launcher's title bar. Japandi remains the first-run default with its original rounded corners and soft neutral palette. **Cyberpunk** now has deliberately squared panels, neon cyan/magenta outlines, glow effects and monospace/pixel-font fallback. Both AI Desktop windows have dedicated **13px circular red/yellow/green** functional titlebar controls, rather than resized GNOME buttons. Colors remain app-scoped, not OS-wide. See [Theme design](docs/THEMES.md).
 
 ## Keyboard usage
 
