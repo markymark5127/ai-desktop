@@ -1,4 +1,4 @@
-# Spotlight-style search overlay (prototype)
+# Mutsu OS Search — Spotlight-style overlay (prototype)
 
 The everyday launcher is now a **compact, undecorated GTK4 window** instead
 of a full-size AI chat application. The intended interaction is deliberately
@@ -7,7 +7,7 @@ familiar to someone coming from macOS Spotlight.
 ## Behavior now implemented
 
 - Open the launcher with its GNOME shortcut: **Super+Space** (usually
-  Command+Space on a Mac keyboard), or select AI Desktop from the app menu.
+  Command+Space on a Mac keyboard), or select Mutsu OS from the app menu.
 - An empty search is just a **single translucent input field**—no titlebar,
   permanent chat transcript, provider selector, dock settings or onboarding
   buttons are visible.
