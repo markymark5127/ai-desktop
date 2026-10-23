@@ -3,13 +3,13 @@
 ## Phase 0: prototype (this commit)
 - Native GNOME window, bounded model-driven tool calls, CLI, tests.
 - Headless Newelle inference adapter as default (plus built-in, direct Ollama, OpenAI API and Anthropic API), authentication and optional systemd user service.
-- Explicit per-request cloud consent; explicit change approval.
+- Optional, persistent, revocable model-sharing permission (off by default); separately confirmed system-changing actions.
 
 ## Phase 1: genuinely helpful desktop assistant
-- Offline instant app search and natural-language queries (app search implemented; indexed file search pending).
+- Offline installed-app and bounded local filename search implemented, grouped with an opt-in AI fallback. Persistent whole-disk/content indexing remains pending.
 - Desktop application discovery by friendly name (implemented in search UI; agent tool exposes IDs internally).
-- Compact undecorated translucent Spotlight GTK launcher **implemented**: app matches plus visible Ask AI fallback; ordinary Enter asks AI when no match; focus-loss hides the launcher without abandoning in-flight requests. Full GNOME Shell overlay, native blur and fullscreen focus behavior remain pending. See [Spotlight UI](SPOTLIGHT_UI.md).
-- Japandi/Cyberpunk/System theme selector and saved launcher preference implemented; OS-wide styling still pending.
+- Compact undecorated translucent Spotlight GTK launcher **implemented**: app matches plus visible Ask AI fallback; ordinary Enter asks AI when no match; idle focus-loss closes the launcher; in-flight work retains the hidden window. Full GNOME Shell overlay, native blur and fullscreen focus behavior remain pending. See [Spotlight UI](SPOTLIGHT_UI.md).
+- Japandi/Cyberpunk/System theme selector and saved launcher preference implemented; explicit theme selection can apply uploaded Mutsu OS wallpapers with a reversible GNOME backup. Full OS-wide styling is still pending.
 - Standard US vs Mac US keyboard profile selector, displayed Super-key shortcut labels, opt-in reversible GNOME XKB source selection (implemented). Next: guided physical-key test and optional shortcut emulation, without globally swapping Ctrl/Cmd.
 - **First-run wizard prototype now implemented:** launch on first run/--setup; skippable and reopenable from launcher. Includes app-search exercise, theme, Mac/PC keyboard and live key test, helper, optional Newelle check, GSConnect availability/pairing guidance, Steam detection. See [Onboarding](ONBOARDING.md).
 - Reframe the first-run step as **"Your computer comes with a helping hand"**, not "select an AI model"; let users test Super+Space immediately. See [Helper Experience](HELPER_EXPERIENCE.md).
