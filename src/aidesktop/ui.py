@@ -135,6 +135,28 @@ class AssistantWindow(Adw.ApplicationWindow):
         search_scroll.set_propagate_natural_height(True)
         search_scroll.set_child(self.results)
         self.results_section.append(search_scroll)
+        # Shortcuts only prefill the search; pressing Enter is still required
+        # to send anything to Newelle or another configured AI.
+        self.suggestion_chips = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=7
+        )
+        self.suggestion_chips.add_css_class("spotlight-chips")
+        self.suggestion_chips.set_margin_start(12)
+        self.suggestion_chips.set_margin_end(12)
+        self.suggestion_chips.set_margin_top(0)
+        self.suggestion_chips.set_margin_bottom(10)
+        for label, prefix in (
+            ("Explain this", "Explain "),
+            ("Troubleshoot", "Help me troubleshoot "),
+        ):
+            chip = Gtk.Button(label=label)
+            chip.add_css_class("spotlight-chip")
+            chip.connect(
+                "clicked", lambda _btn, pre=prefix: self._prefill_ai(pre)
+            )
+            self.suggestion_chips.append(chip)
+        self.suggestion_chips.set_visible(False)
+        self.results_section.append(self.suggestion_chips)
         root.append(self.results_section)
 
         # An answer isn't a permanent conversation pane. It only expands after
@@ -478,6 +500,17 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.cancel_button.set_visible(False)
         self._update_results()
 
+    def _prefill_ai(self, prefix: str) -> None:
+        current = self.entry.get_text().strip()
+        if not current:
+            return
+        if current.casefold().startswith(prefix.casefold()):
+            self.entry.grab_focus()
+            return
+        self.entry.set_text(prefix + current)
+        self.entry.set_position(-1)
+        self.entry.grab_focus()
+
     def _append_heading(self, title: str) -> None:
         """Noninteractive group label inside the same scrollable results list."""
         row = Gtk.ListBoxRow()
@@ -593,6 +626,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         else:
             self.results_section.remove_css_class("spotlight-ai-only")
         self.results_section.set_visible(any_results)
+        self.suggestion_chips.set_visible(bool(route.offer_ai and query))
         if self.selectable_indices:
             self.results.select_row(
                 self.results.get_row_at_index(self.selectable_indices[0])
