@@ -34,10 +34,13 @@ experience**, not a screenshot of our implemented GNOME launcher.
 | Local installed app search + explicit Ask AI fallback | Implemented |
 | Warm Japandi styling of result rows and AI-only state | Implemented in CSS; VM QA pending |
 | Popup settings and Newelle inference/consent | Implemented; VM QA pending |
-| User wallpaper images committed to repo | **Awaiting user upload** |
+| User 4K wallpaper images committed to repo | Both present |
+| Explicit theme selection applies matching GNOME wallpaper | Implemented with backup/restore; VM QA pending |
 | OS wallpaper switch, dock icons and full GNOME Shell visual style | Planned |
-| Local indexed file/folder results with modified dates | **Not implemented** |
-| Rich AI suggestions/chips and action submenus | Planned |
+| Bounded filename/folder results (Documents, Downloads, Pictures etc.) | Implemented locally; depth/budget capped, no content indexing |
+| Full persistent file index with modified dates and comprehensive ranking | Planned |
+| Two non-network AI prompt chips (Explain / Troubleshoot) | Implemented, prefill only |
+| Rich contextual actions and per-file AI suggestion menus | Planned |
 | Mac-style top bar/global menu, true GNOME Shell blur and positioning | Planned |
 | Actual Bazzite-derived installable image | Planned |
 
