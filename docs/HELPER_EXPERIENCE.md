@@ -2,7 +2,7 @@
 
 ## Product promise
 
-AI Desktop is the built-in troubleshooting buddy that helps someone move from macOS to Linux gaming without memorizing Linux terminology or terminal commands. The assistant is optional, permission-aware, and educational. It is not a process that silently changes the system.
+Mutsu OS is the built-in troubleshooting buddy that helps someone move from macOS to Linux gaming without memorizing Linux terminology or terminal commands. The assistant is optional, permission-aware, and educational. It is not a process that silently changes the system.
 
 **Super + Space** is the universal entry point. It opens apps, finds files, navigates settings, carries out supported actions, and helps troubleshoot problems.
 
