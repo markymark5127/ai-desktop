@@ -70,10 +70,28 @@ def _request(path: str, payload: dict | None = None, *, timeout: int = 30) -> di
         with opener.open(request, timeout=timeout) as response:
             raw = response.read(1_000_001)
     except HTTPError as exc:
-        if exc.code == 401:
+        if exc.code in (401, 403):
             raise NewelleError(
-                "Newelle rejected the API key. Configure AIDESKTOP_NEWELLE_API_KEY "
-                "to match Newelle's GUI API settings."
+                "Newelle rejected the API key. Make sure the GUI API key in "
+                "Newelle matches ~/.config/ai-desktop/newelle-token. "
+                "Re-run scripts/configure-newelle-key.sh if needed."
+            ) from exc
+        if exc.code == 404:
+            raise NewelleError(
+                "Newelle returned HTTP 404. The GUI API at 127.0.0.1 may be "
+                "disabled or its /v1 endpoint is unavailable in this version. "
+                "Check Settings > Interfaces > GUI API and the selected port."
+            ) from exc
+        if exc.code in (400, 422):
+            raise NewelleError(
+                f"Newelle rejected the request (HTTP {exc.code}). "
+                "Check that a working model/provider is configured in Newelle."
+            ) from exc
+        if exc.code in (500, 502, 503):
+            raise NewelleError(
+                f"Newelle returned HTTP {exc.code}. The interface is reachable, "
+                "but model inference failed; check the model/provider and "
+                "the ai-desktop-newelle user-service logs."
             ) from exc
         raise NewelleError(f"Newelle returned HTTP {exc.code}") from exc
     except (URLError, TimeoutError, OSError) as exc:
@@ -125,4 +143,21 @@ def complete_newelle(system_prompt: str, user_prompt: str) -> str:
         raise NewelleError("Newelle returned an unsupported message format")
     if content.startswith("[Error:"):
         raise NewelleError("Newelle reported a model failure; check its provider settings")
+    if not content.strip():
+        raise NewelleError("Newelle connected but returned an empty model reply; check model configuration")
     return content
+
+
+def test_newelle() -> str:
+    """Explicit end-to-end test; sends ONLY a generic prompt to the model.
+
+    This is never called automatically on startup or on each keystroke.
+    Configured cloud models may receive the harmless test phrase.
+    """
+    connection = check_newelle()
+    complete_newelle(
+        "This is a harmless connection test. Respond with a short acknowledgement.",
+        "Say READY.",
+    )
+    return connection + " · model replied successfully."
+
