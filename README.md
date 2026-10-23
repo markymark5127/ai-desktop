@@ -1,4 +1,4 @@
-# AI Desktop
+# Mutsu OS — AI Desktop prototype
 
 **A Mac-familiar GNOME gaming desktop in development—currently a standalone assistant prototype, not yet a distribution.**
 
@@ -14,8 +14,8 @@ Our [Calm Japandi desktop reference](docs/MUTSU_DESKTOP_REFERENCE.md) describes 
 - Offline, scannable **KDE Connect iPhone/Android QR codes** in the phone-pairing step, using official app-store destinations.
 - Reversible **Mac-style GNOME dock configuration** through an already enabled Dash to Dock extension: always-on bottom dock by default, four positions, Launchpad-like Show Applications grid button; optional Activities-button hiding guidance.
 - **Standard English US / Mac English US keyboard profiles**, with Win+Space versus ⌘+Space labels, explicit GNOME layout application, and reversible input-source backup.
-- Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation.
-- Enter opens a matching app, or **asks the selected AI by default** if there is no local match. Every nonempty search also offers a visible Ask AI option. No special AI shortcut is needed; clicking elsewhere hides Spotlight. Ctrl+, or Command+, opens preferences.
+- Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation; plus bounded local-only filename and folder search in familiar home directories. Spotlight groups real results under Top Results, Files and AI Suggestions.
+- Enter opens a matching app, or **asks the selected AI by default** if there is no local match. Every nonempty search also offers a visible Ask AI option. No special AI shortcut is needed; clicking elsewhere closes an idle Spotlight (in-flight requests remain alive). Ctrl+, or Command+, opens preferences.
 - Built-in read-only diagnostics, even without an AI model.
 - **One-time, optional model-sharing permission** in setup wizard and Spotlight Settings. Off by default; when approved, Enter asks Newelle/other configured models without repeated privacy popups. Disabling it prevents future model requests; system-changing actions still need approval.
 - **Headless Newelle (default)** for local or cloud models configured once in Newelle; legacy direct Ollama, OpenAI API and Anthropic API adapters remain optional.
@@ -25,7 +25,7 @@ Our [Calm Japandi desktop reference](docs/MUTSU_DESKTOP_REFERENCE.md) describes 
 - Private history of approved AI-driven actions (no chat transcripts or diagnostic output).
 - CLI mode for development and unit tests.
 
-**Not yet implemented:** convertible/tablet posture detection, touch-first app-grid Home or swipe-up tablet navigation, automated device pairing/AI provider onboarding in the welcome wizard, OS-wide visual theming (current appearance affects only our launcher), automatic Newelle onboarding and provider switching UI, GNOME Shell overlay (Super+Space is now available through an opt-in setup script), indexed *file* search, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
+**Not yet implemented:** convertible/tablet posture detection, touch-first app-grid Home or swipe-up tablet navigation, automated device pairing/AI provider onboarding in the welcome wizard, complete OS-wide visual theming (currently the launcher/wizard and explicit GNOME wallpaper selection), automatic Newelle onboarding and provider switching UI, GNOME Shell overlay (Super+Space is now available through an opt-in setup script), full persistent file-content indexing, MCP, account-based ChatGPT/Claude login, GNOME Keyring configuration, distro ISO, app store, gaming-repair workflows, iPhone continuity, audit logs, rollback, or generalized troubleshooting. This is a prototype, not a reliable automated repair utility.
 
 ## New: working first-run welcome wizard (prototype)
 
@@ -154,6 +154,8 @@ Select the desired provider in Spotlight Settings. Before using any AI model, op
 - src/aidesktop/phone_download.py — bundled offline KDE Connect app-store QR matrices
 - src/aidesktop/search.py — freedesktop application catalog and instant ranked search
 - src/aidesktop/search_routing.py — local-first matching and safe focus-loss logic
+- src/aidesktop/file_search.py — bounded background filename-only search under user-facing home folders
+- src/aidesktop/wallpaper.py — explicit, reversible GNOME wallpaper switching to uploaded Mutsu assets
 - src/aidesktop/history.py — timestamped, private audit trail for approved actions
 - src/aidesktop/agent.py — bounded AI planner and confirmation handling
 - src/aidesktop/providers.py — model provider adapters
