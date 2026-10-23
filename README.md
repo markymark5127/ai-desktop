@@ -1,16 +1,16 @@
-# Mutsu OS — AI Desktop prototype
+# Mutsu OS
 
-**A Mac-familiar GNOME gaming desktop in development—currently a standalone assistant prototype, not yet a distribution.**
+**A Mac-familiar, adaptive Linux gaming OS in development.** The current repository implements its GNOME desktop prototype; it is not yet a separately installable distribution image.
 
 A Mac-inspired search window that lets people describe what they want in everyday language. It can inspect common Linux problems, explain findings, and request confirmation before making a supported change. The intended future base is Bazzite GNOME for gaming, but this first milestone runs as a normal GNOME application.
 
-Our [Calm Japandi desktop reference](docs/MUTSU_DESKTOP_REFERENCE.md) describes the visual direction and the [4K wallpaper upload folder](assets/wallpapers/README.md) specifies the approved asset names. Our [Adaptive Desktop vision](docs/ADAPTIVE_DESKTOP.md) adds automatic MacBook-to-iPad-like transitions on supported convertible laptops, with tablet-first app-grid Home and an explicit manual override (planned, not implemented). Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.md) makes the helper into optional Linux training wheels and supports user-adjustable explanation levels (planned, not yet built). Our [product vision](docs/PRODUCT_VISION.md) is to help Mac users feel at home on a Bazzite-based gaming PC: Spotlight-style search with headless Newelle, GNOME dock/gestures/window snapping, honest phone continuity through GSConnect/KDE Connect, approachable game support and safe system repair. Mac-like *behavior* comes before cosmetic imitation.
+See the [official naming guide](docs/BRANDING.md). Our [Calm Japandi desktop reference](docs/MUTSU_DESKTOP_REFERENCE.md) describes the visual direction and the [4K wallpaper upload folder](assets/wallpapers/README.md) specifies the approved asset names. Our [Adaptive Desktop vision](docs/ADAPTIVE_DESKTOP.md) adds automatic MacBook-to-iPad-like transitions on supported convertible laptops, with tablet-first app-grid Home and an explicit manual override (planned, not implemented). Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.md) makes the helper into optional Linux training wheels and supports user-adjustable explanation levels (planned, not yet built). Our [product vision](docs/PRODUCT_VISION.md) is to help Mac users feel at home on a Bazzite-based gaming PC: Spotlight-style search with headless Newelle, GNOME dock/gestures/window snapping, honest phone continuity through GSConnect/KDE Connect, approachable game support and safe system repair. Mac-like *behavior* comes before cosmetic imitation.
 
 ## Working in this first version
 
 - **Compact translucent Spotlight-style search bar** with no permanent titlebar/chat pane. App matches and replies expand only as needed; appearance/provider/setup live in a small preferences popover. See [Spotlight UI](docs/SPOTLIGHT_UI.md).
 - GTK4 / libadwaita first-run wizard with switchable Japandi, Cyberpunk or System appearance, edge-to-edge styling and optional Mac controls.
-- Mac-style red/yellow/green window controls on the **upper left** of AI Desktop, plus a reversible, optional left-side window-button setting for other compatible GNOME apps.
+- Mac-style red/yellow/green window controls on the **upper left** of Mutsu OS, plus a reversible, optional left-side window-button setting for other compatible GNOME apps.
 - Offline, scannable **KDE Connect iPhone/Android QR codes** in the phone-pairing step, using official app-store destinations.
 - Reversible **Mac-style GNOME dock configuration** through an already enabled Dash to Dock extension: always-on bottom dock by default, four positions, Launchpad-like Show Applications grid button; optional Activities-button hiding guidance.
 - **Standard English US / Mac English US keyboard profiles**, with Win+Space versus ⌘+Space labels, explicit GNOME layout application, and reversible input-source backup.
@@ -29,7 +29,7 @@ Our [Calm Japandi desktop reference](docs/MUTSU_DESKTOP_REFERENCE.md) describes 
 
 ## New: working first-run welcome wizard (prototype)
 
-On first graphical launch, AI Desktop opens a skippable **Mac-to-Linux welcome wizard**. In the compact Spotlight launcher, click the small preferences icon or press Ctrl+, and choose **Setup & keyboard settings…** to reopen it:
+On first graphical launch, Mutsu OS opens a skippable **Mac-to-Linux welcome wizard**. In the compact Spotlight launcher, click the small preferences icon or press Ctrl+, and choose **Setup & keyboard settings…** to reopen it:
 
     bash scripts/run-dev.sh --setup
     bash scripts/run-dev.sh --setup-status
@@ -90,12 +90,12 @@ This changes GNOME's input-source shortcut if it conflicts. The installer saves 
 
     python3 scripts/shortcut.py --restore
 
-The script is opt-in; inspect it first if you prefer. This is still a standalone window, not a custom GNOME Shell overlay. If you already use Super+Space to switch languages, expect that behavior to change while AI Desktop is bound.
+The script is opt-in; inspect it first if you prefer. This is still a standalone window, not a custom GNOME Shell overlay. If you already use Super+Space to switch languages, expect that behavior to change while Mutsu OS is bound.
 
 **During active development**, Git pulls do not replace an already-running,
 hidden GNOME application instance. To make sure new UI code is actually
 running, use `bash scripts/restart-dev.sh`, which stops only your current
-user's AI Desktop Python module process, then launches the updated source.
+user's Mutsu OS Python module process, then launches the updated source.
 It does not stop Newelle. The **Setup & keyboard settings…** item uses an
 application action, and `bash scripts/run-dev.sh --setup` is forwarded
 correctly to the existing primary instance (after restarting old instances
@@ -103,17 +103,17 @@ at least once to load the updated handler).
 
 ### Recommended: headless Newelle on Bazzite GNOME
 
-Newelle manages your model configuration while AI Desktop owns the Spotlight
+Newelle manages your model configuration while Mutsu OS owns the Spotlight
 UI, system tools and approvals. **No fork is needed.**
 
 Follow **[Headless Newelle setup](docs/NEWELLE_SETUP.md)** to install the Flatpak,
-set a localhost-only GUI API with authentication, connect the AI Desktop client,
+set a localhost-only GUI API with authentication, connect the Mutsu OS client,
 and optionally enable an automatic systemd **user service**. With it running,
 select **Newelle (recommended)** in Spotlight's preferences popover (gear icon / Ctrl+,).
 
 This integration intentionally uses only the non-agent model endpoint:
 Newelle does **not** get to run system commands or MCP tools behind our
-permission interface. AI Desktop validates requests, proposes changes and asks
+permission interface. Mutsu OS validates requests, proposes changes and asks
 permission before modifying settings. The full Newelle agent/MCP pipeline is
 not connected yet.
 
@@ -187,15 +187,15 @@ from the Applications grid and workspace overview.
 
 ## Keyboard setup
 
-Choose **Standard US · Win** or **Mac US · ⌘ Command** in AI Desktop's Keyboard selector. On typical Apple keyboards, ⌘ Command already sends the Linux **Super** modifier. The Spotlight shortcut is always the same Super+Space binding; it appears as Win+Space or ⌘+Space depending on the physical keyboard.
+Choose **Standard US · Win** or **Mac US · ⌘ Command** in Mutsu OS's Keyboard selector. On typical Apple keyboards, ⌘ Command already sends the Linux **Super** modifier. The Spotlight shortcut is always the same Super+Space binding; it appears as Win+Space or ⌘+Space depending on the physical keyboard.
 
-The **Apply layout to GNOME** button is an optional, separately confirmed system change. It prefers `us` or `us+mac` while preserving other input languages and saving a reversible backup. **Restore layout** restores the prior list. Switching profiles by itself changes only AI Desktop's labels and preference, not your OS keymap. It does not globally remap Command+C/V to Ctrl+C/V.
+The **Apply layout to GNOME** button is an optional, separately confirmed system change. It prefers `us` or `us+mac` while preserving other input languages and saving a reversible backup. **Restore layout** restores the prior list. Switching profiles by itself changes only Mutsu OS's labels and preference, not your OS keymap. It does not globally remap Command+C/V to Ctrl+C/V.
 
 Full detail: [Keyboard setup / physical Command key behavior](docs/KEYBOARD_PROFILES.md). The first-login setup wizard will include this choice.
 
 ## Appearance
 
-Select **Japandi**, **Cyberpunk** or **System** from the small settings icon inside Spotlight (or the setup wizard). Japandi remains the first-run default with its original rounded corners and soft neutral palette. **Cyberpunk** now has deliberately squared panels, neon cyan/magenta outlines, glow effects and monospace/pixel-font fallback. Both AI Desktop windows have dedicated **13px circular red/yellow/green** functional titlebar controls, rather than resized GNOME buttons. Colors remain app-scoped, not OS-wide. See [Theme design](docs/THEMES.md).
+Select **Japandi**, **Cyberpunk** or **System** from the small settings icon inside Spotlight (or the setup wizard). Japandi remains the first-run default with its original rounded corners and soft neutral palette. **Cyberpunk** now has deliberately squared panels, neon cyan/magenta outlines, glow effects and monospace/pixel-font fallback. Both Mutsu OS windows have dedicated **13px circular red/yellow/green** functional titlebar controls, rather than resized GNOME buttons. Colors remain app-scoped, not OS-wide. See [Theme design](docs/THEMES.md).
 
 ## Keyboard usage
 
