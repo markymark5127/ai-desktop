@@ -8,13 +8,15 @@ chmod +x "$HOME/.local/bin/ai-desktop"
 cat > "$HOME/.local/share/applications/io.github.markymark5127.AIDesktop.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=Mutsu Search
-Comment=Mutsu OS Spotlight-style application, file and AI search
+Name=Mutsu OS Search
+GenericName=Application, File and AI Search
+Comment=Search Mutsu OS applications, local files and the selected AI
+Keywords=Mutsu;Mutsu OS;Spotlight;Search;AI;Files;
 Exec=$HOME/.local/bin/ai-desktop
 Icon=system-search-symbolic
 Terminal=false
 Categories=Utility;System;
 StartupNotify=true
 EOF
-echo "Installed AI Desktop launcher at $HOME/.local/bin/ai-desktop"
+echo "Installed Mutsu OS Search launcher at $HOME/.local/bin/ai-desktop"
 echo "To use Super+Space, configure a custom shortcut in GNOME Settings > Keyboard."
