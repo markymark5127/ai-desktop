@@ -41,7 +41,7 @@ class SpotlightLifecycleTests(unittest.TestCase):
         self.assertIn('self._append_heading("Top Results")', update)
         self.assertIn('self._append_heading("Files")', update)
         self.assertIn('self._append_heading("AI Suggestions")', update)
-        self.assertIn('"Ask Mutsu AI"', update)
+        self.assertIn('f"Ask {AI_NAME}"', update)
         self.assertIn("self.results_divider.set_visible(False)", update)
         self.assertIn("self.selectable_indices[0]", update)
         self.assertIn("self.selectable_indices", key)
