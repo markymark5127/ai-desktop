@@ -34,6 +34,7 @@ For a headless check of locally saved user options:
 | AI connection | User-initiated check of authenticated loopback Newelle GUI API; links to setup guide | Automatic installation/provider onboarding with usable provider selection |
 | Phone pairing | iPhone/Android/skip choice with **offline app-store QR codes** for KDE Connect; inspect GSConnect availability; open its preferences | Actual in-wizard pairing and phone diagnostics |
 | Gaming and desktop | Shows whether Steam is installed; one-click explicit open if found; tiling guidance | Full Bazzite integration, Steam/Proton controller diagnostics and quarter-tiling extensions |
+| Adaptive Desktop / tablet posture | **Not implemented** — planned mode choice in future onboarding | Automatic detection, app-grid Home, swipe-to-Home, larger touch UI, maximized apps and safe switch back |
 
 **No promise of full AirDrop, Universal Clipboard, SMS, iMessage, or always-on
 iPhone sync.** KDE Connect on iOS is limited by iOS background and sandbox rules.
@@ -41,6 +42,10 @@ iPhone sync.** KDE Connect on iOS is limited by iOS background and sandbox rules
 **No app installs or root commands are performed** by the wizard. Dash to Dock settings are changed only after selecting Apply and confirming, and the previous dock configuration is backed up. Hiding Activities is still manual through a compatible Just Perfection extension. It does not
 automatically replace GNOME shortcut bindings, modify the XKB layout, pair a
 phone, or initialize Newelle without user input.
+
+## Planned adaptive desktop onboarding
+
+The final distro will detect capable 2-in-1 hardware where the Linux kernel/libinput exposes a real tablet-mode switch, demonstrate touch-first app-grid Home, and offer Automatic / Always Desktop / Always Tablet preferences. If there is no reliable switch, users need a manual mode toggle. It must never force tablet mode just because a touchscreen is present. **This is only a future requirement, not available in today's wizard.** See [ADAPTIVE_DESKTOP.md](ADAPTIVE_DESKTOP.md).
 
 ## Installer and recent wizard polish
 
