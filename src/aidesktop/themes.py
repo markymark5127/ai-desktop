@@ -33,10 +33,10 @@ COMMON = """
 .ai-desktop scrolledwindow {
   border-radius: 12px;
 }
-.ai-desktop listbox {
+.ai-desktop list {
   border-radius: 12px;
 }
-.ai-desktop listbox row {
+.ai-desktop list row {
   border-radius: 8px;
 }
 .ai-desktop button {
@@ -103,12 +103,12 @@ window.ai-desktop-window.japandi headerbar {
   border: 1px solid #c6c7b7;
   box-shadow: none;
 }
-.ai-desktop.japandi listbox {
+.ai-desktop.japandi list {
   background-color: #fffcf6;
   color: #303832;
   border: 1px solid #d9d7cc;
 }
-.ai-desktop.japandi listbox row:selected {
+.ai-desktop.japandi list row:selected {
   background-color: #dce5d9;
   color: #263b2d;
 }
@@ -183,22 +183,22 @@ window.ai-desktop-window.cyberpunk headerbar dropdown > button {
   box-shadow: 0 0 12px rgba(255,54,186,0.55);
 }
 .ai-desktop.cyberpunk scrolledwindow,
-.ai-desktop.cyberpunk listbox,
+.ai-desktop.cyberpunk list,
 .ai-desktop.cyberpunk box,
 .ai-desktop.cyberpunk stack {
   border-radius: 0;
 }
-.ai-desktop.cyberpunk listbox {
+.ai-desktop.cyberpunk list {
   color: #e9fdff;
   background-color: #0c1427;
   border: 1px solid #00f5ff;
   box-shadow: 0 0 10px rgba(0,245,255,0.18);
 }
-.ai-desktop.cyberpunk listbox row {
+.ai-desktop.cyberpunk list row {
   border-radius: 0;
   border-bottom: 1px solid rgba(0,245,255,0.20);
 }
-.ai-desktop.cyberpunk listbox row:selected {
+.ai-desktop.cyberpunk list row:selected {
   background-color: #2e1440;
   color: #ffffff;
   border-left: 3px solid #ff36ba;
@@ -311,21 +311,50 @@ window.spotlight-window .ai-desktop.spotlight-shell .spotlight-approval {
    themed translucent Spotlight panel instead of forming a white rectangle. */
 window.spotlight-window .ai-desktop.spotlight-shell scrolledwindow.spotlight-scroll,
 window.spotlight-window .ai-desktop.spotlight-shell scrolledwindow.spotlight-scroll > viewport,
-window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list,
-window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row {
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list,
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row {
   background: transparent;
   background-image: none;
   border: none;
   box-shadow: none;
 }
-window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list {
-  padding: 3px 1px 5px;
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list {
+  padding: 2px 1px 9px;
 }
-window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row {
+/* A calm native spotlight grouping rhythm. Section headers are not rows
+   that can be activated, and never draw a highlighted selection. */
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row.spotlight-section-row {
+  background: transparent;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+  padding: 2px 0 0;
+  min-height: 26px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-section-heading {
+  font-weight: 600;
+  font-size: 12px;
+  opacity: 0.72;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-result-subtitle {
+  font-size: 12px;
+  opacity: 0.76;
+}
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row.spotlight-result-row {
+  min-height: 55px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row.spotlight-ask-row {
+  min-height: 61px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-results {
+  border-radius: 12px;
+  background: transparent;
+}
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row {
   margin: 2px 0;
   min-height: 46px;
 }
-window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row.spotlight-ask-row {
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row.spotlight-ask-row {
   min-height: 70px;
 }
 window.spotlight-window .ai-desktop.spotlight-shell .spotlight-ai-only {
@@ -338,7 +367,7 @@ window.spotlight-window .ai-desktop.spotlight-shell .spotlight-ask-title {
 window.spotlight-window .ai-desktop.spotlight-shell .spotlight-ask-subtitle {
   font-size: 12px;
 }
-window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row:focus-visible {
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: -2px;
 }
@@ -367,12 +396,12 @@ window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output {
 }
 window.spotlight-window .ai-desktop.spotlight-shell scrolledwindow.spotlight-scroll,
 window.spotlight-window .ai-desktop.spotlight-shell scrolledwindow.spotlight-scroll > viewport,
-window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list,
-window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row:not(:selected) {
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list,
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row:not(:selected) {
   background: transparent;
   color: #f8f9fc;
 }
-window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row:selected {
+window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row:selected {
   background-color: rgba(255,255,255,0.18);
   border-radius: 10px;
 }
@@ -395,27 +424,33 @@ window.spotlight-window .ai-desktop.spotlight-shell.japandi textview.spotlight-o
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi scrolledwindow.spotlight-scroll,
 window.spotlight-window .ai-desktop.spotlight-shell.japandi scrolledwindow.spotlight-scroll > viewport,
-window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list,
-window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list row:not(:selected) {
+window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list,
+window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:not(:selected) {
   background: transparent;
   background-image: none;
   border: none;
   color: #303832;
 }
-window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list row {
+window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row {
   border-radius: 12px;
   color: #303832;
 }
-window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list row:hover:not(:selected) {
+window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:hover:not(:selected) {
   background: rgba(81, 107, 92, 0.08);
 }
-window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list row:selected {
+window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:selected {
   background-color: rgba(81, 107, 92, 0.18);
   color: #263b2d;
   border-radius: 12px;
 }
-window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list row:selected label {
+window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:selected label {
   color: #263b2d;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi .spotlight-section-heading {
+  color: #646a5c;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row.spotlight-section-row {
+  border-radius: 0;
 }
 """,
     "cyberpunk": SPOTLIGHT_COMMON + """
@@ -438,23 +473,29 @@ window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk textview.spotlight
 }
 window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk scrolledwindow.spotlight-scroll,
 window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk scrolledwindow.spotlight-scroll > viewport,
-window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list,
-window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list row:not(:selected) {
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk list.spotlight-list,
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk list.spotlight-list row:not(:selected) {
   background: transparent;
   border: none;
   color: #ebfdff;
 }
-window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list row {
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk list.spotlight-list row {
   border-radius: 0;
   color: #ebfdff;
 }
-window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list row:hover:not(:selected) {
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk list.spotlight-list row:hover:not(:selected) {
   background-color: rgba(0, 245, 255, 0.10);
 }
-window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list row:selected {
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk list.spotlight-list row:selected {
   background-color: rgba(255, 54, 186, 0.25);
   border-left: 3px solid #ff36ba;
   border-radius: 0;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk .spotlight-section-heading {
+  color: #00f5ff;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-family: monospace;
 }
 """,
 }
