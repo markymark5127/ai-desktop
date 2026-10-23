@@ -84,6 +84,8 @@ class SetupWizard(Adw.ApplicationWindow):
         body.append(self.progress)
 
         self.stack = Gtk.Stack()
+        # Don't force all pages to retain the height of the tallest step.
+        self.stack.set_vhomogeneous(False)
         self.stack.set_transition_type(Gtk.StackTransitionType.SLIDE_LEFT_RIGHT)
         self.stack.set_transition_duration(180)
 
