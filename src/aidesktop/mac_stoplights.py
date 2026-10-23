@@ -42,7 +42,6 @@ def install_stoplights(window: Gtk.Window, header: Gtk.HeaderBar) -> Gtk.Box:
         button.set_hexpand(False)
         button.set_vexpand(False)
         button.set_tooltip_text(title)
-        button.set_accessible_role(Gtk.AccessibleRole.BUTTON)
         button.update_property([Gtk.AccessibleProperty.LABEL], [title])
         button.connect("clicked", lambda _button, action=callback: action())
         controls.append(button)
