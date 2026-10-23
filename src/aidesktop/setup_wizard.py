@@ -57,6 +57,7 @@ class SetupWizard(Adw.ApplicationWindow):
         self.add_css_class("ai-desktop-window")
         root = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         root.add_css_class("ai-desktop")
+        self.theme_root = root
         toolbar = Adw.ToolbarView()
         self.set_content(toolbar)
         toolbar.set_content(root)
@@ -149,6 +150,11 @@ class SetupWizard(Adw.ApplicationWindow):
         return label
 
     def _apply_theme(self, name: str) -> None:
+        for theme in ("japandi", "cyberpunk", "system"):
+            self.remove_css_class(theme)
+            self.theme_root.remove_css_class(theme)
+        self.add_css_class(name)
+        self.theme_root.add_css_class(name)
         manager = Adw.StyleManager.get_default()
         accessible = manager.get_high_contrast()
         self.css.load_from_data(("" if accessible else STYLES[name]).encode("utf-8"))
