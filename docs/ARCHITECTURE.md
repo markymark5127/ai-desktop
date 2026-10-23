@@ -4,7 +4,7 @@
 
 GNOME/libadwaita GUI (Japandi/Cyberpunk/System themes) -> provider-independent Agent -> explicit tool registry -> OS.
 
-The prototype is a GNOME **application** with a future Shell extension. It is not a custom GNOME fork or a new desktop environment. A customized signed Bazzite GNOME OS image may be built later for distribution, preserving the reusable desktop assistant as a standalone app.
+The prototype is a GNOME **application** with a future Shell extension. The proposed [Adaptive Desktop](ADAPTIVE_DESKTOP.md) is a **GNOME Shell integration** layered on the same session; it will respond to reliable libinput tablet posture events to show app-grid Home, touch navigation, maximize-on-launch and reversible appearance presets, without creating a separate window manager or app launcher. It is not a custom GNOME fork or a new desktop environment. A customized signed Bazzite GNOME OS image may be built later for distribution, preserving the reusable desktop assistant as a standalone app.
 Inference providers: **headless Newelle GUI API** (default), built-in routing, optional direct local Ollama, OpenAI API and Anthropic API. Newelle is separately installed and managed via a systemd user service (optional).
 
 ## Current prototype
@@ -35,3 +35,4 @@ Inference providers: **headless Newelle GUI API** (default), built-in routing, o
 5. GNOME keyring credentials, supported account-auth flows and redaction.
 6. Gaming tools and Bazzite GNOME image customization.
 7. Phone continuity integration where iOS allows it.
+8. Adaptive Desktop hardware posture bridge and GNOME Shell touch-first Home, with manual override, accessibility preservation, reversible desktop state and physical convertible QA.
