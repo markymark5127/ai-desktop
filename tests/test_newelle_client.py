@@ -74,7 +74,16 @@ class NewelleTests(unittest.TestCase):
             'AIDESKTOP_NEWELLE_PORT': str(self.server.server_port),
             'AIDESKTOP_NEWELLE_API_KEY': 'test-private-key',
         }):
-            self.assertIn('model replied successfully', probe())
+            with patch('aidesktop.newelle_client.model_sharing_allowed', return_value=True):
+                self.assertIn('model replied successfully', probe())
+
+    def test_explicit_probe_respects_consent(self):
+        from aidesktop.newelle_client import test_newelle as probe
+        with patch('aidesktop.newelle_client.model_sharing_allowed', return_value=False):
+            with patch('aidesktop.newelle_client._request') as network:
+                with self.assertRaisesRegex(NewelleError, 'Model sharing is disabled'):
+                    probe()
+                network.assert_not_called()
 
     def test_empty_model_reply_is_actionable(self):
         from aidesktop.newelle_client import complete_newelle
