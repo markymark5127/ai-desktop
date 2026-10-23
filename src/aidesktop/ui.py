@@ -22,6 +22,7 @@ from .search import AppResult, list_applications
 from .search_routing import route_query, should_hide_on_focus_loss
 from .file_search import FileResult, list_local_files, search_local_files
 from .wallpaper import WallpaperError, apply_theme_wallpaper
+from .branding import SEARCH_NAME, AI_NAME
 from .newelle_client import NewelleError, test_newelle
 from .tools import run_tool
 from .themes import (
@@ -48,7 +49,7 @@ class AssistantWindow(Adw.ApplicationWindow):
 
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
-        self.set_title("Mutsu Search")
+        self.set_title(SEARCH_NAME)
         self.set_default_size(640, -1)
         self.set_decorated(False)
         # Gtk.Window:is-active becomes False after another app or the desktop
@@ -92,7 +93,7 @@ class AssistantWindow(Adw.ApplicationWindow):
 
         self.entry = Gtk.Entry()
         self.entry.add_css_class("spotlight-entry")
-        self.entry.set_placeholder_text("Search apps, files, or ask Mutsu AI…")
+        self.entry.set_placeholder_text(f"Search apps, files, or ask {AI_NAME}…")
         self.entry.set_icon_from_icon_name(
             Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic"
         )
@@ -611,7 +612,7 @@ class AssistantWindow(Adw.ApplicationWindow):
                 chosen, "assistant"
             ).replace(" (recommended)", "")
             row = self._make_result(
-                "Ask Mutsu AI",
+                f"Ask {AI_NAME}",
                 f"Via {provider} · {route.query[:75]}",
                 "dialog-question-symbolic",
                 css_class="spotlight-ask-row",
