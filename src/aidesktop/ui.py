@@ -17,7 +17,9 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 
 from .agent import Agent, AgentResponse, PendingAction
-from .search import AppResult, list_applications, search_applications
+from .search import AppResult, list_applications
+from .search_routing import route_query, should_hide_on_focus_loss
+from .newelle_client import NewelleError, test_newelle
 from .tools import run_tool
 from .themes import (
     THEME_LABELS, STYLES, SCHEMES, SPOTLIGHT_STYLES,
@@ -43,11 +45,19 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.set_title("AI Desktop Spotlight")
         self.set_default_size(640, -1)
         self.set_decorated(False)
+        # Gtk.Window:is-active becomes False after another app or the desktop
+        # receives focus. A short deferred check avoids closing for our own
+        # preferences popover and permission dialogs.
+        self.connect("notify::is-active", self._on_active_changed)
         self.agent = Agent()
         self.pending: PendingAction | None = None
         self.catalog: list[AppResult] = list_applications()
         self.matches: list[AppResult] = []
+        self.targets: list[AppResult | None] = []
         self.busy = False
+        self._ever_active = False
+        self._privacy_dialog_open = False
+        self._pending_dismiss = False
         self._launching = False
         self.add_css_class("ai-desktop-window")
         self.add_css_class("spotlight-window")
@@ -180,12 +190,26 @@ class AssistantWindow(Adw.ApplicationWindow):
         menu.append(self.setup_button)
         self.shortcut_hint = Gtk.Label(
             label=f"Spotlight: {shortcut_label(get_profile())}  ·  "
-                  "Enter: open  ·  Ctrl/⌘+Enter: ask  ·  Esc: close"
+                  "Enter: open/ask  ·  Esc: close"
         )
         self.shortcut_hint.add_css_class("dim-label")
         self.shortcut_hint.set_wrap(True)
         menu.append(self.shortcut_hint)
+        self.model_status = Gtk.Label(
+            label="Newelle connection not checked.", xalign=0
+        )
+        self.model_status.set_wrap(True)
+        self.model_status.add_css_class("dim-label")
+        menu.append(self.model_status)
+        self.model_test_button = Gtk.Button(label="Test Newelle connection + reply")
+        self.model_test_button.set_tooltip_text(
+            "Sends a short, non-personal test prompt to Newelle's selected model"
+        )
+        self.model_test_button.connect("clicked", self._test_newelle)
+        menu.append(self.model_test_button)
         self.settings.set_child(menu)
+        self.choice.connect("notify::selected", self._on_provider_changed)
+        self.settings.connect("closed", self._on_settings_closed)
 
         active_theme = load_theme()
         self.theme_choice.set_selected(
@@ -195,6 +219,60 @@ class AssistantWindow(Adw.ApplicationWindow):
         self._apply_theme(active_theme)
         self.theme_choice.connect("notify::selected", self._on_theme_changed)
         self.entry.grab_focus()
+
+    def _on_active_changed(self, *_unused) -> None:
+        if self.is_active():
+            self._ever_active = True
+            return
+        if self._ever_active and not self._pending_dismiss:
+            self._pending_dismiss = True
+            GLib.timeout_add(150, self._dismiss_if_unfocused)
+
+    def _dismiss_if_unfocused(self) -> bool:
+        self._pending_dismiss = False
+        if should_hide_on_focus_loss(
+            activated_once=self._ever_active,
+            is_active=self.is_active(),
+            is_visible=self.get_visible(),
+            modal_dialog=self._privacy_dialog_open,
+            settings_open=self.settings.get_visible(),
+        ):
+            # Hide instead of destroy, so background inference and approval
+            # state survive. The next shortcut activation reuses this window.
+            self.hide()
+        return GLib.SOURCE_REMOVE
+
+    def _on_settings_closed(self, *_unused) -> None:
+        if not self.is_active() and self.get_visible():
+            GLib.timeout_add(150, self._dismiss_if_unfocused)
+
+    def prepare_activation(self) -> None:
+        if not self.busy and self.pending is None:
+            self.entry.set_text("")
+            self.response_section.set_visible(False)
+            self.results_section.set_visible(False)
+            self._relayout()
+
+    def _on_provider_changed(self, *_unused) -> None:
+        self._update_results()
+
+    def _test_newelle(self, *_unused) -> None:
+        self.model_test_button.set_sensitive(False)
+        self.model_status.set_text("Checking API and test inference…")
+
+        def worker() -> None:
+            try:
+                message = test_newelle()
+            except NewelleError as exc:
+                message = f"Newelle isn't ready: {exc}"
+            GLib.idle_add(self._show_newelle_status, message)
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _show_newelle_status(self, message: str) -> bool:
+        self.model_status.set_text(message)
+        self.model_test_button.set_sensitive(True)
+        return GLib.SOURCE_REMOVE
 
     def _apply_theme(self, theme: str) -> None:
         for name in ("japandi", "cyberpunk", "system"):
@@ -228,7 +306,7 @@ class AssistantWindow(Adw.ApplicationWindow):
     def _show_settings(self) -> None:
         self.shortcut_hint.set_label(
             f"Spotlight: {shortcut_label(get_profile())}  ·  "
-            "Enter: open  ·  Ctrl/⌘+Enter: ask  ·  Esc: close"
+            "Enter: open/ask  ·  Esc: close"
         )
         self.settings_button.popup()
 
@@ -269,24 +347,17 @@ class AssistantWindow(Adw.ApplicationWindow):
         self._update_results()
 
     def _update_results(self) -> None:
-        query = self.entry.get_text().strip()
-        if query.lower().startswith(("open ", "launch ")):
-            query = query.split(" ", 1)[1].strip()
-        if not query or query.lower().startswith("ask ") or "?" in query or len(query.split()) > 4:
-            self.matches = []
-        else:
-            self.matches = search_applications(
-                query, limit=5, apps=self.catalog
-            )
-
+        # Application/future-file search is purely local. The AI fallback is
+        # offered as the last row, never sent while the user is still typing.
+        route = route_query(self.entry.get_text(), self.catalog, limit=5)
+        self.matches = list(route.apps)
+        self.targets = []
         while child := self.results.get_row_at_index(0):
             self.results.remove(child)
 
         for app in self.matches:
             row = Gtk.ListBoxRow()
-            content = Gtk.Box(
-                orientation=Gtk.Orientation.HORIZONTAL, spacing=12
-            )
+            content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
             content.set_margin_top(8)
             content.set_margin_bottom(8)
             content.set_margin_start(14)
@@ -294,24 +365,41 @@ class AssistantWindow(Adw.ApplicationWindow):
             image = Gtk.Image.new_from_icon_name(app.icon)
             image.set_pixel_size(24)
             content.append(image)
-            labels = Gtk.Box(
-                orientation=Gtk.Orientation.VERTICAL, spacing=2
-            )
-            name = Gtk.Label(label=app.name, xalign=0)
-            labels.append(name)
+            labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
+            labels.append(Gtk.Label(label=app.name, xalign=0))
             if app.description:
-                subtitle = Gtk.Label(
-                    label=app.description[:90], xalign=0
-                )
+                subtitle = Gtk.Label(label=app.description[:90], xalign=0)
                 subtitle.add_css_class("dim-label")
                 subtitle.set_ellipsize(Pango.EllipsizeMode.END)
                 labels.append(subtitle)
             content.append(labels)
             row.set_child(content)
             self.results.append(row)
+            self.targets.append(app)
 
-        self.results_section.set_visible(bool(self.matches))
-        if self.matches:
+        if route.offer_ai:
+            row = Gtk.ListBoxRow()
+            row.add_css_class("spotlight-ask-row")
+            content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
+            content.set_margin_top(9)
+            content.set_margin_bottom(9)
+            content.set_margin_start(14)
+            content.set_margin_end(14)
+            icon = Gtk.Image.new_from_icon_name("dialog-question-symbolic")
+            icon.set_pixel_size(24)
+            content.append(icon)
+            chosen = self._provider()
+            provider_name = dict((key, label) for label, key in CHOICES).get(chosen, "assistant")
+            label = Gtk.Label(label=f"Ask {provider_name}: {route.query[:68]}", xalign=0)
+            label.set_ellipsize(Pango.EllipsizeMode.END)
+            label.set_hexpand(True)
+            content.append(label)
+            row.set_child(content)
+            self.results.append(row)
+            self.targets.append(None)
+
+        self.results_section.set_visible(bool(self.targets))
+        if self.targets:
             self.results.select_row(self.results.get_row_at_index(0))
         self._relayout()
 
@@ -322,20 +410,17 @@ class AssistantWindow(Adw.ApplicationWindow):
             else:
                 self.close()
             return True
-        # The Mac Command key normally sends Super; support macOS-style
-        # Command+, and Command+Return alongside their Ctrl equivalents.
-        if state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SUPER_MASK):
-            if keyval == Gdk.KEY_comma:
-                self._show_settings()
-                return True
-            if keyval in (Gdk.KEY_Return, Gdk.KEY_KP_Enter):
-                self._ask_ai()
-                return True
-        if keyval in (Gdk.KEY_Down, Gdk.KEY_Up) and self.matches:
+        # Enter is enough for both launch and AI; there is no special AI
+        # hotkey. Only Settings retains its Ctrl/Command+, shortcut.
+        if (state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SUPER_MASK)
+                and keyval == Gdk.KEY_comma):
+            self._show_settings()
+            return True
+        if keyval in (Gdk.KEY_Down, Gdk.KEY_Up) and self.targets:
             current = self.results.get_selected_row()
             idx = current.get_index() if current else 0
             delta = 1 if keyval == Gdk.KEY_Down else -1
-            idx = max(0, min(idx + delta, len(self.matches) - 1))
+            idx = max(0, min(idx + delta, len(self.targets) - 1))
             self.results.select_row(self.results.get_row_at_index(idx))
             return True
         return False
@@ -344,17 +429,21 @@ class AssistantWindow(Adw.ApplicationWindow):
         query = self.entry.get_text().strip()
         if not query:
             return
-        if self.matches and not query.lower().startswith("ask "):
-            row = self.results.get_selected_row()
-            idx = row.get_index() if row else 0
-            self._open_app(self.matches[idx])
+        row = self.results.get_selected_row()
+        idx = row.get_index() if row else 0
+        if 0 <= idx < len(self.targets) and self.targets[idx] is not None:
+            self._open_app(self.targets[idx])
         else:
             self._ask_ai()
 
     def _on_result_activated(self, _list_box, row) -> None:
         idx = row.get_index()
-        if 0 <= idx < len(self.matches):
-            self._open_app(self.matches[idx])
+        if 0 <= idx < len(self.targets):
+            app = self.targets[idx]
+            if app is not None:
+                self._open_app(app)
+            else:
+                self._ask_ai()
 
     def _open_app(self, app: AppResult) -> None:
         self.pending = None
@@ -377,6 +466,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.pending = None
         self._launching = False
         if provider in ("newelle", "openai", "anthropic"):
+            self._privacy_dialog_open = True
             dialog = Gtk.MessageDialog(
                 transient_for=self, modal=True,
                 message_type=Gtk.MessageType.QUESTION,
@@ -393,6 +483,7 @@ class AssistantWindow(Adw.ApplicationWindow):
 
             def decide(dlg, response_id):
                 dlg.destroy()
+                self._privacy_dialog_open = False
                 if response_id == Gtk.ResponseType.OK:
                     self._execute(lambda: self.agent.ask(query, provider))
 
@@ -460,15 +551,21 @@ class AssistantApp(Adw.Application):
         window.entry.grab_focus()
 
     def do_activate(self) -> None:
-        window = self.props.active_window
-        if not window:
-            from .onboarding import is_setup_done
-            if self.force_setup or not is_setup_done():
-                from .setup_wizard import SetupWizard
-                window = SetupWizard(self, on_done=self._show_launcher)
-                self.force_setup = False
-            else:
-                window = AssistantWindow(self)
+        from .onboarding import is_setup_done
+        if self.force_setup or not is_setup_done():
+            from .setup_wizard import SetupWizard
+            wizard = next((w for w in self.get_windows() if isinstance(w, SetupWizard)), None)
+            if wizard is None:
+                wizard = SetupWizard(self, on_done=self._show_launcher)
+            self.force_setup = False
+            wizard.present()
+            return
+        # Hidden Spotlight survives focus loss, preserving in-flight Newelle
+        # responses; the next Super+Space activation presents the same window.
+        window = next((w for w in self.get_windows() if isinstance(w, AssistantWindow)), None)
+        if window is None:
+            window = AssistantWindow(self)
+        else:
+            window.prepare_activation()
         window.present()
-        if isinstance(window, AssistantWindow):
-            window.entry.grab_focus()
+        window.entry.grab_focus()
