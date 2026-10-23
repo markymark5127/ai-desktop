@@ -36,6 +36,19 @@ See [Adaptive Desktop design and implementation specification](ADAPTIVE_DESKTOP.
 - Restore laptop dock/window/scale behavior when unfolding without overwriting changed user settings; handle suspend/resume and unreliable switches.
 - Evaluate Touchshell/TouchUp as GNOME-version-pinned prototypes, avoiding conflicting gesture extensions; test on actual Yoga-class hardware rather than assuming VM detection.
 
+## Mutsu OS system-wide branding
+
+- [x] Centralize product name and user-visible Mutsu Search app label
+- [x] Install primary Mutsu emblem as a user-scoped app icon when uploaded
+- [x] Add read-only SVG inventory and three core icon filename requirements
+- [x] Scaffold *experimental, opt-in* Bazzite GNOME-derived image overlay for Mutsu OS name/LOGO, GDM greeter mark and wallpaper assets
+- [ ] Upload the approved circular symbol, monochrome symbolic logo, and horizontal wordmark SVGs to `assets/icons/`
+- [ ] Boot-test image, GNOME About and GDM login in a disposable VM with upstream-compatible updates/rollback
+- [ ] Create and integrate an approved Plymouth boot splash from the existing two-wave mark
+- [ ] Brand the installer/ISO, GNOME Shell top bar and tablet Home without breaking the existing session or upstream attribution
+
+See [system-branding build guide](../packaging/mutsu-image/README.md) and [icon inventory](../assets/icons/README.md).
+
 ## Mac-familiar desktop experience (cross-cutting milestones)
 - Design for Mac-to-Linux migration and Steam/Proton gaming; see [Product vision](PRODUCT_VISION.md).
 - Reversible Mac dock configurator now implemented for an already enabled Dash to Dock GNOME extension (Bottom/Left/Right/Top, always-on default, Show Applications/Launchpad grid). The install wizard page is included. See [DOCK.md](DOCK.md).
