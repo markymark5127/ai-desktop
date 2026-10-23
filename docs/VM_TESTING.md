@@ -52,13 +52,14 @@ bash scripts/run-dev.sh --setup-status
 
 The **first launch automatically opens the skippable welcome wizard**.
 Work through the theme, keyboard, helper, Newelle status, GSConnect and Steam
-steps. To re-open it later, click **Setup** in the launcher. See
+steps. To re-open it later, press Ctrl+, in the search bar (or click the small preferences icon) and choose **Setup & keyboard settings…**. See
 [ONBOARDING.md](ONBOARDING.md) for the regression checklist and exact privacy
 boundaries.
 
-- Search for a GNOME application by name. Type a few letters; press Enter.
-- Try "my sound is not working" with **Built-in (offline)** selected.
-- Change the appearance between **Japandi**, **Cyberpunk**, and **System**, checking that none exposes an unthemed white border. Cyberpunk should show square neon-outlined controls; Japandi should retain its original soft rounded controls.
+- Launch the regular AI Desktop window and verify it is **only a translucent search field**, not a large chat app, with no permanent titlebar or transcript. See [SPOTLIGHT_UI.md](SPOTLIGHT_UI.md).
+- Search for a GNOME application by name. Type a few letters; matches expand below the field; press Enter and verify the app starts and Spotlight closes.
+- Open preferences (gear / Ctrl+,), select **Built-in (offline)**, and try "my sound is not working" with Ctrl+Enter; verify the result appears below the field only on request.
+- Change the appearance between **Japandi**, **Cyberpunk**, and **System**, using Spotlight preferences or the setup wizard. Check that the bar remains compact/translucent; Japandi should retain rounded edges and Cyberpunk should have angular neon outlines. Cyberpunk should show square neon-outlined controls; Japandi should retain its original soft rounded controls.
 - Scroll to the bottom of a long wizard page, select **Continue**, then **Back**; each new page should start at the top (including after the slide transition).
 - Check that the colored Mac titlebar controls are **small true circles** and that close, minimize and maximize work.
 - Verify left-side colored stoplight controls on both setup and launcher; apply/revert the GNOME-wide button-layout option and inspect Files/Settings.
