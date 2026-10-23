@@ -8,7 +8,9 @@ Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.
 
 ## Working in this first version
 
-- GTK4 / libadwaita search-first application window with **switchable Japandi, Cyberpunk or System appearance**.
+- GTK4 / libadwaita search-first application window with **switchable Japandi, Cyberpunk or System appearance**, now edge-to-edge rather than leaving white framing.
+- Mac-style red/yellow/green window controls on the **upper left** of AI Desktop, plus a reversible, optional left-side window-button setting for other compatible GNOME apps.
+- Offline, scannable **KDE Connect iPhone/Android QR codes** in the phone-pairing step, using official app-store destinations.
 - Reversible **Mac-style GNOME dock configuration** through an already enabled Dash to Dock extension: always-on bottom dock by default, four positions, Launchpad-like Show Applications grid button; optional Activities-button hiding guidance.
 - **Standard English US / Mac English US keyboard profiles**, with Win+Space versus ⌘+Space labels, explicit GNOME layout application, and reversible input-source backup.
 - Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation.
@@ -34,7 +36,7 @@ The wizard offers Japandi/Cyberpunk appearance, Mac or PC US keyboard selection 
 
 It does **not** yet automatically install Newelle, pair a phone, configure a Mac-like dock/advanced tiling, index files, or make Bazzite installation images. Those are separate milestones.
 
-See [First-run onboarding](docs/ONBOARDING.md) for the implemented steps, privacy boundaries, and VM test checklist.
+See [First-run onboarding](docs/ONBOARDING.md) for the implemented steps, privacy boundaries, and VM test checklist. For the latest theme, titlebar and QR-code details see [Window and phone setup](docs/WINDOW_AND_PHONE_SETUP.md).
 
 ## Test on Windows before installing Linux
 
@@ -116,11 +118,13 @@ Select the desired provider in the window. Each cloud request requires a privacy
 ## Repository layout
 
 - src/aidesktop/ui.py — GNOME keyboard-first window, app suggestions, approval dialogs
-- src/aidesktop/themes.py — reusable, app-scoped Japandi and Cyberpunk styles
+- src/aidesktop/themes.py — edge-to-edge Japandi/Cyberpunk styles and Mac stoplight buttons
 - src/aidesktop/keyboard_profiles.py — Mac/PC US profile settings and optional reversible GNOME layout
 - src/aidesktop/onboarding.py — secure per-user first-run status, phone choice and learning style
 - src/aidesktop/setup_wizard.py — GTK welcome, dock, keyboard test, Newelle check, GSConnect guidance and Steam overview
 - src/aidesktop/dock.py — safe, reversible dock configuration for an enabled GNOME Dash to Dock extension
+- src/aidesktop/window_controls.py — reversible GNOME user window-button placement
+- src/aidesktop/phone_download.py — bundled offline KDE Connect app-store QR matrices
 - src/aidesktop/search.py — freedesktop application catalog and instant ranked search
 - src/aidesktop/history.py — timestamped, private audit trail for approved actions
 - src/aidesktop/agent.py — bounded AI planner and confirmation handling
@@ -161,7 +165,7 @@ Full detail: [Keyboard setup / physical Command key behavior](docs/KEYBOARD_PROF
 
 ## Appearance
 
-Select **Japandi**, **Cyberpunk** or **System** in the launcher's title bar. Japandi is the first-run default. The selected look persists across launches, and changing it does not alter the OS or other applications. See [Theme design](docs/THEMES.md).
+Select **Japandi**, **Cyberpunk** or **System** in the launcher's title bar. Japandi is the first-run default. The selected look persists across launches. AI Desktop's theme paints its full window, including the headerbar, and its left-side titlebar buttons resemble Mac stoplights; these app-scoped colors don't recolor other applications. See [Theme design](docs/THEMES.md).
 
 ## Keyboard usage
 
