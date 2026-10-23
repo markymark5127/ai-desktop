@@ -15,10 +15,15 @@ familiar to someone coming from macOS Spotlight.
   applications under the field. **Enter** opens the selected app, closes the
   launcher after the desktop reports the launch request, and does not call AI.
 - If there is no matching application, **Ask AI** is the selected result and ordinary **Enter** invokes the chosen assistant. An Ask AI option is also available underneath app matches. Nothing is sent while typing. Answers expand below the field only on request. A special Ctrl+Enter shortcut is no longer needed.
-- AI-proposed changes still show **Apply change / Decline** controls, and
-  cloud-capable providers still require privacy consent per request. Actions
-  remain bounded by the project's approved tool catalog.
-- **Escape** closes Spotlight. Clicking another application or the desktop hides it automatically; popup settings and privacy-consent dialogs are exempt. The hidden window remains alive for in-flight AI work and is reused when the shortcut reopens it. Arrow keys select app or AI results, and a new search collapses the previous answer.
+- **One-time opt-in:** the AI connection step of setup and Spotlight Settings
+  offer a checkbox to allow questions/diagnostics to be sent to the chosen
+  model. This permission defaults OFF and can be revoked at any time. Once
+  enabled there is **no per-query privacy popup**. Unchecked means no model
+  requests, including to a locally configured model; offline search still works.
+- AI-proposed changes still show **Apply change / Decline** controls, even
+  when model permission has been approved. Actions remain bounded by
+  the project's approved tool catalog.
+- **Escape** closes Spotlight. Clicking another application or the desktop hides it automatically; the settings popover is exempt. The hidden window remains alive for in-flight AI work and is reused when the shortcut reopens it. Arrow keys select app or AI results, and a new search collapses the previous answer.
 - A subtle settings icon inside the bar (or **Ctrl+,** / **Command+,**) opens provider and
   appearance choices plus a **Setup & keyboard settings…** entry. The full
   original setup wizard remains a separate window via `--setup`.
@@ -87,7 +92,8 @@ The GNOME user-session launcher and Super+Space installer scripts are unchanged.
 
 ## Test Newelle end-to-end
 
-Click the Spotlight gear icon → **Test Newelle connection + reply**. This performs both a read-only model listing and a harmless short inference request via the configured Newelle GUI API. It sends no personal diagnostics, but can use a cloud model if you selected one in Newelle. From Terminal, the equivalent command is:
+Enable model sharing via Spotlight Settings, then click the gear icon →
+**Test Newelle connection + reply**. This performs both a read-only model listing and a harmless short inference request via the configured Newelle GUI API. It sends no personal diagnostics, but can use a cloud model if you selected one in Newelle. From Terminal, the equivalent command is:
 
     bash scripts/run-dev.sh --test-newelle
 
