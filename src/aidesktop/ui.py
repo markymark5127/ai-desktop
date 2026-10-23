@@ -9,6 +9,7 @@ This is a regular GTK4 window, not yet a GNOME Shell overlay/layer surface.
 from __future__ import annotations
 
 import threading
+import traceback
 
 import gi
 
@@ -61,6 +62,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self._ever_active = False
         self._syncing_model_permission = False
         self._pending_dismiss = False
+        self._opening_setup = False
         self._launching = False
         self.add_css_class("ai-desktop-window")
         self.add_css_class("spotlight-window")
@@ -238,6 +240,8 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.entry.grab_focus()
 
     def _on_active_changed(self, *_unused) -> None:
+        if self._opening_setup:
+            return
         if self.is_active():
             self._ever_active = True
             return
@@ -247,6 +251,8 @@ class AssistantWindow(Adw.ApplicationWindow):
 
     def _dismiss_if_unfocused(self) -> bool:
         self._pending_dismiss = False
+        if self._opening_setup:
+            return GLib.SOURCE_REMOVE
         if should_hide_on_focus_loss(
             activated_once=self._ever_active,
             is_active=self.is_active(),
@@ -359,11 +365,34 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.settings_button.popup()
 
     def _open_setup(self, *_unused) -> None:
-        from .setup_wizard import SetupWizard
+        """Leave Spotlight visible until the complete wizard is presented.
+
+        Popovers can cause GTK/Wayland focus changes; run navigation on the
+        next idle instead of changing application windows inside their click
+        handler. An exception must never strand the user with an empty desktop.
+        """
+        if self._opening_setup:
+            return
+        self._opening_setup = True
         self.settings.popdown()
-        self.hide()
-        wizard = SetupWizard(self.get_application(), on_done=self.present)
-        wizard.present()
+        GLib.idle_add(self._present_setup)
+
+    def _present_setup(self) -> bool:
+        try:
+            app = self.get_application()
+            if app is None:
+                raise RuntimeError("Spotlight is no longer attached to the application")
+            app.open_setup_from(self)
+        except Exception as exc:
+            traceback.print_exc()
+            self._show_text(
+                f"Couldn't open Setup & keyboard settings ({type(exc).__name__}): "
+                f"{exc}. You can also use: bash scripts/run-dev.sh --setup"
+            )
+            self.present()
+        finally:
+            self._opening_setup = False
+        return GLib.SOURCE_REMOVE
 
     def _relayout(self) -> None:
         # Clearing GTK's cached height prevents the window remaining the size
@@ -579,9 +608,50 @@ class AssistantApp(Adw.Application):
         self.force_setup = force_setup
 
     def _show_launcher(self) -> None:
-        window = AssistantWindow(self)
+        window = next(
+            (w for w in self.get_windows() if isinstance(w, AssistantWindow)),
+            None,
+        )
+        if window is None:
+            window = AssistantWindow(self)
+        else:
+            window.prepare_activation()
+            window._sync_model_permission()
         window.present()
         window.entry.grab_focus()
+
+    def open_setup_from(self, launcher: AssistantWindow) -> None:
+        """Open or focus setup first; dismiss Spotlight only on success."""
+        from .setup_wizard import SetupWizard
+
+        wizard = next(
+            (w for w in self.get_windows() if isinstance(w, SetupWizard)),
+            None,
+        )
+        if wizard is None:
+            wizard = SetupWizard(
+                self,
+                on_done=self._show_launcher,
+            )
+            # Closing the wizard via its traffic-light close control should
+            # return to Spotlight too, not leave the session with no UI.
+            wizard.connect(
+                "close-request", self._on_setup_close_request, launcher
+            )
+        wizard.present()
+        # In particular, don't hide Spotlight before __init__/present has
+        # succeeded: previous code made setup launch failures look like nothing.
+        launcher.hide()
+
+    def _on_setup_close_request(
+        self, _wizard: Adw.ApplicationWindow, _launcher: AssistantWindow
+    ) -> bool:
+        GLib.idle_add(self._show_launcher_after_setup_close)
+        return False
+
+    def _show_launcher_after_setup_close(self) -> bool:
+        self._show_launcher()
+        return GLib.SOURCE_REMOVE
 
     def do_activate(self) -> None:
         from .onboarding import is_setup_done
