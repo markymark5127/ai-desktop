@@ -428,6 +428,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self._show_text(response.message)
         self.approve_button.set_visible(response.pending is not None)
         self.cancel_button.set_visible(response.pending is not None)
+        self.entry.grab_focus()
         return GLib.SOURCE_REMOVE
 
     def _on_approve(self, *_unused) -> None:
