@@ -36,6 +36,29 @@ class SetupNavigationTests(unittest.TestCase):
         self.assertIn("GLib.idle_add(self._present_setup)", callback)
         self.assertNotIn("self.hide()", callback)
 
+    def test_setup_button_activates_application_action(self):
+        constructor = method_source("AssistantWindow", "__init__")
+        self.assertIn('self.setup_button.set_action_name("app.open-setup")', constructor)
+        startup = method_source("AssistantApp", "do_startup")
+        self.assertIn('Gio.SimpleAction.new("open-setup", None)', startup)
+        self.assertIn("self.add_action(setup_action)", startup)
+        action = method_source("AssistantApp", "_on_open_setup_action")
+        self.assertIn("launcher._open_setup()", action)
+
+    def test_setup_command_line_is_forwarded_to_existing_app(self):
+        constructor = method_source("AssistantApp", "__init__")
+        self.assertIn("Gio.ApplicationFlags.HANDLES_COMMAND_LINE", constructor)
+        forwarded = method_source("AssistantApp", "do_command_line")
+        self.assertIn('args[1] == "setup"', forwarded)
+        self.assertIn("self.force_setup = True", forwarded)
+        self.assertIn("self.activate()", forwarded)
+        main = (
+            FILE.parent / "__main__.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn('["ai-desktop", "setup"] if args.setup else ["ai-desktop"]', main)
+        self.assertIn("app.run(internal_argv)", main)
+        self.assertNotIn("app.run(None)", main)
+
     def test_wizard_is_presented_before_spotlight_is_hidden(self):
         navigation = method_source("AssistantApp", "open_setup_from")
         self.assertIn("wizard = SetupWizard(", navigation)
