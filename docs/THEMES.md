@@ -37,6 +37,24 @@ or other users' settings.
 Libadwaita selects appropriate light/dark widget behavior when you select
 Japandi or Cyberpunk. Selecting System returns to the GNOME theme.
 
+## Mutsu wallpaper upload names
+
+The final 4K desktop wallpapers should be committed under
+`assets/wallpapers/`, with exact filenames
+`mutsu-japandi-4k.png` and `mutsu-cyberpunk-4k.png`
+(**3840 × 2160 PNG**). See
+[wallpaper README](../assets/wallpapers/README.md) for testing commands and
+future OS-image installation paths. The screenshot showing the dock, bar,
+search results and background is a **desktop design reference**, not the
+wallpaper file. See [Calm Japandi design](MUTSU_DESKTOP_REFERENCE.md).
+
+The Spotlight results list uses per-theme translucent GTK scroller/viewport/
+row styling, including selected state; an unmatched search now produces a full
+Ask AI row rather than a collapsed footer. The app closes on normal focus
+loss to avoid stale hidden singleton instances, while background model
+requests and pending approvals preserve their state. Final appearance still
+requires VM/Wayland testing.
+
 ## Future OS-wide coherence
 
 Later, the distro image can choose a matching wallpaper, icons, dock behavior,
