@@ -80,6 +80,10 @@ class AssistantWindow(Adw.ApplicationWindow):
             self._theme_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
+        # CSS providers added for the display survive window closure unless
+        # explicitly removed. Without cleanup, reopening Spotlight can leave
+        # old themes overriding new window/list styling.
+        self.connect("close-request", self._remove_theme_provider)
 
         self.entry = Gtk.Entry()
         self.entry.add_css_class("spotlight-entry")
@@ -246,6 +250,12 @@ class AssistantWindow(Adw.ApplicationWindow):
         self._apply_theme(active_theme)
         self.theme_choice.connect("notify::selected", self._on_theme_changed)
         self.entry.grab_focus()
+
+    def _remove_theme_provider(self, *_unused) -> bool:
+        Gtk.StyleContext.remove_provider_for_display(
+            self.get_display(), self._theme_provider
+        )
+        return False
 
     def _on_active_changed(self, *_unused) -> None:
         if self._opening_setup:
