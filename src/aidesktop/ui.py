@@ -111,12 +111,14 @@ class AssistantWindow(Adw.ApplicationWindow):
         )
         self.results_section.add_css_class("spotlight-results")
         self.results_section.set_visible(False)
-        self.results_section.append(Gtk.Separator())
+        self.results_divider = Gtk.Separator()
+        self.results_section.append(self.results_divider)
         self.results = Gtk.ListBox()
         self.results.add_css_class("spotlight-list")
         self.results.set_selection_mode(Gtk.SelectionMode.SINGLE)
         self.results.connect("row-activated", self._on_result_activated)
         search_scroll = Gtk.ScrolledWindow()
+        search_scroll.add_css_class("spotlight-scroll")
         search_scroll.set_policy(
             Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC
         )
@@ -266,9 +268,14 @@ class AssistantWindow(Adw.ApplicationWindow):
             modal_dialog=False,
             settings_open=self.settings.get_visible(),
         ):
-            # Hide instead of destroy, so background inference and approval
-            # state survive. The next shortcut activation reuses this window.
-            self.hide()
+            # For ordinary Spotlight searches, CLOSE instead of just hiding.
+            # That releases the old GNOME app instance so a later shortcut
+            # starts current code (important while developing). Preserve a
+            # hidden window only for an in-flight request or approval.
+            if self.busy or self.pending is not None:
+                self.hide()
+            else:
+                self.close()
         return GLib.SOURCE_REMOVE
 
     def _on_settings_closed(self, *_unused) -> None:
@@ -464,23 +471,44 @@ class AssistantWindow(Adw.ApplicationWindow):
             row = Gtk.ListBoxRow()
             row.add_css_class("spotlight-ask-row")
             content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
-            content.set_margin_top(9)
-            content.set_margin_bottom(9)
+            content.add_css_class("spotlight-ask-content")
+            # An AI-only search should be a full, selectable result — not a
+            # collapsed line of footer text under an empty list.
+            content.set_size_request(-1, 62)
+            content.set_margin_top(4)
+            content.set_margin_bottom(4)
             content.set_margin_start(14)
             content.set_margin_end(14)
             icon = Gtk.Image.new_from_icon_name("dialog-question-symbolic")
-            icon.set_pixel_size(24)
+            icon.set_pixel_size(28)
             content.append(icon)
             chosen = self._provider()
-            provider_name = dict((key, label) for label, key in CHOICES).get(chosen, "assistant")
-            label = Gtk.Label(label=f"Ask {provider_name}: {route.query[:68]}", xalign=0)
-            label.set_ellipsize(Pango.EllipsizeMode.END)
-            label.set_hexpand(True)
-            content.append(label)
+            provider_name = dict((key, label) for label, key in CHOICES).get(
+                chosen, "assistant"
+            )
+            provider_name = provider_name.replace(" (recommended)", "")
+            labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+            labels.set_valign(Gtk.Align.CENTER)
+            labels.set_hexpand(True)
+            heading = Gtk.Label(label=f"Ask {provider_name}", xalign=0)
+            heading.add_css_class("spotlight-ask-title")
+            labels.append(heading)
+            subtitle = Gtk.Label(label=route.query[:90], xalign=0)
+            subtitle.add_css_class("dim-label")
+            subtitle.add_css_class("spotlight-ask-subtitle")
+            subtitle.set_ellipsize(Pango.EllipsizeMode.END)
+            labels.append(subtitle)
+            content.append(labels)
             row.set_child(content)
             self.results.append(row)
             self.targets.append(None)
 
+        ai_only = route.offer_ai and not self.matches
+        self.results_divider.set_visible(not ai_only)
+        if ai_only:
+            self.results_section.add_css_class("spotlight-ai-only")
+        else:
+            self.results_section.remove_css_class("spotlight-ai-only")
         self.results_section.set_visible(bool(self.targets))
         if self.targets:
             self.results.select_row(self.results.get_row_at_index(0))
