@@ -67,7 +67,7 @@ See [ONBOARDING.md](ONBOARDING.md) for exactly what works, what remains manual, 
 3. Offer **Standard English (US)** or **Mac English (US)** physical-keyboard setup, with Win/Command acting as Super for Spotlight, a keyboard test and a reversible optional GNOME input layout; teach the 5 most useful shortcuts and explain that Ctrl+C/V behavior is unchanged.
 4. Introduce **"Your computer comes with a helping hand"**, not an AI feature pitch: demonstrate Super+Space as an instant app/file/settings launcher and a plain-English troubleshooting buddy; allow a real "Try it now" task.
 5. Choose an explanation preference: "Just help me fix things", "Help me and briefly explain" (default), or "Teach me as we go". This must never alter permissions or approval rules.
-6. Configure headless Newelle as an **optional backend**, with privacy/cost disclosure for cloud use; ensure Spotlight and ordinary navigation still work without it.
+6. Configure headless Newelle as an **optional backend**, with privacy/cost disclosure and an unchecked-by-default model-sharing checkbox. Once a user opts in, don't present a modal dialog for each question; allow revocation in Settings. Search and ordinary navigation work without AI.
 7. Optionally pair a phone via GSConnect/KDE Connect; show OS-specific capability chart.
 8. Optional Mac migration guide (browser data, documents, music/photos, passwords, app alternatives).
 9. On touchscreen/convertible machines, explain planned Automatic/Tablet/Desktop posture modes and ensure the finished distro provides a reliable manual mode switch when hardware signals are absent.
