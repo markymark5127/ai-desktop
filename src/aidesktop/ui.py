@@ -87,7 +87,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.settings_button.add_css_class("spotlight-settings-button")
         self.settings_button.set_icon_name("preferences-system-symbolic")
         self.settings_button.set_has_frame(False)
-        self.settings_button.set_tooltip_text("Preferences (Ctrl+,)")
+        self.settings_button.set_tooltip_text("Preferences (Ctrl+, or ⌘+,)")
         search_row.append(self.settings_button)
         root.append(search_row)
 
@@ -180,7 +180,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         menu.append(self.setup_button)
         self.shortcut_hint = Gtk.Label(
             label=f"Spotlight: {shortcut_label(get_profile())}  ·  "
-                  "Enter: open  ·  Ctrl+Enter: ask  ·  Esc: close"
+                  "Enter: open  ·  Ctrl/⌘+Enter: ask  ·  Esc: close"
         )
         self.shortcut_hint.add_css_class("dim-label")
         self.shortcut_hint.set_wrap(True)
@@ -228,7 +228,7 @@ class AssistantWindow(Adw.ApplicationWindow):
     def _show_settings(self) -> None:
         self.shortcut_hint.set_label(
             f"Spotlight: {shortcut_label(get_profile())}  ·  "
-            "Enter: open  ·  Ctrl+Enter: ask  ·  Esc: close"
+            "Enter: open  ·  Ctrl/⌘+Enter: ask  ·  Esc: close"
         )
         self.settings_button.popup()
 
@@ -239,11 +239,17 @@ class AssistantWindow(Adw.ApplicationWindow):
         wizard = SetupWizard(self.get_application(), on_done=self.present)
         wizard.present()
 
+    def _relayout(self) -> None:
+        # Clearing GTK's cached height prevents the window remaining the size
+        # of a previous long AI response after returning to an empty search.
+        self.set_default_size(640, -1)
+        self.queue_resize()
+
     def _show_text(self, message: str) -> None:
         self.results_section.set_visible(False)
         self.output.get_buffer().set_text(message)
         self.response_section.set_visible(True)
-        self.queue_resize()
+        self._relayout()
 
     def _provider(self) -> str:
         return CHOICES[self.choice.get_selected()][1]
@@ -307,7 +313,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.results_section.set_visible(bool(self.matches))
         if self.matches:
             self.results.select_row(self.results.get_row_at_index(0))
-        self.queue_resize()
+        self._relayout()
 
     def _on_key(self, _controller, keyval, _keycode, state) -> bool:
         if keyval == Gdk.KEY_Escape:
@@ -316,7 +322,9 @@ class AssistantWindow(Adw.ApplicationWindow):
             else:
                 self.close()
             return True
-        if state & Gdk.ModifierType.CONTROL_MASK:
+        # The Mac Command key normally sends Super; support macOS-style
+        # Command+, and Command+Return alongside their Ctrl equivalents.
+        if state & (Gdk.ModifierType.CONTROL_MASK | Gdk.ModifierType.SUPER_MASK):
             if keyval == Gdk.KEY_comma:
                 self._show_settings()
                 return True
