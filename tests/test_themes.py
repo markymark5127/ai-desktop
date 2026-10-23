@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from aidesktop.themes import SCHEMES, STYLES, THEME_LABELS, config_path, load_theme, save_theme, validate_theme
+from aidesktop.themes import (SCHEMES, STYLES, SPOTLIGHT_STYLES, SPOTLIGHT_HIGH_CONTRAST, THEME_LABELS, config_path, load_theme, save_theme, validate_theme)
 
 
 class ThemeTests(unittest.TestCase):
@@ -43,6 +43,22 @@ class ThemeTests(unittest.TestCase):
             self.assertIn("min-height: 13px;", theme)
             self.assertIn("border-radius: 999px;", theme)
             self.assertIn("button.mac-stoplight", theme)
+
+    def test_spotlight_has_one_translucent_search_surface(self):
+        self.assertEqual(set(SPOTLIGHT_STYLES), set(STYLES))
+        for theme, css in SPOTLIGHT_STYLES.items():
+            with self.subTest(theme=theme):
+                self.assertIn("window.ai-desktop-window.spotlight-window", css)
+                self.assertIn("background-color: transparent", css)
+                self.assertIn("spotlight-entry", css)
+                self.assertIn("spotlight-results", css)
+                self.assertIn("spotlight-response", css)
+                self.assertIn("rgba(", css)
+                self.assertIn("spotlight-settings-button", css)
+        self.assertIn("border-radius: 20px", SPOTLIGHT_STYLES["japandi"])
+        self.assertIn("border-radius: 0", SPOTLIGHT_STYLES["cyberpunk"])
+        self.assertIn("#00f5ff", SPOTLIGHT_STYLES["cyberpunk"])
+        self.assertIn("background-color: #101010", SPOTLIGHT_HIGH_CONTRAST)
 
     def test_persist_and_reload_theme(self):
         with tempfile.TemporaryDirectory() as tmp:
