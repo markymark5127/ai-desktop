@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Opt-in GNOME Super+Space binding for the AI Desktop app launcher.
+"""Opt-in GNOME Super+Space binding for the Mutsu OS Search launcher.
 
 Usage: python3 scripts/shortcut.py --apply
        python3 scripts/shortcut.py --restore
@@ -59,7 +59,7 @@ def apply() -> None:
     original = _get_array(MEDIA, "custom-keybindings")
     switch = _get_array(WM, "switch-input-source")
     if PATH in original:
-        raise RuntimeError("An AI Desktop shortcut path already exists; refusing to overwrite it.")
+        raise RuntimeError("A Mutsu OS shortcut path already exists; refusing to overwrite it.")
     for path in original:
         current = f"{MEDIA}.custom-keybinding:{path}"
         key = ast.literal_eval(_run("get", current, "binding"))
@@ -70,7 +70,7 @@ def apply() -> None:
     with os.fdopen(fd, "w", encoding="utf-8") as output:
         json.dump({"custom-keybindings": original, "switch-input-source": switch}, output)
     try:
-        _set_string(CUSTOM, "name", "Mutsu Search")
+        _set_string(CUSTOM, "name", "Mutsu OS Search")
         _set_string(CUSTOM, "command", str(launcher))
         _set_string(CUSTOM, "binding", "<Super>space")
         _set_array(MEDIA, "custom-keybindings", [*original, PATH])
@@ -79,7 +79,7 @@ def apply() -> None:
         _set_array(MEDIA, "custom-keybindings", original)
         _set_array(WM, "switch-input-source", switch)
         raise
-    print("Bound Super+Space to AI Desktop. Original GNOME bindings saved to", BACKUP)
+    print("Bound Super+Space to Mutsu OS Search. Original GNOME bindings saved to", BACKUP)
     print("Use --restore to put those bindings back.")
 
 
@@ -96,7 +96,7 @@ def restore() -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--apply", action="store_true", help="Enable the AI Desktop shortcut")
+    group.add_argument("--apply", action="store_true", help="Enable the Mutsu OS Search shortcut")
     group.add_argument("--restore", action="store_true", help="Restore original bindings")
     args = parser.parse_args()
     try:
