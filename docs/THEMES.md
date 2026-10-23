@@ -18,7 +18,7 @@ is saved as `~/.config/ai-desktop/appearance.json` (or under
 
 ## Implementation
 
-The colors are defined in `src/aidesktop/themes.py`. The CSS rules use the
+The colors are defined in `src/aidesktop/themes.py`. The top-level application window now receives the background color, and interior spacing is applied to a nested body, avoiding exposed white edges. The window headerbar uses Mac-style left-side red/yellow/green buttons; system high-contrast accessibility mode suppresses decorative overrides. The CSS rules use the
 `.ai-desktop` widget class, so they apply only to our assistant window. They
 do NOT change every installed GTK app, GNOME Shell, login screen, wallpaper,
 or other users' settings.
@@ -35,3 +35,8 @@ GNOME APIs and maintainable extensions rather than patching GNOME Shell.
 Maintain accessible contrast, readable selection states, keyboard navigation
 and high-contrast fallback. The theme is subordinate to function and should
 never impair a newcomer's ability to troubleshoot their computer.
+
+
+## Window buttons and phone QR
+
+AI Desktop applies its stoplight CSS only to its own launcher/wizard. The setup wizard can optionally apply a reversible GNOME-wide left-side button placement; applications with independent titlebars may ignore it. Phone pairing now uses offline, scannable official-store QR codes. See [Window and phone setup](WINDOW_AND_PHONE_SETUP.md).
