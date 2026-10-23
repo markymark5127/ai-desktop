@@ -59,6 +59,7 @@ boundaries.
 - Search for a GNOME application by name. Type a few letters; press Enter.
 - Try "my sound is not working" with **Built-in (offline)** selected.
 - Change the appearance between **Japandi**, **Cyberpunk**, and **System**.
+- In the Mac-style dock step, check for Dash to Dock. If present and enabled, apply Bottom + Always show, verify dock visibility and the Show Applications grid, test the Left/Right/Top positions, then Restore; see [DOCK.md](DOCK.md).
 - Restart the window and confirm that your choice was saved.
 - Select **Mac US · ⌘ Command**, then **Apply layout to GNOME** and verify it offers the English (Macintosh) source without removing other languages.
 - Press **Restore layout** and verify the previous input-source list returns. See [Keyboard Profiles](KEYBOARD_PROFILES.md).
