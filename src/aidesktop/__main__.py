@@ -5,10 +5,11 @@ from __future__ import annotations
 import argparse
 
 from .agent import Agent
+from .branding import PRODUCT_NAME
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="AI Desktop early prototype")
+    parser = argparse.ArgumentParser(description=f"{PRODUCT_NAME} desktop prototype")
     parser.add_argument("--ask", help="Run one request without opening the GUI")
     parser.add_argument("--search", help="Search installed applications without opening the GUI")
     parser.add_argument("--history", action="store_true", help="Show recent approved actions")
