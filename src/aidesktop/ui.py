@@ -22,7 +22,7 @@ from .search import AppResult, list_applications
 from .search_routing import route_query, should_hide_on_focus_loss
 from .file_search import FileResult, list_local_files, search_local_files
 from .wallpaper import WallpaperError, apply_theme_wallpaper
-from .branding import SEARCH_NAME, AI_NAME
+from .branding import SEARCH_NAME, AI_NAME, icon_source
 from .newelle_client import NewelleError, test_newelle
 from .tools import run_tool
 from .themes import (
@@ -545,7 +545,14 @@ class AssistantWindow(Adw.ApplicationWindow):
         content.set_margin_bottom(8)
         content.set_margin_start(14)
         content.set_margin_end(14)
-        icon = Gtk.Image.new_from_icon_name(icon_name)
+        icon_path = icon_source("mutsu-ai.svg", "mutsu-logo-symbol.svg") if (
+            css_class == "spotlight-ask-row"
+        ) else None
+        icon = (
+            Gtk.Image.new_from_file(str(icon_path))
+            if icon_path is not None
+            else Gtk.Image.new_from_icon_name(icon_name)
+        )
         icon.set_pixel_size(28)
         content.append(icon)
         labels = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=3)
