@@ -29,6 +29,7 @@ from .newelle_client import NewelleError, check_newelle
 from .onboarding import (
     LEARNING_STYLES, PHONE_OPTIONS, get_learning_style, helper_intro,
     load_preferences, mark_setup_done, save_preferences,
+    model_sharing_allowed, set_model_sharing_allowed,
 )
 from .search import search_applications
 from .themes import THEME_LABELS, SCHEMES, STYLES, load_theme, save_theme
@@ -521,10 +522,24 @@ class SetupWizard(Adw.ApplicationWindow):
         )
         self._paragraph(
             page,
-            "Newelle runs separately and can use a local model or a cloud AI, "
-            "depending on your settings. A cloud model may receive diagnostic "
-            "details only after you agree. You do not need an AI account to use "
-            "this desktop.",
+            "You can use local app search without an AI model. Newelle or another "
+            "selected provider may process your questions and relevant system "
+            "diagnostics. Newelle can use a local or cloud model; cloud models "
+            "may transfer that information off this computer.",
+        )
+        self.model_sharing_choice = Gtk.CheckButton(
+            label="Allow AI Desktop to send my questions and diagnostic details "
+                  "to the selected AI model"
+        )
+        self.model_sharing_choice.set_active(model_sharing_allowed())
+        self.model_sharing_choice.connect("toggled", self._model_sharing_changed)
+        page.append(self.model_sharing_choice)
+        self._paragraph(
+            page,
+            "Optional and OFF by default. When enabled, pressing Enter on an "
+            "Ask AI result sends the question without another confirmation. "
+            "Uncheck this here or in Spotlight Settings to stop future requests. "
+            "Changes to your computer still require separate approval.",
         )
         self.newelle_status = Gtk.Label(
             label="Connection not checked yet.", xalign=0
@@ -543,6 +558,17 @@ class SetupWizard(Adw.ApplicationWindow):
             "its unrestricted command tools. You can finish setup without it.",
         )
         return page
+
+    def _model_sharing_changed(self, button: Gtk.CheckButton) -> None:
+        allowed = button.get_active()
+        try:
+            set_model_sharing_allowed(allowed)
+        except (OSError, ValueError):
+            # Return to the last saved preference if persistence failed.
+            button.set_active(model_sharing_allowed())
+            self.status.set_text(
+                "Couldn't save the model-sharing permission. It was not changed."
+            )
 
     def _check_newelle(self, *_unused):
         self.newelle_status.set_text("Checking local Newelle API…")
