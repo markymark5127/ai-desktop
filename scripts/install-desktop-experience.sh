@@ -27,7 +27,10 @@ bash "$repo_dir/scripts/install-local.sh"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/ai-desktop"
 if (( want_shortcut )); then
   if [[ -f "$state_dir/gnome-shortcut.json" ]]; then
-    printf 'Super+Space shortcut already has a Mutsu OS backup; leaving the existing setting alone.\n'
+    printf 'Super+Space already configured; preserving the existing binding.\n'
+    # Only relabel our own legacy entry. Never overwrite someone else's
+    # shortcut, command or custom display name.
+    python3 "$repo_dir/scripts/shortcut.py" --refresh-label || printf 'Existing shortcut label was left unchanged.\n'
   else
     python3 "$repo_dir/scripts/shortcut.py" --apply
   fi
