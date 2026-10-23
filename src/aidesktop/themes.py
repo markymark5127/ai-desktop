@@ -257,6 +257,154 @@ STYLES = {
     "japandi": COMMON + WINDOW_BUTTONS + JAPANDI,
     "cyberpunk": COMMON + WINDOW_BUTTONS + CYBERPUNK,
 }
+
+# Spotlight is a separate, deliberately small surface. These rules apply ONLY
+# to the launcher window, after the normal app-scoped theme. Translucency is
+# CSS alpha; GNOME/Wayland does not provide a portable app-controlled blur.
+SPOTLIGHT_COMMON = """
+window.ai-desktop-window.spotlight-window {
+  background-color: transparent;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+}
+window.spotlight-window .ai-desktop.spotlight-shell {
+  margin: 8px;
+  padding: 5px 10px;
+  border-radius: 18px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry {
+  min-height: 52px;
+  padding: 2px 8px;
+  border: none;
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+  font-size: 17px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry:focus {
+  outline: none;
+  box-shadow: none;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-results,
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-response {
+  padding-bottom: 4px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-approval {
+  padding: 2px 12px 9px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list,
+window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list row {
+  border: 0;
+  box-shadow: none;
+}
+window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output,
+window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output text {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+window.spotlight-window .ai-desktop.spotlight-shell separator {
+  min-height: 1px;
+}
+"""
+
+SPOTLIGHT_STYLES = {
+    "system": SPOTLIGHT_COMMON + """
+window.spotlight-window .ai-desktop.spotlight-shell {
+  background-color: rgba(38, 42, 51, 0.90);
+  color: #f8f9fc;
+  border: 1px solid rgba(233, 237, 246, 0.20);
+  box-shadow: 0 9px 28px rgba(0, 0, 0, 0.28);
+}
+window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry,
+window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output {
+  color: #ffffff;
+}
+window.spotlight-window .ai-desktop.spotlight-shell listbox.spotlight-list {
+  background-color: transparent;
+  color: #f8f9fc;
+}
+window.spotlight-window .ai-desktop.spotlight-shell listbox row:selected {
+  background-color: rgba(255,255,255,0.18);
+}
+""",
+    "japandi": SPOTLIGHT_COMMON + """
+window.spotlight-window .ai-desktop.spotlight-shell.japandi {
+  background-color: rgba(243, 239, 231, 0.88);
+  color: #303832;
+  border: 1px solid rgba(104, 117, 97, 0.40);
+  border-radius: 20px;
+  box-shadow: 0 9px 26px rgba(40, 51, 45, 0.20);
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi entry.spotlight-entry,
+window.spotlight-window .ai-desktop.spotlight-shell.japandi textview.spotlight-output,
+window.spotlight-window .ai-desktop.spotlight-shell.japandi textview.spotlight-output text {
+  background: transparent;
+  border: none;
+  color: #303832;
+  box-shadow: none;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox.spotlight-list {
+  background: transparent;
+  border: none;
+  color: #303832;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi listbox row:selected {
+  background-color: rgba(81, 107, 92, 0.17);
+  border-radius: 10px;
+}
+""",
+    "cyberpunk": SPOTLIGHT_COMMON + """
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk {
+  background-color: rgba(8, 12, 22, 0.90);
+  color: #ebfdff;
+  border: 1px solid #00f5ff;
+  border-radius: 0;
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.32);
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk entry.spotlight-entry,
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk textview.spotlight-output,
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk textview.spotlight-output text {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: #ebfdff;
+  box-shadow: none;
+  font-family: monospace;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox.spotlight-list {
+  background: transparent;
+  border: none;
+  color: #ebfdff;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk listbox row:selected {
+  background-color: rgba(255, 54, 186, 0.25);
+  border-left: 3px solid #ff36ba;
+  border-radius: 0;
+}
+""",
+}
+
+SPOTLIGHT_HIGH_CONTRAST = """
+window.ai-desktop-window.spotlight-window {
+  background-color: transparent;
+}
+window.spotlight-window .ai-desktop.spotlight-shell {
+  padding: 8px;
+  background-color: #101010;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry,
+window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output,
+window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output text {
+  background: #101010;
+  color: #ffffff;
+}
+"""
+
 SCHEMES = {"system": "default", "japandi": "light", "cyberpunk": "dark"}
 
 
