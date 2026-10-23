@@ -33,6 +33,7 @@ from .onboarding import (
 )
 from .search import search_applications
 from .themes import THEME_LABELS, SCHEMES, STYLES, load_theme, save_theme
+from .wallpaper import WallpaperError, apply_theme_wallpaper
 from .mac_stoplights import install_stoplights
 from .tools import ToolError, run_tool
 
@@ -319,11 +320,20 @@ class SetupWizard(Adw.ApplicationWindow):
 
     def _theme_selected(self, *_unused):
         theme = THEME_LABELS[self.theme_choice.get_selected()][1]
+        self._apply_theme(theme)
         try:
             save_theme(theme)
-            self._apply_theme(theme)
         except OSError:
-            self.status.set_text("Appearance changed for this session, but could not be saved.")
+            self.status.set_text(
+                "Appearance changed for this session, but could not be saved."
+            )
+            return
+        try:
+            self.status.set_text(apply_theme_wallpaper(theme))
+        except WallpaperError as exc:
+            self.status.set_text(
+                f"Appearance saved. Wallpaper was not changed: {exc}"
+            )
 
     def _keyboard_selected(self, *_unused):
         name = PROFILES[self.keyboard_choice.get_selected()][1]
