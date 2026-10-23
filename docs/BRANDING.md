@@ -64,6 +64,10 @@ Then start the new source through `bash scripts/restart-dev.sh`. When the
 actual Mutsu OS derivative image is built, we can perform an explicit
 versioned migration to new technical identifiers if needed.
 
+## System-level branding work
+
+The [experimental derived-image branding layer](../packaging/mutsu-image/README.md) installs your own Mutsu emblem, GDM login logo and GNOME About identity **only as part of a new image build**. It intentionally leaves Bazzite package IDs and updating intact. For current Bazzite installations, `bash scripts/install-local.sh` installs the user-scoped Mutsu app icon once `assets/icons/mutsu-logo-symbol.svg` is uploaded. See [icon naming checklist](../assets/icons/README.md).
+
 ## Scope today
 
 This repository implements a GNOME application prototype and optional
