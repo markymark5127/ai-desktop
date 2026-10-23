@@ -7,6 +7,26 @@ from aidesktop.tools import ToolError
 
 
 class AgentTests(unittest.TestCase):
+    def setUp(self):
+        # Existing action-planning tests explicitly opt into mock inference.
+        self.sharing = patch("aidesktop.agent.model_sharing_allowed", return_value=True)
+        self.sharing.start()
+        self.addCleanup(self.sharing.stop)
+
+    def test_model_sharing_off_never_calls_inference(self):
+        from unittest.mock import Mock
+        fake = Mock()
+        with patch("aidesktop.agent.model_sharing_allowed", return_value=False):
+            result = Agent(inference=fake).ask("Tell me about Bazzite", "newelle")
+        self.assertIn("Model sharing is off", result.message)
+        fake.assert_not_called()
+
+    def test_offline_builtin_diagnostics_ignore_model_permission(self):
+        with patch("aidesktop.agent.model_sharing_allowed", return_value=False):
+            with patch("aidesktop.agent.run_tool", return_value="offline system status"):
+                reply = Agent().ask("system info", "builtin")
+        self.assertIn("offline system status", reply.message)
+
     def test_plain_text_answer_from_model_is_readable_but_cannot_execute(self):
         agent = Agent(inference=lambda *_: "You can check the audio output in Settings.")
         answer = agent.ask("Why is there no audio?", "local")
