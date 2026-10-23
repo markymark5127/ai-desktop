@@ -1,7 +1,6 @@
 # Mutsu OS 4K desktop wallpapers
 
-Upload the **actual wallpaper images (no dock, search window, GNOME bar,
-or screenshot UI baked in)** to this folder in the repository.
+Both approved 4K wallpaper assets are now present in this folder. Keep the actual wallpaper files free of baked-in dock, search or GNOME top bar UI; those are rendered separately.
 
 ## Required names and dimensions
 
@@ -46,9 +45,14 @@ gsettings set org.gnome.desktop.background picture-uri "$uri"
 gsettings set org.gnome.desktop.background picture-uri-dark "$uri"
 ```
 
-These commands only change **the current user's GNOME wallpaper**, and only
-when explicitly run. Theme selection inside AI Desktop does *not* yet
-automatically set GNOME backgrounds.
+These commands only change **the current user's GNOME wallpaper**.
+**New in the prototype:** Explicitly selecting Japandi or Cyberpunk in
+Spotlight Settings or the setup wizard now also sets the corresponding
+wallpaper in GNOME. Selecting **System** restores the previous GNOME
+wallpaper if it was not modified manually in the meantime. Merely
+starting AI Desktop does **not** overwrite an existing desktop background.
+The original background settings are backed up under
+`~/.local/state/ai-desktop/previous-wallpaper.json` (user-private mode 0600).
 
 ## Planned distribution packaging
 
