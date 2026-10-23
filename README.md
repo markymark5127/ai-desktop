@@ -8,13 +8,14 @@ Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.
 
 ## Working in this first version
 
-- GTK4 / libadwaita search-first application window with **switchable Japandi, Cyberpunk or System appearance**, now edge-to-edge rather than leaving white framing.
+- **Compact translucent Spotlight-style search bar** with no permanent titlebar/chat pane. App matches and replies expand only as needed; appearance/provider/setup live in a small preferences popover. See [Spotlight UI](docs/SPOTLIGHT_UI.md).
+- GTK4 / libadwaita first-run wizard with switchable Japandi, Cyberpunk or System appearance, edge-to-edge styling and optional Mac controls.
 - Mac-style red/yellow/green window controls on the **upper left** of AI Desktop, plus a reversible, optional left-side window-button setting for other compatible GNOME apps.
 - Offline, scannable **KDE Connect iPhone/Android QR codes** in the phone-pairing step, using official app-store destinations.
 - Reversible **Mac-style GNOME dock configuration** through an already enabled Dash to Dock extension: always-on bottom dock by default, four positions, Launchpad-like Show Applications grid button; optional Activities-button hiding guidance.
 - **Standard English US / Mac English US keyboard profiles**, with Win+Space versus ⌘+Space labels, explicit GNOME layout application, and reversible input-source backup.
 - Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation.
-- Enter launches the selected app; Ctrl+Enter sends text to the agent; Esc closes the window.
+- Enter launches the selected app and closes the launcher; Ctrl+Enter sends text to the agent; Esc closes Spotlight; Ctrl+, opens preferences.
 - Built-in read-only diagnostics, even without an AI model.
 - **Headless Newelle (default)** for local or cloud models configured once in Newelle; legacy direct Ollama, OpenAI API and Anthropic API adapters remain optional.
 - A model can request only allowlisted tools, never arbitrary shell commands.
@@ -27,7 +28,7 @@ Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.
 
 ## New: working first-run welcome wizard (prototype)
 
-On first graphical launch, AI Desktop opens a skippable **Mac-to-Linux welcome wizard**. The launcher also has a **Setup** button to reopen it at any time:
+On first graphical launch, AI Desktop opens a skippable **Mac-to-Linux welcome wizard**. In the compact Spotlight launcher, click the small preferences icon or press Ctrl+, and choose **Setup & keyboard settings…** to reopen it:
 
     bash scripts/run-dev.sh --setup
     bash scripts/run-dev.sh --setup-status
@@ -98,7 +99,7 @@ UI, system tools and approvals. **No fork is needed.**
 Follow **[Headless Newelle setup](docs/NEWELLE_SETUP.md)** to install the Flatpak,
 set a localhost-only GUI API with authentication, connect the AI Desktop client,
 and optionally enable an automatic systemd **user service**. With it running,
-select **Newelle (recommended)** (the new default) in the launcher.
+select **Newelle (recommended)** in Spotlight's preferences popover (gear icon / Ctrl+,).
 
 This integration intentionally uses only the non-agent model endpoint:
 Newelle does **not** get to run system commands or MCP tools behind our
@@ -132,7 +133,7 @@ Select the desired provider in the window. Each cloud request requires a privacy
 
 ## Repository layout
 
-- src/aidesktop/ui.py — GNOME keyboard-first window, app suggestions, approval dialogs
+- src/aidesktop/ui.py — compact translucent Spotlight window, conditional app/results and approval dialogs
 - src/aidesktop/themes.py — original Japandi and new neon/squared Cyberpunk styles
 - src/aidesktop/mac_stoplights.py — compact Mac-style accessible window action buttons
 - src/aidesktop/keyboard_profiles.py — Mac/PC US profile settings and optional reversible GNOME layout
@@ -181,11 +182,11 @@ Full detail: [Keyboard setup / physical Command key behavior](docs/KEYBOARD_PROF
 
 ## Appearance
 
-Select **Japandi**, **Cyberpunk** or **System** in the launcher's title bar. Japandi remains the first-run default with its original rounded corners and soft neutral palette. **Cyberpunk** now has deliberately squared panels, neon cyan/magenta outlines, glow effects and monospace/pixel-font fallback. Both AI Desktop windows have dedicated **13px circular red/yellow/green** functional titlebar controls, rather than resized GNOME buttons. Colors remain app-scoped, not OS-wide. See [Theme design](docs/THEMES.md).
+Select **Japandi**, **Cyberpunk** or **System** from the small settings icon inside Spotlight (or the setup wizard). Japandi remains the first-run default with its original rounded corners and soft neutral palette. **Cyberpunk** now has deliberately squared panels, neon cyan/magenta outlines, glow effects and monospace/pixel-font fallback. Both AI Desktop windows have dedicated **13px circular red/yellow/green** functional titlebar controls, rather than resized GNOME buttons. Colors remain app-scoped, not OS-wide. See [Theme design](docs/THEMES.md).
 
 ## Keyboard usage
 
-Type part of an installed app name and press Enter to open it. Arrow keys change the selected match. For natural-language help, use the **Ask assistant** button or press Ctrl+Enter (or prefix the request with `ask `). Esc closes the window. Built-in mode can also resolve `open Steam` to the installed desktop application.
+Type part of an installed app name and press Enter to open it; Spotlight closes after requesting launch. Arrow keys change the selected match. For natural-language help, press Ctrl+Enter (or type a question with no matching app and press Enter). The answer expands underneath the search field only when needed. Escape closes Spotlight; the settings icon or Ctrl+, opens provider/appearance/setup. Built-in mode can also resolve `open Steam` to the installed desktop application.
 
 **Limitation:** The app catalog loads when the launcher opens; restart the window after installing software. No search results are sent to a model until you explicitly ask the assistant. Native GNOME shortcut binding and full Spotlight overlay remain future milestones.
 
