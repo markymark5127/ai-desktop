@@ -15,6 +15,7 @@ def main() -> None:
     parser.add_argument("--setup", action="store_true", help="Show the welcome wizard again")
     parser.add_argument("--setup-status", action="store_true", help="Show saved onboarding status")
     parser.add_argument("--check-newelle", action="store_true", help="Test the local Newelle GUI API connection")
+    parser.add_argument("--test-newelle", action="store_true", help="Send a harmless inference test to Newelle")
     parser.add_argument(
         "--provider", choices=("newelle", "builtin", "local", "openai", "anthropic"),
         default="newelle", help="Inference backend for --ask (default: newelle)",
@@ -25,10 +26,10 @@ def main() -> None:
         import json
         print(json.dumps(load_preferences(), sort_keys=True))
         return
-    if args.check_newelle:
-        from .newelle_client import NewelleError, check_newelle
+    if args.check_newelle or args.test_newelle:
+        from .newelle_client import NewelleError, check_newelle, test_newelle
         try:
-            print(check_newelle())
+            print(test_newelle() if args.test_newelle else check_newelle())
         except NewelleError as exc:
             parser.exit(1, f"Newelle: {exc}\n")
         return
