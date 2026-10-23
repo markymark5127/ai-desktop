@@ -45,8 +45,47 @@ COMMON = """
 }
 """
 
+# We intentionally scope colored title buttons to AI Desktop windows. Applying
+# left-side controls OS-wide is a separate, reversible GNOME user preference;
+# Qt/Electron apps can provide their own decorations.
+WINDOW_BUTTONS = """
+.ai-desktop-window windowcontrols button.close,
+.ai-desktop-window windowcontrols button.minimize,
+.ai-desktop-window windowcontrols button.maximize {
+  border-radius: 999px;
+  min-width: 14px;
+  min-height: 14px;
+  padding: 0;
+  margin-left: 2px;
+  margin-right: 2px;
+  box-shadow: none;
+  background-image: none;
+  color: rgba(0,0,0,0.72);
+}
+.ai-desktop-window windowcontrols button.close {
+  background-color: #ff5f57;
+  border: 1px solid #de504b;
+}
+.ai-desktop-window windowcontrols button.minimize {
+  background-color: #febc2e;
+  border: 1px solid #dea523;
+}
+.ai-desktop-window windowcontrols button.maximize {
+  background-color: #28c840;
+  border: 1px solid #1caa35;
+}
+.ai-desktop-window windowcontrols button image {
+  opacity: 0;
+}
+.ai-desktop-window windowcontrols button:hover image,
+.ai-desktop-window windowcontrols button:focus-visible image {
+  opacity: 1;
+}
+"""
+
 JAPANDI = """
-.ai-desktop {
+.ai-desktop,
+window.ai-desktop-window {
   background-color: #f3efe7;
   color: #303832;
 }
@@ -86,7 +125,8 @@ JAPANDI = """
 """
 
 CYBERPUNK = """
-.ai-desktop {
+.ai-desktop,
+window.ai-desktop-window {
   background-color: #121522;
   color: #eef4ff;
 }
@@ -126,9 +166,9 @@ CYBERPUNK = """
 """
 
 STYLES = {
-    "system": "",
-    "japandi": COMMON + JAPANDI,
-    "cyberpunk": COMMON + CYBERPUNK,
+    "system": WINDOW_BUTTONS,
+    "japandi": COMMON + WINDOW_BUTTONS + JAPANDI,
+    "cyberpunk": COMMON + WINDOW_BUTTONS + CYBERPUNK,
 }
 SCHEMES = {"system": "default", "japandi": "light", "cyberpunk": "dark"}
 
