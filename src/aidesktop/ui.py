@@ -646,11 +646,21 @@ class AssistantApp(Adw.Application):
     def _on_setup_close_request(
         self, _wizard: Adw.ApplicationWindow, _launcher: AssistantWindow
     ) -> bool:
+        # Keep the application alive until Spotlight is shown again, even if
+        # the wizard was its last currently mapped window.
+        self.hold()
         GLib.idle_add(self._show_launcher_after_setup_close)
         return False
 
     def _show_launcher_after_setup_close(self) -> bool:
-        self._show_launcher()
+        try:
+            if not any(
+                isinstance(w, AssistantWindow) and w.get_visible()
+                for w in self.get_windows()
+            ):
+                self._show_launcher()
+        finally:
+            self.release()
         return GLib.SOURCE_REMOVE
 
     def do_activate(self) -> None:
