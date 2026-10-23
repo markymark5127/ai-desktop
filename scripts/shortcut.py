@@ -93,14 +93,44 @@ def restore() -> None:
     print("Restored the saved GNOME keyboard shortcuts.")
 
 
+
+def refresh_label() -> None:
+    """Rename only our existing saved Super+Space binding, not other shortcuts."""
+    if not BACKUP.exists():
+        print("No installed Mutsu OS shortcut backup; nothing to rename.")
+        return
+    existing = _get_array(MEDIA, "custom-keybindings")
+    if PATH not in existing:
+        raise RuntimeError("Saved Mutsu OS shortcut path is not registered in GNOME.")
+    command = ast.literal_eval(_run("get", CUSTOM, "command"))
+    expected = str(Path.home() / ".local/bin/ai-desktop")
+    if command != expected:
+        raise RuntimeError("Shortcut points to another command; refusing to relabel it.")
+    old_label = ast.literal_eval(_run("get", CUSTOM, "name"))
+    if old_label not in ("AI Desktop", "Mutsu Search", "Mutsu OS Search"):
+        print(f"Keeping your custom shortcut label: {old_label}")
+        return
+    _set_string(CUSTOM, "name", "Mutsu OS Search")
+    print("Renamed existing Super+Space shortcut to Mutsu OS Search.")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--apply", action="store_true", help="Enable the Mutsu OS Search shortcut")
     group.add_argument("--restore", action="store_true", help="Restore original bindings")
+    group.add_argument(
+        "--refresh-label", action="store_true",
+        help="Update the existing AI Desktop/Mutsu shortcut display name only",
+    )
     args = parser.parse_args()
     try:
-        apply() if args.apply else restore()
+        if args.apply:
+            apply()
+        elif args.restore:
+            restore()
+        else:
+            refresh_label()
     except (OSError, ValueError, RuntimeError) as exc:
         parser.exit(1, f"Shortcut configuration failed: {exc}\n")
 
