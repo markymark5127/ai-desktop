@@ -9,6 +9,7 @@ Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.
 ## Working in this first version
 
 - GTK4 / libadwaita search-first application window with **switchable Japandi, Cyberpunk or System appearance**.
+- Reversible **Mac-style GNOME dock configuration** through an already enabled Dash to Dock extension: always-on bottom dock by default, four positions, Launchpad-like Show Applications grid button; optional Activities-button hiding guidance.
 - **Standard English US / Mac English US keyboard profiles**, with Win+Space versus ⌘+Space labels, explicit GNOME layout application, and reversible input-source backup.
 - Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation.
 - Enter launches the selected app; Ctrl+Enter sends text to the agent; Esc closes the window.
@@ -118,7 +119,8 @@ Select the desired provider in the window. Each cloud request requires a privacy
 - src/aidesktop/themes.py — reusable, app-scoped Japandi and Cyberpunk styles
 - src/aidesktop/keyboard_profiles.py — Mac/PC US profile settings and optional reversible GNOME layout
 - src/aidesktop/onboarding.py — secure per-user first-run status, phone choice and learning style
-- src/aidesktop/setup_wizard.py — GTK welcome, keyboard test, Newelle check, GSConnect guidance and Steam overview
+- src/aidesktop/setup_wizard.py — GTK welcome, dock, keyboard test, Newelle check, GSConnect guidance and Steam overview
+- src/aidesktop/dock.py — safe, reversible dock configuration for an enabled GNOME Dash to Dock extension
 - src/aidesktop/search.py — freedesktop application catalog and instant ranked search
 - src/aidesktop/history.py — timestamped, private audit trail for approved actions
 - src/aidesktop/agent.py — bounded AI planner and confirmation handling
@@ -132,6 +134,22 @@ Select the desired provider in the window. Each cloud request requires a privacy
 ## Safety boundaries
 
 No free-form command executor is available to the model. AI-proposed changes need an approval click; selecting an app search result counts as an explicit launch request. Installed apps are validated against visible desktop entries. The app is not intended to run as root. The Newelle connection has been tested with a simulated local HTTP service; the full GUI + Newelle service has NOT been tested on real hardware in this repository, and its diagnosis cannot be relied on. Use a VM or spare machine first. See docs/ARCHITECTURE.md for limitations.
+
+## Mac-style dock configuration
+
+A new **Mac-style dock** page in the Setup wizard configures an existing,
+enabled Dash to Dock GNOME Shell extension without reinstalling or modifying
+the underlying Bazzite OS. Choose Bottom (default), Left, Right or Top and
+**Always show dock** (default). It enables the Show Applications icon, which
+opens GNOME's Launchpad-like app grid. There is a separately confirmed Apply
+step and Restore original dock settings action.
+
+The extension must be installed and enabled in GNOME Extension Manager first.
+The top-left Activities label can be hidden using a compatible Just Perfection
+extension; that particular operation is guidance only, not automated in the
+current prototype. See [Mac-style dock requirements and setup](docs/DOCK.md).
+Our Spotlight launcher remains available using Super+Space, independently
+from the Applications grid and workspace overview.
 
 ## Keyboard setup
 
