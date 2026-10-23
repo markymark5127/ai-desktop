@@ -15,7 +15,7 @@ Our [troubleshooting-buddy / universal Spotlight design](docs/HELPER_EXPERIENCE.
 - Reversible **Mac-style GNOME dock configuration** through an already enabled Dash to Dock extension: always-on bottom dock by default, four positions, Launchpad-like Show Applications grid button; optional Activities-button hiding guidance.
 - **Standard English US / Mac English US keyboard profiles**, with Win+Space versus ⌘+Space labels, explicit GNOME layout application, and reversible input-source backup.
 - Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation.
-- Enter launches the selected app and closes the launcher; Ctrl+Enter sends text to the agent; Esc closes Spotlight; Ctrl+, opens preferences.
+- Enter launches the selected app and closes the launcher; Ctrl+Enter or Command+Enter sends text to the agent; Esc closes Spotlight; Ctrl+, or Command+, opens preferences.
 - Built-in read-only diagnostics, even without an AI model.
 - **Headless Newelle (default)** for local or cloud models configured once in Newelle; legacy direct Ollama, OpenAI API and Anthropic API adapters remain optional.
 - A model can request only allowlisted tools, never arbitrary shell commands.
