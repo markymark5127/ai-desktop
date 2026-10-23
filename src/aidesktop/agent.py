@@ -9,7 +9,9 @@ from typing import Callable
 
 from .providers import ProviderError, complete
 from .history import record_action
-from .onboarding import get_learning_style, helper_intro, model_sharing_allowed
+from .onboarding import (
+    get_learning_style, helper_intro, model_sharing_allowed, MODEL_SHARING_LABEL,
+)
 from .search import search_applications
 from .tools import TOOLS, ToolError, run_tool
 
@@ -81,8 +83,8 @@ class Agent:
         if not model_sharing_allowed():
             return AgentResponse(
                 "Model sharing is off. To use the selected AI, enable "
-                "'Allow questions and diagnostics to be sent to the AI model' "
-                "in Spotlight Preferences or the setup wizard."
+                f"'{MODEL_SHARING_LABEL}' in Spotlight Preferences "
+                "or the setup wizard."
             )
 
         context = [f"User request: {request}"]
