@@ -204,7 +204,9 @@ class AssistantWindow(Adw.ApplicationWindow):
         )
         menu.append(self.theme_choice)
         self.setup_button = Gtk.Button(label="Setup & keyboard settings…")
-        self.setup_button.connect("clicked", self._open_setup)
+        # Let Gio.Application own navigation so this also works from a menu
+        # and can be invoked without relying on popover/window focus.
+        self.setup_button.set_action_name("app.open-setup")
         menu.append(self.setup_button)
         self.shortcut_hint = Gtk.Label(
             label=f"Spotlight: {shortcut_label(get_profile())}  ·  "
@@ -603,9 +605,37 @@ class AssistantApp(Adw.Application):
     def __init__(self, *, force_setup: bool = False):
         super().__init__(
             application_id="io.github.markymark5127.AIDesktop",
-            flags=Gio.ApplicationFlags.FLAGS_NONE,
+            flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE,
         )
         self.force_setup = force_setup
+
+    def do_startup(self) -> None:
+        Adw.Application.do_startup(self)
+        setup_action = Gio.SimpleAction.new("open-setup", None)
+        setup_action.connect("activate", self._on_open_setup_action)
+        self.add_action(setup_action)
+
+    def _on_open_setup_action(self, _action, _parameter) -> None:
+        launcher = next(
+            (w for w in self.get_windows() if isinstance(w, AssistantWindow)),
+            None,
+        )
+        if launcher is not None:
+            launcher._open_setup()
+        else:
+            # Supports the action even before Spotlight has been constructed.
+            self.force_setup = True
+            self.activate()
+
+    def do_command_line(self, command_line: Gio.ApplicationCommandLine) -> int:
+        # Unlike a local constructor flag, this reaches the already-running
+        # primary application through its D-Bus command-line handler.
+        # The private "setup" positional token is supplied by __main__.py.
+        args = command_line.get_arguments()
+        if len(args) > 1 and args[1] == "setup":
+            self.force_setup = True
+        self.activate()
+        return 0
 
     def _show_launcher(self) -> None:
         window = next(
@@ -667,11 +697,22 @@ class AssistantApp(Adw.Application):
         from .onboarding import is_setup_done
         if self.force_setup or not is_setup_done():
             from .setup_wizard import SetupWizard
-            wizard = next((w for w in self.get_windows() if isinstance(w, SetupWizard)), None)
-            if wizard is None:
-                wizard = SetupWizard(self, on_done=self._show_launcher)
+            wizard = next(
+                (w for w in self.get_windows() if isinstance(w, SetupWizard)),
+                None,
+            )
+            launcher = next(
+                (w for w in self.get_windows() if isinstance(w, AssistantWindow)),
+                None,
+            )
+            if launcher is not None:
+                # Centralize popover close, focus guard and visible error flow.
+                launcher._open_setup()
+            else:
+                if wizard is None:
+                    wizard = SetupWizard(self, on_done=self._show_launcher)
+                wizard.present()
             self.force_setup = False
-            wizard.present()
             return
         # Hidden Spotlight survives focus loss, preserving in-flight Newelle
         # responses; the next Super+Space activation presents the same window.
