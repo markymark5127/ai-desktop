@@ -9,7 +9,7 @@ from typing import Callable
 
 from .providers import ProviderError, complete
 from .history import record_action
-from .onboarding import get_learning_style, helper_intro
+from .onboarding import get_learning_style, helper_intro, model_sharing_allowed
 from .search import search_applications
 from .tools import TOOLS, ToolError, run_tool
 
@@ -78,9 +78,20 @@ class Agent:
             return AgentResponse("Enter a request of 1–4000 characters.")
         if provider == "builtin":
             return self._builtin(request)
+        if not model_sharing_allowed():
+            return AgentResponse(
+                "Model sharing is off. To use the selected AI, enable "
+                "'Allow questions and diagnostics to be sent to the AI model' "
+                "in Spotlight Preferences or the setup wizard."
+            )
 
         context = [f"User request: {request}"]
         for _ in range(4):  # no unending autonomous action loop
+            # Re-check consent between diagnostic steps. Turning permission
+            # off prevents additional model requests, although it cannot
+            # retract a request already in flight.
+            if not model_sharing_allowed():
+                return AgentResponse("Model sharing was disabled. No further requests were sent.")
             try:
                 raw = self.inference(
                     provider, _system_prompt(get_learning_style()), "\n\n".join(context)
