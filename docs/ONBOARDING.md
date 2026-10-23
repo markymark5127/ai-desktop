@@ -17,7 +17,7 @@ To open the desktop app normally:
 
 If no setup preference exists, the wizard opens automatically. Press **Skip
 setup** to keep using the launcher. In the launcher, click **Setup** to reopen
-the walkthrough, even after completing/skipping it. No root account is needed.
+the walkthrough, even after completing/skipping it. The normal Spotlight search field no longer shows a permanent Setup button; choose the small preferences icon (or Ctrl+,), then **Setup & keyboard settings…**. No root account is needed.
 
 For a headless check of locally saved user options:
 
