@@ -103,16 +103,30 @@ Enable model sharing via Spotlight Settings, then click the gear icon →
 
 If this fails, follow [NEWELLE_SETUP.md](NEWELLE_SETUP.md). Normal plain-text model replies are displayed as explanations; only validated structured action plans can invoke allowed tools with approvals.
 
-### If the Setup button seems to do nothing
+### When Setup & keyboard settings doesn't open
 
-The Setup button now waits for the preferences popover to close before
-presenting the wizard. The old behavior hid Spotlight before building
-the wizard; a GTK error could leave no window or visible diagnostic.
-The updated launcher shows an inline `Couldn't open Setup...` message
-and prints the underlying Python traceback to the Terminal if construction
-fails. For an independent check, quit AI Desktop entirely and run:
+GTK/Adwaita is a **single-instance app**. A hidden, still-running Spotlight
+can retain earlier Python code after `git pull`; executing `run-dev.sh` by
+itself may simply reactivate that old instance. Use the dev-only safe restart:
+
+    cd ~/ai-desktop
+    git pull
+    bash scripts/restart-dev.sh
+
+Then use the gear menu → **Setup & keyboard settings…**. The menu now
+activates the `app.open-setup` GNOME application action, with an idempotent
+`clicked` fallback. Setup is presented before Spotlight hides.
+
+For a second independent test, while the newly restarted app is running,
+open another terminal and execute:
 
     bash scripts/run-dev.sh --setup
 
-Check the terminal for any traceback and share the traceback (not API keys)
-when reporting a remaining GTK-version issue.
+Unlike the old local-only `force_setup` flag, `--setup` is now forwarded via
+GApplication command-line handling to the **existing** process, so it opens the
+full wizard even when Spotlight is already running.
+
+A wizard-construction error is reported inline in Spotlight as
+`Couldn't open Setup & keyboard settings`, and a Python traceback is printed
+to the terminal. If either navigation path still fails, please report the
+terminal traceback, excluding all API keys.
