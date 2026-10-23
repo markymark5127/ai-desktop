@@ -16,9 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class GtkDialogCompatibilityTests(unittest.TestCase):
-    def test_consent_and_setup_dialogs_use_introspectable_property(self):
+    def test_remaining_setup_dialogs_use_introspectable_property(self):
         for relative, expected_dialogs in (
-            ("src/aidesktop/ui.py", 1),
+            ("src/aidesktop/ui.py", 0),
             ("src/aidesktop/setup_wizard.py", 3),
         ):
             with self.subTest(path=relative):
@@ -41,6 +41,8 @@ class GtkDialogCompatibilityTests(unittest.TestCase):
                     and target.value.attr == "props"
                 ]
                 self.assertEqual(len(supported_assignments), expected_dialogs)
+                # The privacy modal was removed from the Spotlight launcher;
+                # other user-approved GNOME setting changes keep their dialogs.
 
 
 if __name__ == "__main__":
