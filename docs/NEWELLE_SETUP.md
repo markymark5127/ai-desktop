@@ -36,7 +36,7 @@ a separately installed Flatpak in headless GUI-API mode, not as a fork.
 
        bash scripts/run-dev.sh --check-newelle
 
-   Expected output includes "Newelle connected" with the selected model. This **only checks API availability**, not working inference. Verify the selected model really answers by running:
+   Expected output includes "Newelle connected" with the selected model. This **only checks API availability**, not working inference. To send model requests, enable the optional sharing checkbox in the AI Desktop wizard's AI connection page or Spotlight Settings. It defaults to off. Verify the selected model really answers by running:
 
        bash scripts/run-dev.sh --test-newelle
 
@@ -79,9 +79,13 @@ this prototype. Its full /api/messages/run-llm and /v2 agent endpoints are
 deliberately *not* used.
 
 Cloud-backed models may upload your prompt, system details, and log output,
-depending on the model configured inside Newelle. AI Desktop displays a
-per-request confirmation in the GUI. CLI prompts do not have this dialog;
-avoid sending sensitive information from the CLI. A future onboarding flow
+depending on the model configured inside Newelle. The wizard and Spotlight
+Settings have an **unchecked-by-default, revocable model-sharing permission**.
+Once checked, Spotlight no longer interrupts each request with a popup; CLI
+agent requests also respect the saved setting. The optional end-to-end Newelle
+inference test requires this permission, while the model-list connection check
+does not. Disabling sharing prevents future requests but cannot retract data
+already sent. Avoid sending sensitive information from the CLI. A future onboarding flow
 will discover the selected provider and apply finer-grained privacy rules.
 
 ## Troubleshooting
