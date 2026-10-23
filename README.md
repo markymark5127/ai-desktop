@@ -92,6 +92,15 @@ This changes GNOME's input-source shortcut if it conflicts. The installer saves 
 
 The script is opt-in; inspect it first if you prefer. This is still a standalone window, not a custom GNOME Shell overlay. If you already use Super+Space to switch languages, expect that behavior to change while AI Desktop is bound.
 
+**During active development**, Git pulls do not replace an already-running,
+hidden GNOME application instance. To make sure new UI code is actually
+running, use `bash scripts/restart-dev.sh`, which stops only your current
+user's AI Desktop Python module process, then launches the updated source.
+It does not stop Newelle. The **Setup & keyboard settings…** item uses an
+application action, and `bash scripts/run-dev.sh --setup` is forwarded
+correctly to the existing primary instance (after restarting old instances
+at least once to load the updated handler).
+
 ### Recommended: headless Newelle on Bazzite GNOME
 
 Newelle manages your model configuration while AI Desktop owns the Spotlight
