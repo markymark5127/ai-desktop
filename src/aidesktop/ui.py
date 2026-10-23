@@ -473,7 +473,7 @@ class AssistantWindow(Adw.ApplicationWindow):
                 buttons=Gtk.ButtonsType.NONE,
                 text="Share this question with the selected model?",
             )
-            dialog.format_secondary_text(
+            dialog.props.secondary_text = (
                 "Newelle may use a local or cloud model. Prompts and diagnostic "
                 "results can leave this computer, depending on its configuration. "
                 "Avoid sharing passwords or personal information."
