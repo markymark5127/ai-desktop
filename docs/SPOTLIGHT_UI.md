@@ -35,7 +35,9 @@ The search results no longer render an opaque default Gtk.ListBox, GtkViewport o
 The background uses alpha-composited GTK4 CSS rather than an opaque top-level
 window. Japandi remains warm and rounded; Cyberpunk uses a dark angular
 panel with cyan neon outlines; System uses a neutral dark translucent bar.
-GNOME high-contrast settings instead get a readable opaque fallback.
+GNOME high-contrast settings instead get a readable opaque fallback. The
+Japandi background can now follow the theme selection using the uploaded
+Mutsu wallpaper; System restores the prior GNOME background when possible.
 
 **This is not yet a true GNOME Shell Spotlight overlay.** A normal GTK4 app
 cannot guarantee the Mac's precise centered/top-third placement, compositor
@@ -49,9 +51,13 @@ the trusted search/AI backend. Never claim blur is already implemented.
 
 ### App search versus AI scope
 
-The current fast index covers **installed applications only**. Files,
-Settings pages, Steam games, and general desktop actions remain future
-search features. Newelle model inference is optional, and an installed-app
+Spotlight now searches real installed applications **and filenames** in a
+bounded local scan of Documents, Downloads, Desktop, Pictures, Videos and
+Music. The scan runs in a worker thread and searches only metadata/filenames:
+no file contents, symlinks, hidden directories, arbitrary mounted drives or
+cloud results are indexed. File hits open with their registered GNOME
+application. Full GNOME Tracker integration, metadata dates, file contents,
+Steam game search and settings actions are future milestones. Newelle model inference is optional, and an installed-app
 search remains usable when it is offline.
 
 ### Test in a GNOME VM
@@ -71,7 +77,12 @@ Or reopen the wizard separately:
 3. Press Enter on a real installed application: it should launch and the
    Spotlight window should close.
 4. Reopen, type a question and press **Enter**; verify that the AI fallback is selected. For offline tests, choose **Built-in (offline)** in Preferences before asking about audio, disk space or network status.
-5. Check that the answer and any approval buttons appear **only when needed**.
+5. Search `mutsu` or an actual filename under Documents/Downloads/Pictures.
+   Verify `Top Results`, `Files` and `AI Suggestions` headings appear
+   only when there are matching real entries. Enter on a file should open it.
+   Try `Explain this` or `Troubleshoot`: the chip must only prefill the
+   search box; Enter is required for model inference.
+6. Check that the answer and any approval buttons appear **only when needed**.
 6. Type a new search: the prior response should collapse.
 7. Open Preferences with the gear icon or Ctrl+, change theme, and verify
    Japandi/Cyberpunk translucent styling. Full setup should still open.
