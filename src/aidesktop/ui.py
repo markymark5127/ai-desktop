@@ -72,19 +72,24 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.entry.set_icon_from_icon_name(
             Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic"
         )
-        self.entry.set_icon_from_icon_name(
-            Gtk.EntryIconPosition.SECONDARY, "preferences-system-symbolic"
-        )
-        self.entry.set_icon_tooltip_text(
-            Gtk.EntryIconPosition.SECONDARY, "Preferences (Ctrl+,)"
-        )
-        self.entry.connect("icon-press", self._on_entry_icon)
         self.entry.connect("changed", self._on_search_changed)
         self.entry.connect("activate", self._on_submit)
         keys = Gtk.EventControllerKey()
         keys.connect("key-pressed", self._on_key)
         self.entry.add_controller(keys)
-        root.append(self.entry)
+        search_row = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL, spacing=0
+        )
+        search_row.add_css_class("spotlight-searchbar")
+        self.entry.set_hexpand(True)
+        search_row.append(self.entry)
+        self.settings_button = Gtk.MenuButton()
+        self.settings_button.add_css_class("spotlight-settings-button")
+        self.settings_button.set_icon_name("preferences-system-symbolic")
+        self.settings_button.set_has_frame(False)
+        self.settings_button.set_tooltip_text("Preferences (Ctrl+,)")
+        search_row.append(self.settings_button)
+        root.append(search_row)
 
         self.results_section = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=0
@@ -153,7 +158,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.settings.set_has_arrow(False)
         self.settings.set_autohide(True)
         self.settings.set_position(Gtk.PositionType.BOTTOM)
-        self.settings.set_parent(self.entry)
+        self.settings_button.set_popover(self.settings)
         menu = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
         menu.set_margin_top(14)
         menu.set_margin_bottom(14)
@@ -220,16 +225,12 @@ class AssistantWindow(Adw.ApplicationWindow):
         except OSError:
             self._show_text("Appearance changed, but it could not be saved.")
 
-    def _on_entry_icon(self, _entry, position) -> None:
-        if position == Gtk.EntryIconPosition.SECONDARY:
-            self._show_settings()
-
     def _show_settings(self) -> None:
         self.shortcut_hint.set_label(
             f"Spotlight: {shortcut_label(get_profile())}  ·  "
             "Enter: open  ·  Ctrl+Enter: ask  ·  Esc: close"
         )
-        self.settings.popup()
+        self.settings_button.popup()
 
     def _open_setup(self, *_unused) -> None:
         from .setup_wizard import SetupWizard
