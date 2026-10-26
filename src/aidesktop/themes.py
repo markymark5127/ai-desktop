@@ -13,9 +13,9 @@ from pathlib import Path
 
 
 THEME_LABELS = [
-    ("System", "system"),
     ("Japandi", "japandi"),
     ("Cyberpunk", "cyberpunk"),
+    ("System", "system"),
 ]
 
 # GTK4 CSS, scoped entirely to the root class added by ui.py.
