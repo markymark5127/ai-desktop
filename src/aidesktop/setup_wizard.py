@@ -37,11 +37,12 @@ from .wallpaper import WallpaperError, apply_theme_wallpaper
 from .branding import PRODUCT_NAME, WELCOME_TITLE
 from .mac_stoplights import install_stoplights
 from .tools import ToolError, run_tool
+from .adaptive_prefs import MODES, set_adaptive_mode
 
 
 GSCONNECT_ID = "gsconnect@andyholmes.github.io"
 NEWELLE_SETUP_URL = "https://github.com/markymark5127/ai-desktop/blob/main/docs/NEWELLE_SETUP.md"
-STEPS = ("Welcome", "Appearance & keyboard", "Mac-style dock", "Your helper", "AI connection", "Phone pairing", "Gaming & desktop")
+STEPS = ("Welcome", "Appearance & keyboard", "Mac-style dock", "Your helper", "AI connection", "Phone pairing", "Gaming & desktop", "Adaptive Desktop")
 
 
 class SetupWizard(Adw.ApplicationWindow):
@@ -98,7 +99,7 @@ class SetupWizard(Adw.ApplicationWindow):
 
         for idx, make_page in enumerate(
             (self._welcome, self._appearance, self._dock, self._helper, self._model,
-             self._phone, self._gaming)
+             self._phone, self._gaming, self._adaptive)
         ):
             child = make_page()
             self.stack.add_named(child, f"step-{idx}")
@@ -738,6 +739,39 @@ class SetupWizard(Adw.ApplicationWindow):
             self.status.set_text(
                 "Could not open GSConnect preferences. Check that its GNOME extension is installed."
             )
+
+
+    def _adaptive(self) -> Gtk.Box:
+        page = self._page(
+            "Adaptive Desktop.",
+            "On a 2-in-1, fold the keyboard back for an iPad-like app-grid Home. "
+            "Unfold to return to the Mac-like desktop.",
+        )
+        self._paragraph(
+            page,
+            "Automatic uses the hardware tablet-mode signal when the device exposes one. "
+            "Always Desktop and Always Tablet ignore the hinge and stay in that mode. "
+            "You can change this later from the Mutsu Adaptive menu or Quick Settings.",
+        )
+        self.adaptive_choice = Gtk.DropDown.new_from_strings(
+            [label for label, _ in MODES]
+        )
+        page.append(self.adaptive_choice)
+        apply_btn = Gtk.Button(label="Apply Adaptive Desktop mode")
+        apply_btn.add_css_class("suggested-action")
+
+        def apply_mode(*_unused):
+            mode = MODES[self.adaptive_choice.get_selected()][1]
+            self.status.set_text(set_adaptive_mode(mode))
+
+        apply_btn.connect("clicked", apply_mode)
+        page.append(apply_btn)
+        self._paragraph(
+            page,
+            "If the Adaptive Desktop extension is not installed, the choice cannot be saved. "
+            "Gestures stay off until you enable the experimental setting.",
+        )
+        return page
 
     def _gaming(self) -> Gtk.Box:
         page = self._page(
