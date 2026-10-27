@@ -184,15 +184,13 @@ class SetupWizard(Adw.ApplicationWindow):
     def _welcome(self) -> Gtk.Box:
         page = self._page(
             f"Welcome to {PRODUCT_NAME}.",
-            "A Mac-familiar desktop, PC gaming, and a helping hand whenever Linux feels unfamiliar.",
+            "Japandi is the default look. You can change it on the next page.",
         )
         self._paragraph(
             page,
-            "The search shortcut opens apps immediately without AI. When something "
-            "goes wrong, describe the problem and your helper can investigate "
-            "supported parts of the system. It will ask before making changes.",
+            "Super+Space opens apps and files. AI is optional and asks before changing anything.",
         )
-        self._paragraph(page, "Try it now: type the name of an installed application.")
+        self._paragraph(page, "Try a search:")
         self.try_search = Gtk.Entry()
         self.try_search.set_placeholder_text("e.g. Files, Settings, Terminal")
         page.append(self.try_search)
@@ -219,10 +217,10 @@ class SetupWizard(Adw.ApplicationWindow):
 
     def _appearance(self) -> Gtk.Box:
         page = self._page(
-            "Make it feel like your Mac.",
-            "Choose a look and keyboard. You can change either later.",
+            "Look and keyboard.",
+            "Japandi is selected. Switch to Cyberpunk or System if you prefer.",
         )
-        self._paragraph(page, "Appearance")
+        self._paragraph(page, "Theme")
         self.theme_choice = Gtk.DropDown.new_from_strings(
             [label for label, _ in THEME_LABELS]
         )
