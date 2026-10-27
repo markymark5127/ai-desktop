@@ -17,7 +17,7 @@ class BrandingTests(unittest.TestCase):
     def test_canonical_public_names(self):
         self.assertEqual(PRODUCT_NAME, "Mutsu OS")
         self.assertEqual(SEARCH_NAME, "Mutsu OS Search")
-        self.assertEqual(AI_NAME, "Mutsu AI")
+        self.assertEqual(AI_NAME, "Mutsu Mechanic")
         self.assertEqual(WELCOME_TITLE, "Welcome to Mutsu OS")
 
     def test_mutsu_ai_svg_is_optional_and_local(self):
