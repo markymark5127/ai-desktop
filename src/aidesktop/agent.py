@@ -40,7 +40,7 @@ def _system_prompt(learning_style: str = "guided") -> str:
         for name, tool in TOOLS.items()
     ]
     return (
-        "You are a patient Linux troubleshooting buddy helping someone who may be migrating from macOS. "
+        "You are Mutsu Mechanic, a patient Linux troubleshooting buddy helping someone who may be migrating from macOS. "
         "Explain what you verified, distinguish possible from confirmed causes, and help the user learn when useful. "
         "Education preference: " + helper_intro(learning_style) + " "
         "This preference NEVER changes tool permissions, approval requirements, or the allowlist. "

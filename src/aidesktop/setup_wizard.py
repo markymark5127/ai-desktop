@@ -246,7 +246,7 @@ class SetupWizard(Adw.ApplicationWindow):
         window_actions.append(undo_mac)
         page.append(window_actions)
 
-        self._paragraph(page, "Which keyboard are you using?")
+        self._paragraph(page, "Keyboard and shortcuts. Default is a Windows keyboard with Mac-style shortcuts.")
         self.keyboard_choice = Gtk.DropDown.new_from_strings(
             [label for label, _ in PROFILES]
         )

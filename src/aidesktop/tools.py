@@ -92,6 +92,29 @@ def _search_installed_apps(args: dict[str, str]) -> str:
     return "\n".join(f"{app.name}: {app.desktop_id}" for app in matches)
 
 
+def _audio_repair(args: dict[str, str]) -> str:
+    """Restart user audio and verify the default sink still exists.
+
+    Approval is required. Undo is switching back to the previous sink,
+    which is reported so the user (or a later set_audio_output) can restore it.
+    """
+    before = _command(["pactl", "get-default-sink"]).strip()
+    _command(["systemctl", "--user", "restart", "pipewire", "pipewire-pulse", "wireplumber"], timeout=15)
+    after = _command(["pactl", "get-default-sink"]).strip()
+    sinks = _command(["pactl", "list", "short", "sinks"])
+    if not after:
+        raise ToolError("Audio restart finished but no default sink was verified")
+    return (
+        f"Audio services restarted. Previous default: {before or 'unknown'}. "
+        f"Verified default is now {after}. Undo: set_audio_output sink={before}."
+        f"\n{sinks}"
+    )
+
+
+def _bluetooth_status(_: dict[str, str]) -> str:
+    return _command(["bluetoothctl", "show"])
+
+
 def _set_audio_output(args: dict[str, str]) -> str:
     sink = args["sink"]
     available = _command(["pactl", "list", "short", "sinks"])
@@ -144,6 +167,14 @@ TOOLS: dict[str, Tool] = {
     "set_audio_output": Tool(
         "Change the default audio sink to one of the sinks listed by audio_outputs",
         {"sink": "Exact existing sink name"}, True, _set_audio_output,
+    ),
+    "audio_repair": Tool(
+        "Restart user audio services, then verify the default sink. Reports the previous sink for undo.",
+        {}, True, _audio_repair,
+    ),
+    "bluetooth_status": Tool(
+        "Show the Bluetooth adapter state. Read-only evidence before any pairing change.",
+        {}, False, _bluetooth_status,
     ),
 }
 

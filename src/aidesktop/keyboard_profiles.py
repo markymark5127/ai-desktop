@@ -19,10 +19,11 @@ from pathlib import Path
 
 
 PROFILES = (
-    ("Standard US · Win", "standard"),
-    ("Mac US · ⌘ Command", "mac"),
+    ("Windows keyboard, Mac shortcuts", "windows-mac"),
+    ("Windows keyboard, standard shortcuts", "standard"),
+    ("Mac keyboard", "mac"),
 )
-LAYOUT_IDS = {"standard": "us", "mac": "us+mac"}
+LAYOUT_IDS = {"windows-mac": "us", "standard": "us", "mac": "us+mac"}
 SCHEMA = "org.gnome.desktop.input-sources"
 
 
