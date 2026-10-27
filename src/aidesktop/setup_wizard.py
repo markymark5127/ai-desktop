@@ -17,7 +17,8 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
 from .keyboard_profiles import (
     PROFILES, KeyboardError, apply_profile_layout, get_profile,
-    restore_previous_layout, set_profile, shortcut_label,
+    keyd_active, mac_shortcuts_wanted, restore_previous_layout,
+    set_keyd, set_profile, shortcut_label,
 )
 from .dock import DockError, POSITIONS, apply_dock, restore_dock, dock_status
 from .phone_download import PHONE_APPS, qr_matrix, app_info
@@ -261,7 +262,10 @@ class SetupWizard(Adw.ApplicationWindow):
 
         self.keyboard_shortcut = Gtk.Label(xalign=0)
         page.append(self.keyboard_shortcut)
+        self.keyd_state = Gtk.Label(xalign=0)
+        page.append(self.keyd_state)
         self._refresh_shortcut()
+        self._refresh_keyd_state()
 
         self._paragraph(
             page, "Click the field and press your physical Command or Windows key "
@@ -324,6 +328,7 @@ class SetupWizard(Adw.ApplicationWindow):
         self._apply_theme(theme)
         try:
             save_theme(theme)
+            self._set_branding_appearance(theme)
         except OSError:
             self.status.set_text(
                 "Appearance changed for this session, but could not be saved."
@@ -344,9 +349,29 @@ class SetupWizard(Adw.ApplicationWindow):
         except OSError:
             self.status.set_text("Keyboard preference could not be saved.")
 
+    def _set_branding_appearance(self, theme: str) -> None:
+        # Canonical setting. The branding extension reacts and applies
+        # wallpaper, icons, and shell CSS. Follow System is "system".
+        import subprocess
+        value = theme if theme in ("japandi", "cyberpunk", "system") else "japandi"
+        subprocess.run(
+            ["gsettings", "set", "org.gnome.shell.extensions.mutsu-branding", "appearance", value],
+            check=False, timeout=5,
+        )
+
     def _refresh_shortcut(self):
         name = PROFILES[self.keyboard_choice.get_selected()][1]
         self.keyboard_shortcut.set_text(f"Your Spotlight shortcut: {shortcut_label(name)}")
+
+    def _refresh_keyd_state(self):
+        name = PROFILES[self.keyboard_choice.get_selected()][1]
+        wanted = mac_shortcuts_wanted(name)
+        active = keyd_active()
+        if wanted:
+            state = "on" if active else "off"
+            self.keyd_state.set_text(f"Mac shortcuts (Super+C / Super+V): {state}")
+        else:
+            self.keyd_state.set_text("Mac shortcuts: off for this choice. Super+Space still opens search.")
 
     def _key_pressed(self, _controller, keyval, _keycode, state):
         super_keys = {
@@ -383,7 +408,11 @@ class SetupWizard(Adw.ApplicationWindow):
         def response(dlg, result):
             dlg.destroy()
             if result == Gtk.ResponseType.OK:
-                self._run_background(lambda: apply_profile_layout(chosen))
+                def apply():
+                    apply_profile_layout(chosen)
+                    return set_keyd(mac_shortcuts_wanted(chosen))
+                self._run_background(apply)
+                self._refresh_keyd_state()
 
         dialog.connect("response", response)
         dialog.present()

@@ -81,6 +81,42 @@ def set_profile(profile: str) -> None:
     _atomic_private_json(preference_path(), {"profile": validate(profile)})
 
 
+def mac_shortcuts_wanted(profile: str) -> bool:
+    return validate(profile) == "windows-mac"
+
+
+def keyd_active() -> bool:
+    try:
+        result = subprocess.run(
+            ["systemctl", "is-active", "keyd"],
+            text=True, capture_output=True, timeout=5, check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return result.stdout.strip() == "active"
+
+
+def set_keyd(enabled: bool) -> str:
+    """Start or stop the Mac-shortcut mapper. Needs a privileged systemctl."""
+    action = "start" if enabled else "stop"
+    commands = (
+        ["systemctl", action, "keyd"],
+        ["pkexec", "systemctl", action, "keyd"],
+    )
+    last = "keyd could not be changed"
+    for argv in commands:
+        try:
+            result = subprocess.run(argv, text=True, capture_output=True, timeout=20, check=False)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            last = str(exc)
+            continue
+        if result.returncode == 0:
+            state = "on" if enabled else "off"
+            return f"Mac shortcuts are {state}."
+        last = (result.stderr or result.stdout or "systemctl failed").strip()
+    raise KeyboardError(last)
+
+
 def super_label(profile: str) -> str:
     return "⌘ Command" if validate(profile) == "mac" else "Win / Super"
 
