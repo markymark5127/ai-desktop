@@ -46,8 +46,8 @@ def _api_key() -> str:
             raise NewelleError("Could not read the Newelle API token file") from exc
     if not key or "\n" in key or "\r" in key:
         raise NewelleError(
-            "Configure a Newelle GUI API key, then save the matching key in "
-            "~/.config/ai-desktop/newelle-token (mode 0600). See README."
+            "Mutsu pairs Newelle automatically. Open Mutsu Portal or wait for "
+            "the next login if the pairing has not finished."
         )
     return key
 
@@ -73,9 +73,8 @@ def _request(path: str, payload: dict | None = None, *, timeout: int = 30) -> di
     except HTTPError as exc:
         if exc.code in (401, 403):
             raise NewelleError(
-                "Newelle rejected the API key. Make sure the GUI API key in "
-                "Newelle matches ~/.config/ai-desktop/newelle-token. "
-                "Re-run scripts/configure-newelle-key.sh if needed."
+                "Newelle rejected the local token. Mutsu will re-pair on the "
+                "next login. You do not enter this key."
             ) from exc
         if exc.code == 404:
             raise NewelleError(

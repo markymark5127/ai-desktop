@@ -92,23 +92,70 @@ def _search_installed_apps(args: dict[str, str]) -> str:
     return "\n".join(f"{app.name}: {app.desktop_id}" for app in matches)
 
 
-def _audio_repair(args: dict[str, str]) -> str:
-    """Restart user audio and verify the default sink still exists.
+def _repair_path():
+    from pathlib import Path
+    import os
+    root = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state") / "ai-desktop"
+    root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    return root / "last-repair.json"
 
-    Approval is required. Undo is switching back to the previous sink,
-    which is reported so the user (or a later set_audio_output) can restore it.
-    """
-    before = _command(["pactl", "get-default-sink"]).strip()
+
+def _audio_evidence() -> dict[str, str]:
+    return {
+        "default_sink": _command(["pactl", "get-default-sink"]).strip(),
+        "sinks": _command(["pactl", "list", "short", "sinks"]).strip(),
+        "pipewire": _command(["systemctl", "--user", "is-active", "pipewire"]).strip(),
+        "wireplumber": _command(["systemctl", "--user", "is-active", "wireplumber"]).strip(),
+    }
+
+
+def _audio_repair(args: dict[str, str]) -> str:
+    """Transaction: evidence, restart, verify, store an executable undo."""
+    import json
+    before = _audio_evidence()
+    if not before["default_sink"]:
+        raise ToolError("No default audio sink was found, so there is nothing safe to restart")
     _command(["systemctl", "--user", "restart", "pipewire", "pipewire-pulse", "wireplumber"], timeout=15)
-    after = _command(["pactl", "get-default-sink"]).strip()
-    sinks = _command(["pactl", "list", "short", "sinks"])
-    if not after:
+    after = _audio_evidence()
+    if not after["default_sink"]:
         raise ToolError("Audio restart finished but no default sink was verified")
+    if after["pipewire"] != "active" or after["wireplumber"] != "active":
+        raise ToolError(f"Audio services did not come back active: {after}")
+    record = {
+        "kind": "audio_restart",
+        "before_sink": before["default_sink"],
+        "after_sink": after["default_sink"],
+    }
+    path = _repair_path()
+    path.write_text(json.dumps(record) + "\n", encoding="utf-8")
+    path.chmod(0o600)
     return (
-        f"Audio services restarted. Previous default: {before or 'unknown'}. "
-        f"Verified default is now {after}. Undo: set_audio_output sink={before}."
-        f"\n{sinks}"
+        f"Audio repair applied. Before: sink {before['default_sink']}, "
+        f"pipewire {before['pipewire']}, wireplumber {before['wireplumber']}. "
+        f"After: sink {after['default_sink']}, pipewire {after['pipewire']}, "
+        f"wireplumber {after['wireplumber']}. Undo is available as undo_last_repair."
     )
+
+
+def _undo_last_repair(_: dict[str, str]) -> str:
+    import json
+    path = _repair_path()
+    if not path.exists():
+        raise ToolError("No repair is recorded to undo")
+    record = json.loads(path.read_text(encoding="utf-8"))
+    if record.get("kind") != "audio_restart":
+        raise ToolError("The last repair is not an audio change")
+    sink = record.get("before_sink") or ""
+    available = _command(["pactl", "list", "short", "sinks"])
+    sinks = {line.split()[1] for line in available.splitlines() if len(line.split()) >= 2}
+    if sink not in sinks:
+        raise ToolError(f"Previous sink {sink} is no longer present, so undo was not applied")
+    _command(["pactl", "set-default-sink", sink])
+    actual = _command(["pactl", "get-default-sink"]).strip()
+    if actual != sink:
+        raise ToolError(f"Undo was not verified. Current output: {actual}")
+    path.unlink(missing_ok=True)
+    return f"Undid the audio repair. Default sink is {actual} again."
 
 
 def _bluetooth_status(_: dict[str, str]) -> str:
@@ -169,8 +216,12 @@ TOOLS: dict[str, Tool] = {
         {"sink": "Exact existing sink name"}, True, _set_audio_output,
     ),
     "audio_repair": Tool(
-        "Restart user audio services, then verify the default sink. Reports the previous sink for undo.",
+        "Restart user audio, verify services and the default sink, and store an undo.",
         {}, True, _audio_repair,
+    ),
+    "undo_last_repair": Tool(
+        "Undo the last approved audio repair by restoring the previous default sink.",
+        {}, True, _undo_last_repair,
     ),
     "bluetooth_status": Tool(
         "Show the Bluetooth adapter state. Read-only evidence before any pairing change.",
