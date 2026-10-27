@@ -589,20 +589,17 @@ class SetupWizard(Adw.ApplicationWindow):
             "Changes to your computer still require separate approval.",
         )
         self.newelle_status = Gtk.Label(
-            label="Connection not checked yet.", xalign=0
+            label="Mutsu pairs Newelle for you. No API key to type.", xalign=0
         )
         self.newelle_status.set_wrap(True)
         page.append(self.newelle_status)
-        btn = Gtk.Button(label="Check headless Newelle connection")
-        btn.connect("clicked", self._check_newelle)
+        btn = Gtk.Button(label="Pair Newelle")
+        btn.connect("clicked", self._pair_newelle)
         page.append(btn)
-        guide = Gtk.Button(label="Open optional Newelle setup guide")
-        guide.connect("clicked", lambda *_: self._open_url(NEWELLE_SETUP_URL))
-        page.append(guide)
         self._paragraph(
             page,
-            "This prototype connects only to Newelle's model endpoint, not to "
-            "its unrestricted command tools. You can finish setup without it.",
+            "Mutsu generates the local token and starts the headless service. "
+            "You can finish setup without it. This does not ask for a cloud key.",
         )
         return page
 
@@ -616,6 +613,29 @@ class SetupWizard(Adw.ApplicationWindow):
             self.status.set_text(
                 "Couldn't save the model-sharing permission. It was not changed."
             )
+
+    def _pair_newelle(self, *_unused):
+        import subprocess
+        self.newelle_status.set_text("Pairing Newelle…")
+        def work():
+            script = "/usr/libexec/mutsu-os/setup-newelle-user.sh"
+            if not __import__("os").path.isfile(script):
+                return "Pairing script is not in this image yet."
+            result = subprocess.run([script], text=True, capture_output=True, timeout=120)
+            text = (result.stdout or result.stderr or "Pairing finished.").strip()
+            if result.returncode == 0:
+                return text or "Newelle is paired."
+            return text or "Pairing did not finish. It will retry next login."
+        def done(message):
+            self.newelle_status.set_text(message)
+            return False
+        def run():
+            try:
+                message = work()
+            except Exception as exc:
+                message = str(exc)
+            GLib.idle_add(done, message)
+        __import__("threading").Thread(target=run, daemon=True).start()
 
     def _check_newelle(self, *_unused):
         self.newelle_status.set_text("Checking local Newelle API…")
