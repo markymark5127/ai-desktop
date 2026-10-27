@@ -9,7 +9,7 @@ saved preferences, shortcut backups, Newelle keys, and user services.
 
 PRODUCT_NAME = "Mutsu OS"
 SEARCH_NAME = f"{PRODUCT_NAME} Search"
-AI_NAME = "Mutsu AI"
+AI_NAME = "Mutsu Mechanic"
 WELCOME_TITLE = f"Welcome to {PRODUCT_NAME}"
 
 from pathlib import Path

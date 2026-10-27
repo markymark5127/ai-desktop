@@ -571,9 +571,13 @@ def load_theme() -> str:
             value = json.load(stream)
     except (OSError, ValueError):
         return "japandi"
-    if not isinstance(value, dict) or value.get("theme") not in STYLES:
+    if not isinstance(value, dict):
         return "japandi"
-    return value["theme"]
+    # Desktop extension writes "appearance"; this app writes "theme".
+    name = value.get("theme") or value.get("appearance")
+    if name not in STYLES:
+        return "japandi"
+    return name
 
 
 def save_theme(name: str) -> None:
@@ -584,7 +588,7 @@ def save_theme(name: str) -> None:
     try:
         os.fchmod(fd, 0o600)
         with os.fdopen(fd, "w", encoding="utf-8") as stream:
-            json.dump({"theme": name}, stream)
+            json.dump({"theme": name, "appearance": name}, stream)
             stream.write("\n")
         os.replace(temporary, path)
     finally:
