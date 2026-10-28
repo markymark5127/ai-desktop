@@ -104,13 +104,15 @@ class NewelleTests(unittest.TestCase):
             }):
                 self.assertIn('connected', check_newelle())
 
-    def test_requires_explicit_shared_api_key(self):
+    def test_unpaired_newelle_prompts_for_automatic_pairing(self):
+        # The OS now creates a local user token automatically. Until that
+        # service finishes, never use an unauthenticated Newelle connection.
         with tempfile.TemporaryDirectory() as tmp:
             with patch.dict(os.environ, {
                 'AIDESKTOP_NEWELLE_PORT': str(self.server.server_port),
                 'AIDESKTOP_NEWELLE_API_KEY':'', 'XDG_CONFIG_HOME':tmp,
             }):
-                with self.assertRaisesRegex(NewelleError, 'Configure a Newelle GUI API key'):
+                with self.assertRaisesRegex(NewelleError, 'Mutsu pairs Newelle automatically'):
                     check_newelle()
 
     def test_port_restrictions(self):
