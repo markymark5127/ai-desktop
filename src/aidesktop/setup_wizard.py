@@ -42,7 +42,7 @@ from .tools import ToolError, run_tool
 
 GSCONNECT_ID = "gsconnect@andyholmes.github.io"
 NEWELLE_SETUP_URL = "https://github.com/markymark5127/ai-desktop/blob/main/docs/NEWELLE_SETUP.md"
-STEPS = ("Welcome", "Appearance & keyboard", "Mac-style dock", "Your helper", "AI connection", "Phone pairing", "Gaming & desktop")
+STEPS = ("Welcome", "Look and keyboard", "You are ready")
 
 
 class SetupWizard(Adw.ApplicationWindow):
@@ -98,8 +98,7 @@ class SetupWizard(Adw.ApplicationWindow):
         self.stack.set_transition_duration(180)
 
         for idx, make_page in enumerate(
-            (self._welcome, self._appearance, self._dock, self._helper, self._model,
-             self._phone, self._gaming)
+            (self._welcome, self._appearance, self._ready)
         ):
             child = make_page()
             self.stack.add_named(child, f"step-{idx}")
@@ -185,11 +184,7 @@ class SetupWizard(Adw.ApplicationWindow):
     def _welcome(self) -> Gtk.Box:
         page = self._page(
             f"Welcome to {PRODUCT_NAME}.",
-            "Japandi is the default look. You can change it on the next page.",
-        )
-        self._paragraph(
-            page,
-            "Super+Space opens apps and files. AI is optional and asks before changing anything.",
+            "This takes a minute. Super+Space opens apps and files.",
         )
         self._paragraph(page, "Try a search:")
         self.try_search = Gtk.Entry()
@@ -218,8 +213,8 @@ class SetupWizard(Adw.ApplicationWindow):
 
     def _appearance(self) -> Gtk.Box:
         page = self._page(
-            "Look and keyboard.",
-            "Japandi is selected. Switch to Cyberpunk or System if you prefer.",
+            "Pick a look.",
+            "Japandi is the default. You can change this later.",
         )
         self._paragraph(page, "Theme")
         self.theme_choice = Gtk.DropDown.new_from_strings(
@@ -232,22 +227,7 @@ class SetupWizard(Adw.ApplicationWindow):
         page.append(self.theme_choice)
         self.theme_choice.connect("notify::selected", self._theme_selected)
 
-        self._paragraph(
-            page,
-            "Window controls: macOS-style red, yellow and green buttons appear "
-            f"on the left of {PRODUCT_NAME} windows. You can also move controls to the left "
-            "in other GNOME apps (their colors may still follow their theme).",
-        )
-        window_actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        use_mac = Gtk.Button(label="Use left-side buttons in GNOME…")
-        use_mac.connect("clicked", self._confirm_window_layout)
-        window_actions.append(use_mac)
-        undo_mac = Gtk.Button(label="Restore original buttons")
-        undo_mac.connect("clicked", lambda *_: self._run_background(restore_window_layout))
-        window_actions.append(undo_mac)
-        page.append(window_actions)
-
-        self._paragraph(page, "Keyboard and shortcuts. Default is a Windows keyboard with Mac-style shortcuts.")
+        self._paragraph(page, "Keyboard. Default is a Windows keyboard with Mac shortcuts.")
         self.keyboard_choice = Gtk.DropDown.new_from_strings(
             [label for label, _ in PROFILES]
         )
@@ -257,43 +237,11 @@ class SetupWizard(Adw.ApplicationWindow):
         ))
         self.keyboard_choice.connect("notify::selected", self._keyboard_selected)
         page.append(self.keyboard_choice)
-
         self.keyboard_shortcut = Gtk.Label(xalign=0)
         page.append(self.keyboard_shortcut)
-        self.keyd_state = Gtk.Label(xalign=0)
-        page.append(self.keyd_state)
         self._refresh_shortcut()
-        self._refresh_keyd_state()
+        return page
 
-        self._paragraph(
-            page, "Click the field and press your physical Command or Windows key "
-            "to check whether GNOME detects it as Super. Some Windows VMs intercept the key.",
-        )
-        self.key_test = Gtk.Entry()
-        self.key_test.set_placeholder_text("Click here, then press ⌘ Command or Win")
-        page.append(self.key_test)
-        self.key_feedback = Gtk.Label(xalign=0)
-        self.key_feedback.set_wrap(True)
-        page.append(self.key_feedback)
-        keys = Gtk.EventControllerKey()
-        keys.connect("key-pressed", self._key_pressed)
-        self.key_test.add_controller(keys)
-
-        actions = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
-        apply_button = Gtk.Button(label="Apply selected layout to GNOME…")
-        apply_button.connect("clicked", self._confirm_keyboard_change)
-        actions.append(apply_button)
-        restore_button = Gtk.Button(label="Restore prior layout")
-        restore_button.connect(
-            "clicked", lambda *_: self._run_background(restore_previous_layout)
-        )
-        actions.append(restore_button)
-        page.append(actions)
-        self._paragraph(
-            page,
-            "Command normally acts as Super on Apple keyboards. This profile does NOT "
-            "swap Ctrl+C/Ctrl+V or your terminal controls. Applying a layout is optional.",
-        )
         return page
 
     def _confirm_window_layout(self, *_unused):
@@ -344,6 +292,7 @@ class SetupWizard(Adw.ApplicationWindow):
         try:
             set_profile(name)
             self._refresh_shortcut()
+            self._run_background(lambda: set_keyd(mac_shortcuts_wanted(name)))
         except OSError:
             self.status.set_text("Keyboard preference could not be saved.")
 
@@ -785,6 +734,19 @@ class SetupWizard(Adw.ApplicationWindow):
             self.status.set_text(
                 "Could not open GSConnect preferences. Check that its GNOME extension is installed."
             )
+
+
+    def _ready(self) -> Gtk.Box:
+        page = self._page(
+            "You are ready.",
+            "Press Super+Space anytime to search apps, files, and ask Mutsu Mechanic.",
+        )
+        self._paragraph(
+            page,
+            "Japandi is on, Mac shortcuts are available, and Newelle is already in the system. "
+            "You can change the look, keyboard, dock, and phone pairing later in Settings.",
+        )
+        return page
 
     def _gaming(self) -> Gtk.Box:
         page = self._page(
