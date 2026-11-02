@@ -10,7 +10,7 @@ from aidesktop.themes import (SCHEMES, STYLES, SPOTLIGHT_STYLES, SPOTLIGHT_HIGH_
 
 class ThemeTests(unittest.TestCase):
     def test_three_themes_have_scoped_gtk_css(self):
-        self.assertEqual([key for _, key in THEME_LABELS], ["system", "japandi", "cyberpunk"])
+        self.assertEqual([key for _, key in THEME_LABELS], ["japandi", "cyberpunk", "system"])
         self.assertEqual(set(STYLES), set(SCHEMES))
         # The system palette remains GNOME-native, while AI Desktop still
         # provides its own traffic-light title controls.
