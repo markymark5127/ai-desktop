@@ -52,6 +52,26 @@ def _api_key() -> str:
     return key
 
 
+
+def _ensure_local_api() -> bool:
+    """Start the bundled headless service once. Never ask the user to open Newelle."""
+    if getattr(_ensure_local_api, "tried", False):
+        return False
+    _ensure_local_api.tried = True
+    import subprocess
+    commands = (
+        ["systemctl", "--user", "start", "ai-desktop-newelle.service"],
+        ["systemctl", "--user", "start", "mutsu-newelle-link.service"],
+    )
+    for command in commands:
+        try:
+            subprocess.run(command, check=False, timeout=8,
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+    return True
+
+
 def _request(path: str, payload: dict | None = None, *, timeout: int = 30) -> dict:
     if path not in ("/v1/models", "/v1/chat/completions"):
         raise NewelleError("Unsupported Newelle API endpoint")
@@ -78,9 +98,8 @@ def _request(path: str, payload: dict | None = None, *, timeout: int = 30) -> di
             ) from exc
         if exc.code == 404:
             raise NewelleError(
-                "Newelle returned HTTP 404. The GUI API at 127.0.0.1 may be "
-                "disabled or its /v1 endpoint is unavailable in this version. "
-                "Check Settings > Interfaces > GUI API and the selected port."
+                "Mutsu is still connecting the local AI. It starts the "
+                "Newelle service on 127.0.0.1 automatically; you do not open it."
             ) from exc
         if exc.code in (400, 422):
             raise NewelleError(
@@ -95,9 +114,11 @@ def _request(path: str, payload: dict | None = None, *, timeout: int = 30) -> di
             ) from exc
         raise NewelleError(f"Newelle returned HTTP {exc.code}") from exc
     except (URLError, TimeoutError, OSError) as exc:
+        if _ensure_local_api():
+            return _request(path, payload, timeout=timeout)
         raise NewelleError(
-            "Newelle is unavailable. Start its gui-api headless interface and "
-            "check that it listens on 127.0.0.1 at the configured port."
+            "Mutsu is still starting the local AI on 127.0.0.1. "
+            "You do not open Newelle or type a key. It will finish on its own."
         ) from exc
     if len(raw) > 1_000_000:
         raise NewelleError("Newelle response exceeded the allowed size")

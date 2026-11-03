@@ -127,7 +127,7 @@ class NewelleTests(unittest.TestCase):
         with patch.dict(os.environ, {
             'AIDESKTOP_NEWELLE_PORT': '1', 'AIDESKTOP_NEWELLE_API_KEY':'test-private-key'
         }):
-            with self.assertRaisesRegex(NewelleError, 'unavailable'):
+            with self.assertRaisesRegex(NewelleError, 'still starting the local AI'):
                 check_newelle()
 
 
