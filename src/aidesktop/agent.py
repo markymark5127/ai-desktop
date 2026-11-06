@@ -11,6 +11,7 @@ from .providers import ProviderError, complete
 from .history import record_action
 from .onboarding import (
     get_learning_style, helper_intro, model_sharing_allowed, MODEL_SHARING_LABEL,
+    CLOUD_PROVIDERS, CLOUD_SHARING_LABEL,
 )
 from .search import search_applications
 from .tools import TOOLS, ToolError, run_tool
@@ -80,11 +81,15 @@ class Agent:
             return AgentResponse("Enter a request of 1–4000 characters.")
         if provider == "builtin":
             return self._builtin(request)
-        if not model_sharing_allowed():
+        if not model_sharing_allowed(provider):
+            if provider in CLOUD_PROVIDERS:
+                return AgentResponse(
+                    "Cloud AI is off. To send questions to this provider, enable "
+                    f"'{CLOUD_SHARING_LABEL}' in Mutsu Search settings (the gear icon)."
+                )
             return AgentResponse(
-                "Model sharing is off. To use the selected AI, enable "
-                f"'{MODEL_SHARING_LABEL}' in Spotlight Preferences "
-                "or the setup wizard."
+                "Mutsu Mechanic's AI is switched off. Turn on "
+                f"'{MODEL_SHARING_LABEL}' in Mutsu Search settings (the gear icon)."
             )
 
         context = [f"User request: {request}"]
@@ -92,8 +97,8 @@ class Agent:
             # Re-check consent between diagnostic steps. Turning permission
             # off prevents additional model requests, although it cannot
             # retract a request already in flight.
-            if not model_sharing_allowed():
-                return AgentResponse("Model sharing was disabled. No further requests were sent.")
+            if not model_sharing_allowed(provider):
+                return AgentResponse("The AI was switched off. No further requests were sent.")
             try:
                 raw = self.inference(
                     provider, _system_prompt(get_learning_style()), "\n\n".join(context)

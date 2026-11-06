@@ -81,7 +81,7 @@ class NewelleTests(unittest.TestCase):
         from aidesktop.newelle_client import test_newelle as probe
         with patch('aidesktop.newelle_client.model_sharing_allowed', return_value=False):
             with patch('aidesktop.newelle_client._request') as network:
-                with self.assertRaisesRegex(NewelleError, 'Model sharing is disabled'):
+                with self.assertRaisesRegex(NewelleError, 'switched off'):
                     probe()
                 network.assert_not_called()
 

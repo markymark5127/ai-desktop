@@ -23,13 +23,21 @@ PHONE_OPTIONS = (
     ("I'll do this later", "later"),
 )
 STATES = {"pending", "completed", "skipped"}
-MODEL_SHARING_LABEL = "Allow AI model sharing"
+# Mutsu Mechanic's AI is ON by default: the bundled Qwen model runs on this
+# computer through Ollama, so nothing leaves the device. Sending questions to
+# a CLOUD provider (OpenAI, Anthropic) still needs separate, explicit opt-in.
+MODEL_SHARING_LABEL = "Use Mutsu Mechanic AI (runs on this computer)"
+CLOUD_SHARING_LABEL = "Allow cloud AI models"
+CLOUD_PROVIDERS = frozenset({"openai", "anthropic"})
 
 DEFAULTS = {
     "status": "pending",
     "learning_style": "guided",
     "phone": "later",
+    # Legacy key, now the cloud consent. Older files saved False by default,
+    # which correctly keeps cloud providers off.
     "model_sharing": False,
+    "ai_enabled": True,
 }
 
 
@@ -52,8 +60,9 @@ def _validated(value: dict) -> dict[str, str | bool]:
     for key, allowed in valid.items():
         if not isinstance(data[key], str) or data[key] not in allowed:
             raise ValueError(f"Invalid onboarding option: {key}")
-    if not isinstance(data["model_sharing"], bool):
-        raise ValueError("Model sharing consent must be a boolean")
+    for key in ("model_sharing", "ai_enabled"):
+        if not isinstance(data[key], bool):
+            raise ValueError("AI permissions must be booleans")
     return data
 
 
@@ -94,20 +103,36 @@ def get_learning_style() -> str:
     return str(load_preferences()["learning_style"])
 
 
-def model_sharing_allowed() -> bool:
-    """Persistent, explicit permission to send content to a model.
+def model_sharing_allowed(provider: str | None = None) -> bool:
+    """May Mutsu send this request to an AI model?
 
-    Older onboarding files lack this setting: they default to False.
-    Malformed settings also fail closed. Merely selecting a provider never
-    grants consent.
+    On by default for the on-device model (Newelle with the bundled Qwen, or
+    a local provider); the user can switch the AI off entirely. Cloud
+    providers additionally need explicit cloud consent. Malformed settings
+    fail closed for the cloud and fall back to the default for local AI.
     """
+    prefs = load_preferences()
+    if prefs["ai_enabled"] is not True:
+        return False
+    if provider in CLOUD_PROVIDERS:
+        return prefs["model_sharing"] is True
+    return True
+
+
+def cloud_sharing_allowed() -> bool:
     return load_preferences()["model_sharing"] is True
 
 
 def set_model_sharing_allowed(allowed: bool) -> None:
-    """Persist opt-in/opt-out before the UI claims the choice was saved."""
+    """Switch Mutsu Mechanic's AI on or off (persisted before the UI says so)."""
     if not isinstance(allowed, bool):
-        raise ValueError("Model sharing consent must be a boolean")
+        raise ValueError("AI permission must be a boolean")
+    save_preferences(ai_enabled=allowed)
+
+
+def set_cloud_sharing_allowed(allowed: bool) -> None:
+    if not isinstance(allowed, bool):
+        raise ValueError("Cloud consent must be a boolean")
     save_preferences(model_sharing=allowed)
 
 

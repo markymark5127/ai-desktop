@@ -17,7 +17,7 @@ See the [official naming guide](docs/BRANDING.md) and the [Mutsu OS system-brand
 - Instant offline application search by friendly name, description, or desktop ID, with keyboard navigation; plus bounded local-only filename and folder search in familiar home directories. Spotlight groups real results under Top Results, Files and AI Suggestions.
 - Enter opens a matching app, or **asks the selected AI by default** if there is no local match. Every nonempty search also offers a visible Ask AI option. No special AI shortcut is needed; clicking elsewhere closes an idle Spotlight (in-flight requests remain alive). Ctrl+, or Command+, opens preferences.
 - Built-in read-only diagnostics, even without an AI model.
-- **One-time, optional model-sharing permission** in setup wizard and Spotlight Settings. Off by default; when approved, Enter asks Newelle/other configured models without repeated privacy popups. Disabling it prevents future model requests; system-changing actions still need approval.
+- **Mutsu Mechanic AI on by default** with the bundled on-device model (Newelle + local Qwen through Ollama): questions stay on the computer. Switch it off in the setup wizard or Mutsu Search settings. **Cloud providers (OpenAI, Anthropic) need a separate explicit opt-in.** System-changing actions always need approval.
 - **Headless Newelle (default)** for local or cloud models configured once in Newelle; legacy direct Ollama, OpenAI API and Anthropic API adapters remain optional.
 - A model can request only allowlisted tools, never arbitrary shell commands.
 - Every application launch or default audio-output change requires an explicit click to approve.
@@ -133,7 +133,7 @@ Export your own API credentials before starting the app:
     export ANTHROPIC_API_KEY=...
     bash scripts/run-dev.sh
 
-Select the desired provider in Spotlight Settings. Before using any AI model, optionally check **Allow questions and diagnostics to be sent to the AI model** in the setup wizard or Settings. It is **off by default** and replaces repeated per-query popups. If enabled, prompts and diagnostic results may leave the device through cloud providers, including Newelle if configured to use a cloud model. You can turn it off anytime; already transmitted requests cannot be recalled. Do not share confidential diagnostics.
+Select the provider in Mutsu Search settings (gear icon). **Use Mutsu Mechanic AI** is on by default and uses the on-device model, so prompts and diagnostics stay on the computer. Direct cloud providers (OpenAI, Anthropic) only receive requests after you check **Allow cloud AI models**. If you reconfigure Newelle itself to use a cloud model, Newelle sends requests there. Turning the AI off stops future requests; already transmitted requests cannot be recalled.
 
 **Important:** This MVP uses separately billed API keys, NOT your ChatGPT or Claude subscription sign-in. Subscription/OAuth-style provider flows are future integrations, subject to each provider's terms and eligibility.
 
@@ -199,7 +199,7 @@ Select **Japandi**, **Cyberpunk** or **System** from the small settings icon ins
 
 ## Keyboard usage
 
-Type an installed app name and press Enter to open it. If there is no local match, a visible **Ask AI** result is selected, so Enter uses the chosen assistant when model sharing has been enabled; no hotkey is needed. Arrow keys can select Ask AI even when app matches exist. Nothing is sent during typing. Clicking another app or the desktop hides Spotlight while retaining any in-flight answer. Escape dismisses it; the gear icon or Ctrl+, opens provider/appearance/setup. Built-in mode can also resolve `open Steam` to the installed desktop application.
+Type an installed app name and press Enter to open it. If there is no local match, a visible **Ask AI** result is selected, so Enter uses the chosen assistant when the AI is on (the default); no hotkey is needed. Arrow keys can select Ask AI even when app matches exist. Nothing is sent during typing. Clicking another app or the desktop hides Spotlight while retaining any in-flight answer. Escape dismisses it; the gear icon or Ctrl+, opens provider/appearance/setup. Built-in mode can also resolve `open Steam` to the installed desktop application.
 
 **Limitation:** The app catalog loads when the launcher opens; restart the window after installing software. No search results are sent to a model until you explicitly ask the assistant. Native GNOME shortcut binding and full Spotlight overlay remain future milestones.
 

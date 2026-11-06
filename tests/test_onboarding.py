@@ -9,6 +9,7 @@ from aidesktop.onboarding import (
     DEFAULTS, LEARNING_STYLES, get_learning_style, helper_intro, is_setup_done,
     load_preferences, mark_setup_done, preferences_path, save_preferences,
     model_sharing_allowed, set_model_sharing_allowed,
+    cloud_sharing_allowed, set_cloud_sharing_allowed,
 )
 
 
@@ -31,40 +32,56 @@ class OnboardingTests(unittest.TestCase):
                 self.assertTrue(is_setup_done())
                 self.assertEqual(load_preferences()["status"], "completed")
 
-    def test_model_sharing_defaults_off_and_can_be_revoked(self):
+    def test_local_ai_on_by_default_and_can_be_switched_off(self):
         with tempfile.TemporaryDirectory() as directory:
             with patch.dict(os.environ, {"XDG_CONFIG_HOME": directory}):
-                self.assertFalse(model_sharing_allowed())
-                set_model_sharing_allowed(True)
                 self.assertTrue(model_sharing_allowed())
-                self.assertIs(load_preferences()["model_sharing"], True)
+                self.assertTrue(model_sharing_allowed("newelle"))
                 set_model_sharing_allowed(False)
-                self.assertFalse(model_sharing_allowed())
+                self.assertFalse(model_sharing_allowed("newelle"))
+                self.assertIs(load_preferences()["ai_enabled"], False)
+                set_model_sharing_allowed(True)
+                self.assertTrue(model_sharing_allowed("local"))
                 self.assertEqual(
                     stat.S_IMODE(preferences_path().stat().st_mode), 0o600
                 )
                 with self.assertRaises(ValueError):
                     set_model_sharing_allowed("yes")
 
-    def test_older_preference_file_stays_valid_without_silent_opt_in(self):
+    def test_cloud_providers_need_explicit_consent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.dict(os.environ, {"XDG_CONFIG_HOME": directory}):
+                for provider in ("openai", "anthropic"):
+                    self.assertFalse(model_sharing_allowed(provider))
+                set_cloud_sharing_allowed(True)
+                self.assertTrue(cloud_sharing_allowed())
+                self.assertTrue(model_sharing_allowed("openai"))
+                set_model_sharing_allowed(False)
+                self.assertFalse(model_sharing_allowed("openai"),
+                                 "switching the AI off also stops cloud requests")
+
+    def test_older_preference_file_keeps_cloud_off(self):
         with tempfile.TemporaryDirectory() as directory:
             with patch.dict(os.environ, {"XDG_CONFIG_HOME": directory}):
                 p = preferences_path()
                 p.parent.mkdir(parents=True)
                 p.write_text(
-                    '{"status":"completed","phone":"iphone","learning_style":"learn"}'
+                    '{"status":"completed","phone":"iphone","learning_style":"learn",'
+                    '"model_sharing":false}'
                 )
-                self.assertFalse(model_sharing_allowed())
+                self.assertTrue(model_sharing_allowed("newelle"),
+                                "on-device AI works for existing users")
+                self.assertFalse(model_sharing_allowed("anthropic"))
                 self.assertTrue(is_setup_done())
                 self.assertEqual(load_preferences()["learning_style"], "learn")
 
-    def test_corrupt_consent_fails_closed(self):
+    def test_corrupt_consent_fails_closed_for_cloud(self):
         with tempfile.TemporaryDirectory() as directory:
             with patch.dict(os.environ, {"XDG_CONFIG_HOME": directory}):
                 p = preferences_path()
                 p.parent.mkdir(parents=True)
                 p.write_text('{"model_sharing":"true"}')
-                self.assertFalse(model_sharing_allowed())
+                self.assertFalse(model_sharing_allowed("openai"))
 
     def test_skipping_is_reopenable(self):
         with tempfile.TemporaryDirectory() as directory:

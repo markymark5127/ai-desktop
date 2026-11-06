@@ -308,7 +308,7 @@ class SetupWizard(Adw.ApplicationWindow):
 
     def _refresh_shortcut(self):
         name = PROFILES[self.keyboard_choice.get_selected()][1]
-        self.keyboard_shortcut.set_text(f"Your Spotlight shortcut: {shortcut_label(name)}")
+        self.keyboard_shortcut.set_text(f"Your Mutsu Search shortcut: {shortcut_label(name)}")
 
     def _refresh_keyd_state(self):
         name = PROFILES[self.keyboard_choice.get_selected()][1]
@@ -389,7 +389,7 @@ class SetupWizard(Adw.ApplicationWindow):
         self._paragraph(
             page,
             "Show Applications (the app grid, like Launchpad) will appear in "
-            "the dock. This is separate from Spotlight (Super + Space). "
+            "the dock. This is separate from Mutsu Search (Super + Space). "
             "Activities/Overview remains available for workspaces even if "
             "you later choose to hide its top-left button.",
         )
@@ -514,15 +514,14 @@ class SetupWizard(Adw.ApplicationWindow):
 
     def _model(self) -> Gtk.Box:
         page = self._page(
-            "Get more help when you need it.",
-            "Your everyday search works without AI. Newelle can provide deeper explanations.",
+            "Meet Mutsu Mechanic.",
+            "Ask for help, explanations and fixes. It's ready now.",
         )
         self._paragraph(
             page,
-            "You can use local app search without an AI model. Newelle or another "
-            "selected provider may process your questions and relevant system "
-            "diagnostics. Newelle can use a local or cloud model; cloud models "
-            "may transfer that information off this computer.",
+            "Mutsu Mechanic uses an AI model that runs on this computer, so "
+            "your questions and system details stay here. App and file search "
+            "work with or without it.",
         )
         self.model_sharing_choice = Gtk.CheckButton(label=MODEL_SHARING_LABEL)
         self.model_sharing_choice.set_active(model_sharing_allowed())
@@ -530,17 +529,16 @@ class SetupWizard(Adw.ApplicationWindow):
         page.append(self.model_sharing_choice)
         self._paragraph(
             page,
-            "Optional and OFF by default. When enabled, pressing Enter on an "
-            "Ask AI result sends the question without another confirmation. "
-            "Uncheck this here or in Spotlight Settings to stop future requests. "
-            "Changes to your computer still require separate approval.",
+            "On by default. Uncheck it here or in Mutsu Search settings to "
+            "switch the AI off. Cloud AI providers stay off unless you allow "
+            "them. Changes to your computer always ask first.",
         )
         self.newelle_status = Gtk.Label(
-            label="Mutsu pairs Newelle for you. No API key to type.", xalign=0
+            label="Mutsu Mechanic sets itself up. Nothing to configure.", xalign=0
         )
         self.newelle_status.set_wrap(True)
         page.append(self.newelle_status)
-        btn = Gtk.Button(label="Pair Newelle")
+        btn = Gtk.Button(label="Check Mutsu Mechanic")
         btn.connect("clicked", self._pair_newelle)
         page.append(btn)
         self._paragraph(
@@ -563,7 +561,7 @@ class SetupWizard(Adw.ApplicationWindow):
 
     def _pair_newelle(self, *_unused):
         import subprocess
-        self.newelle_status.set_text("Pairing Newelle…")
+        self.newelle_status.set_text("Setting up Mutsu Mechanic…")
         def work():
             script = "/usr/libexec/mutsu-os/setup-newelle-user.sh"
             if not __import__("os").path.isfile(script):
@@ -571,7 +569,7 @@ class SetupWizard(Adw.ApplicationWindow):
             result = subprocess.run([script], text=True, capture_output=True, timeout=120)
             text = (result.stdout or result.stderr or "Pairing finished.").strip()
             if result.returncode == 0:
-                return text or "Newelle is paired."
+                return text or "Mutsu Mechanic is ready."
             return text or "Pairing did not finish. It will retry next login."
         def done(message):
             self.newelle_status.set_text(message)
@@ -585,7 +583,7 @@ class SetupWizard(Adw.ApplicationWindow):
         __import__("threading").Thread(target=run, daemon=True).start()
 
     def _check_newelle(self, *_unused):
-        self.newelle_status.set_text("Checking local Newelle API…")
+        self.newelle_status.set_text("Checking Mutsu Mechanic…")
 
         def work():
             try:
@@ -743,7 +741,7 @@ class SetupWizard(Adw.ApplicationWindow):
         )
         self._paragraph(
             page,
-            "Japandi is on, Mac shortcuts are available, and Newelle is already in the system. "
+            "Japandi is on, Mac shortcuts are available, and Mutsu Mechanic is ready to help. "
             "You can change the look, keyboard, dock, and phone pairing later in Settings.",
         )
         return page

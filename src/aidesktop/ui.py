@@ -32,11 +32,12 @@ from .themes import (
 from .keyboard_profiles import shortcut_label, get_profile
 from .onboarding import (
     model_sharing_allowed, set_model_sharing_allowed, MODEL_SHARING_LABEL,
+    cloud_sharing_allowed, set_cloud_sharing_allowed, CLOUD_SHARING_LABEL,
 )
 
 
 CHOICES = [
-    ("Newelle (recommended)", "newelle"),
+    ("Mutsu Mechanic (on this computer, recommended)", "newelle"),
     ("Built-in (offline)", "builtin"),
     ("Local Ollama", "local"),
     ("OpenAI API", "openai"),
@@ -223,10 +224,14 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.model_permission.set_active(model_sharing_allowed())
         self.model_permission.connect("toggled", self._on_model_permission_changed)
         menu.append(self.model_permission)
+        self.cloud_permission = Gtk.CheckButton(label=CLOUD_SHARING_LABEL)
+        self.cloud_permission.set_active(cloud_sharing_allowed())
+        self.cloud_permission.connect("toggled", self._on_cloud_permission_changed)
+        menu.append(self.cloud_permission)
         privacy_description = Gtk.Label(
-            label="When enabled, questions and relevant diagnostic details "
-                  "are sent to the selected model. Newelle may use the cloud. "
-                  "Turn it off anytime to stop future requests.",
+            label="Mutsu Mechanic answers with a model that runs on this "
+                  "computer; your questions stay here. Cloud providers only "
+                  "receive questions if you allow cloud AI models.",
             xalign=0,
         )
         privacy_description.set_wrap(True)
@@ -251,21 +256,21 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.setup_button.connect("clicked", self._open_setup)
         menu.append(self.setup_button)
         self.shortcut_hint = Gtk.Label(
-            label=f"Spotlight: {shortcut_label(get_profile())}  ·  "
+            label=f"Mutsu Search: {shortcut_label(get_profile())}  ·  "
                   "Enter: open/ask  ·  Esc: close"
         )
         self.shortcut_hint.add_css_class("dim-label")
         self.shortcut_hint.set_wrap(True)
         menu.append(self.shortcut_hint)
         self.model_status = Gtk.Label(
-            label="Newelle connection not checked.", xalign=0
+            label="Mutsu Mechanic AI not checked yet.", xalign=0
         )
         self.model_status.set_wrap(True)
         self.model_status.add_css_class("dim-label")
         menu.append(self.model_status)
-        self.model_test_button = Gtk.Button(label="Test Newelle connection + reply")
+        self.model_test_button = Gtk.Button(label="Test Mutsu Mechanic AI")
         self.model_test_button.set_tooltip_text(
-            "Sends a short, non-personal test prompt to Newelle's selected model"
+            "Sends a short, non-personal test prompt to Mutsu Mechanic's model"
         )
         self.model_test_button.connect("clicked", self._test_newelle)
         self.model_test_button.set_sensitive(model_sharing_allowed())
@@ -363,11 +368,23 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.model_test_button.set_sensitive(allowed)
         self._update_results()
 
+    def _on_cloud_permission_changed(self, button: Gtk.CheckButton) -> None:
+        if self._syncing_model_permission:
+            return
+        try:
+            set_cloud_sharing_allowed(button.get_active())
+        except (OSError, ValueError):
+            self._sync_model_permission()
+            self.model_status.set_text("Could not save the cloud permission.")
+            return
+        self._update_results()
+
     def _sync_model_permission(self) -> None:
         self._syncing_model_permission = True
         try:
             allowed = model_sharing_allowed()
             self.model_permission.set_active(allowed)
+            self.cloud_permission.set_active(cloud_sharing_allowed())
             self.model_test_button.set_sensitive(allowed)
         finally:
             self._syncing_model_permission = False
@@ -375,7 +392,7 @@ class AssistantWindow(Adw.ApplicationWindow):
     def _test_newelle(self, *_unused) -> None:
         if not model_sharing_allowed():
             self.model_status.set_text(
-                "Enable the model-sharing checkbox before testing model replies."
+                "Turn on Mutsu Mechanic AI before testing model replies."
             )
             return
         self.model_test_button.set_sensitive(False)
@@ -385,7 +402,7 @@ class AssistantWindow(Adw.ApplicationWindow):
             try:
                 message = test_newelle()
             except NewelleError as exc:
-                message = f"Newelle isn't ready: {exc}"
+                message = f"Mutsu Mechanic isn't ready: {exc}"
             GLib.idle_add(self._show_newelle_status, message)
 
         threading.Thread(target=worker, daemon=True).start()
@@ -437,7 +454,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         # The wizard can change this preference while Spotlight is hidden.
         self._sync_model_permission()
         self.shortcut_hint.set_label(
-            f"Spotlight: {shortcut_label(get_profile())}  ·  "
+            f"Mutsu Search: {shortcut_label(get_profile())}  ·  "
             "Enter: open/ask  ·  Esc: close"
         )
         self.settings_button.popup()
@@ -727,12 +744,14 @@ class AssistantWindow(Adw.ApplicationWindow):
         provider = self._provider()
         self.pending = None
         self._launching = False
-        if provider != "builtin" and not model_sharing_allowed():
+        if provider != "builtin" and not model_sharing_allowed(provider):
             self._show_text(
-                "AI model requests are switched off. To ask the selected "
-                "assistant, open the gear icon and check 'Allow AI model "
-                "sharing'. "
-                "Installed-app search and built-in checks still work."
+                ("Cloud AI is off. Open the gear icon and check "
+                 f"'{CLOUD_SHARING_LABEL}' to use this provider. ")
+                if model_sharing_allowed() else
+                ("Mutsu Mechanic's AI is switched off. Open the gear icon and "
+                 f"check '{MODEL_SHARING_LABEL}'. ")
+                + "App search and built-in checks still work."
             )
             return
         # User already opted in via setup/Settings. Do not interrupt every

@@ -177,8 +177,8 @@ def test_newelle() -> str:
     """
     if not model_sharing_allowed():
         raise NewelleError(
-            "Model sharing is disabled. Enable the optional permission "
-            "in Spotlight Settings before sending a test prompt."
+            "Mutsu Mechanic's AI is switched off. Turn it on in Mutsu Search "
+            "settings before sending a test prompt."
         )
     connection = check_newelle()
     complete_newelle(

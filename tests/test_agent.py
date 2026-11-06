@@ -18,7 +18,7 @@ class AgentTests(unittest.TestCase):
         fake = Mock()
         with patch("aidesktop.agent.model_sharing_allowed", return_value=False):
             result = Agent(inference=fake).ask("Tell me about Bazzite", "newelle")
-        self.assertIn("Model sharing is off", result.message)
+        self.assertIn("switched off", result.message)
         fake.assert_not_called()
 
     def test_offline_builtin_diagnostics_ignore_model_permission(self):

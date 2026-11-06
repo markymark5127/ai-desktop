@@ -27,7 +27,7 @@ class NewelleWiringTests(unittest.TestCase):
         with patch("aidesktop.agent.model_sharing_allowed", return_value=False):
             with patch("aidesktop.newelle_client.complete_newelle") as inference:
                 response = Agent().ask("hello", "newelle")
-        self.assertIn("Model sharing is off", response.message)
+        self.assertIn("switched off", response.message)
         inference.assert_not_called()
 
 
