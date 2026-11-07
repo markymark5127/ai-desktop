@@ -38,6 +38,8 @@ DEFAULTS = {
     # which correctly keeps cloud providers off.
     "model_sharing": False,
     "ai_enabled": True,
+    # Web search only runs when the user picks the "Search the web" row.
+    "search_engine": "duckduckgo",
 }
 
 
@@ -63,6 +65,9 @@ def _validated(value: dict) -> dict[str, str | bool]:
     for key in ("model_sharing", "ai_enabled"):
         if not isinstance(data[key], bool):
             raise ValueError("AI permissions must be booleans")
+    from .spotlight import SEARCH_ENGINES
+    if data["search_engine"] not in SEARCH_ENGINES:
+        data["search_engine"] = "duckduckgo"
     return data
 
 

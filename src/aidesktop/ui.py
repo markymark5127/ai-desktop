@@ -21,6 +21,10 @@ from .agent import Agent, AgentResponse, PendingAction
 from .search import AppResult, list_applications
 from .search_routing import route_query, should_hide_on_focus_loss
 from .file_search import FileResult, list_local_files, search_local_files
+from .spotlight import (
+    Answer, WebAction, SettingsPage, UsageStore, SEARCH_ENGINES,
+    instant_answer, web_actions, search_settings, search_file_contents,
+)
 from .wallpaper import WallpaperError, apply_theme_wallpaper
 from .branding import SEARCH_NAME, AI_NAME, icon_source
 from .newelle_client import NewelleError, test_newelle
@@ -33,7 +37,9 @@ from .keyboard_profiles import shortcut_label, get_profile
 from .onboarding import (
     model_sharing_allowed, set_model_sharing_allowed, MODEL_SHARING_LABEL,
     cloud_sharing_allowed, set_cloud_sharing_allowed, CLOUD_SHARING_LABEL,
+    load_preferences, save_preferences,
 )
+ENGINE_KEYS = list(SEARCH_ENGINES)
 
 
 CHOICES = [
@@ -60,6 +66,10 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.agent = Agent()
         self.pending: PendingAction | None = None
         self.catalog: list[AppResult] = list_applications()
+        self.usage = UsageStore()
+        self._content_query = ""
+        self._content_results: list = []
+        self._content_timer = 0
         self.matches: list[AppResult] = []
         # Index filenames in a bounded background task, never on each key.
         self.files_catalog: list[FileResult] = []
@@ -237,6 +247,13 @@ class AssistantWindow(Adw.ApplicationWindow):
         privacy_description.set_wrap(True)
         privacy_description.add_css_class("dim-label")
         menu.append(privacy_description)
+        menu.append(Gtk.Label(label="Web search", xalign=0))
+        self.engine_choice = Gtk.DropDown.new_from_strings(
+            [SEARCH_ENGINES[key][0] for key in ENGINE_KEYS])
+        engine = load_preferences().get("search_engine", "duckduckgo")
+        self.engine_choice.set_selected(ENGINE_KEYS.index(engine) if engine in ENGINE_KEYS else 0)
+        self.engine_choice.connect("notify::selected", self._on_engine_changed)
+        menu.append(self.engine_choice)
         menu.append(Gtk.Label(label="Appearance", xalign=0))
         self.theme_choice = Gtk.DropDown.new_from_strings(
             [label for label, _name in THEME_LABELS]
@@ -348,7 +365,7 @@ class AssistantWindow(Adw.ApplicationWindow):
             self.entry.set_text("")
             self.response_section.set_visible(False)
             self.results_section.set_visible(False)
-            self._relayout()
+            self._update_results()  # shows Suggested Apps when there are any
 
     def _on_provider_changed(self, *_unused) -> None:
         self._update_results()
@@ -588,19 +605,80 @@ class AssistantWindow(Adw.ApplicationWindow):
         row.set_child(content)
         return row
 
+    def _on_engine_changed(self, *_unused) -> None:
+        try:
+            save_preferences(search_engine=ENGINE_KEYS[self.engine_choice.get_selected()])
+        except (OSError, ValueError):
+            pass
+        self._update_results()
+
+    def _engine(self) -> str:
+        return ENGINE_KEYS[self.engine_choice.get_selected()]
+
+    def _schedule_content_search(self, query: str) -> None:
+        """Search file contents (LocalSearch index) off the UI thread."""
+        if self._content_timer:
+            GLib.source_remove(self._content_timer)
+            self._content_timer = 0
+        if len(query) < 3 or query == self._content_query:
+            return
+
+        def start() -> bool:
+            self._content_timer = 0
+
+            def worker() -> None:
+                paths = search_file_contents(query)
+                GLib.idle_add(self._on_content_results, query, paths)
+            threading.Thread(target=worker, daemon=True).start()
+            return GLib.SOURCE_REMOVE
+        self._content_timer = GLib.timeout_add(250, start)
+
+    def _on_content_results(self, query: str, paths) -> bool:
+        if self.entry.get_text().strip() != query:
+            return GLib.SOURCE_REMOVE  # the user kept typing
+        self._content_query = query
+        self._content_results = paths
+        self._update_results()
+        return GLib.SOURCE_REMOVE
+
     def _update_results(self) -> None:
         query = self.entry.get_text().strip()
         route = route_query(query, self.catalog, limit=4)
-        self.matches = list(route.apps)
+        # Apps you use often (and around this time of day) rank first.
+        self.matches = sorted(route.apps, key=lambda a: -self.usage.score(a.desktop_id))
         self.targets = []
         self.selectable_indices = []
+        answer = instant_answer(query) if query else None
         file_matches = []
-        if query and not query.casefold().startswith("ask ") and "?" not in query:
-            file_matches = search_local_files(
-                query, self.files_catalog, limit=4
-            )
+        settings_matches = []
+        content_matches = []
+        searchable = query and not query.casefold().startswith("ask ") and "?" not in query
+        if searchable:
+            file_matches = search_local_files(query, self.files_catalog, limit=4)
+            settings_matches = search_settings(query)
+            self._schedule_content_search(query)
+            if query == self._content_query:
+                named = {f.path for f in file_matches}
+                content_matches = [p for p in self._content_results if p not in named][:4]
         while child := self.results.get_row_at_index(0):
             self.results.remove(child)
+
+        if not query:
+            # Suggestions on open, like Siri Suggestions in Spotlight.
+            by_id = {app.desktop_id: app for app in self.catalog}
+            suggested = [by_id[d] for d in self.usage.suggestions(list(by_id), limit=5)]
+            if suggested:
+                self._append_heading("Suggested Apps")
+                for app in suggested:
+                    self._append_result(self._make_result(
+                        app.name, app.description or "Application", app.icon,
+                        css_class="spotlight-app-row"), app)
+
+        if answer:
+            self._append_heading("Calculator" if answer.title.count(" ") <= 1 else "Conversion")
+            self._append_result(self._make_result(
+                answer.title, answer.subtitle, "accessories-calculator-symbolic",
+                css_class="spotlight-answer-row"), answer)
 
         if self.matches:
             self._append_heading("Top Results")
@@ -611,6 +689,13 @@ class AssistantWindow(Adw.ApplicationWindow):
                         app.icon, css_class="spotlight-app-row"
                     ), app
                 )
+
+        if settings_matches:
+            self._append_heading("Settings")
+            for page in settings_matches:
+                self._append_result(self._make_result(
+                    page.title, "Settings", "preferences-system-symbolic",
+                    css_class="spotlight-settings-row"), page)
 
         if file_matches:
             self._append_heading("Files")
@@ -629,12 +714,31 @@ class AssistantWindow(Adw.ApplicationWindow):
                     ), file
                 )
 
+        if content_matches:
+            self._append_heading("In Documents")
+            home = GLib.get_home_dir()
+            for path in content_matches:
+                folder = str(path.parent).replace(home, "~", 1)
+                self._append_result(self._make_result(
+                    path.name, f"Contains “{query[:40]}” · {folder}",
+                    "x-office-document-symbolic", css_class="spotlight-file-row"),
+                    FileResult(path, path.name, folder, False))
+
+        if query and not query.casefold().startswith("ask "):
+            actions = web_actions(query, self._engine())
+            if actions:
+                self._append_heading("Web")
+                for action in actions:
+                    self._append_result(self._make_result(
+                        action.title, action.subtitle, "web-browser-symbolic",
+                        css_class="spotlight-web-row"), action)
+
         if route.offer_ai:
             self._append_heading("AI Suggestions")
             chosen = self._provider()
             provider = dict((key, label) for label, key in CHOICES).get(
                 chosen, "assistant"
-            ).replace(" (recommended)", "")
+            ).replace(" (on this computer, recommended)", "").replace(" (recommended)", "")
             row = self._make_result(
                 f"Ask {AI_NAME}",
                 f"Via {provider} · {route.query[:75]}",
@@ -644,7 +748,7 @@ class AssistantWindow(Adw.ApplicationWindow):
             self._append_result(row, None)
 
         any_results = bool(self.selectable_indices)
-        ai_only = route.offer_ai and not self.matches and not file_matches
+        ai_only = route.offer_ai and len(self.selectable_indices) == 1
         self.results_divider.set_visible(False)
         if ai_only:
             self.results_section.add_css_class("spotlight-ai-only")
@@ -709,6 +813,24 @@ class AssistantWindow(Adw.ApplicationWindow):
             self._open_app(target)
         elif isinstance(target, FileResult):
             self._open_file(target)
+        elif isinstance(target, Answer):
+            self.get_clipboard().set(target.value)
+            self._show_text(f"Copied {target.value}")
+        elif isinstance(target, WebAction):
+            try:
+                Gio.AppInfo.launch_default_for_uri(target.url, None)
+            except GLib.Error as exc:
+                self._show_text(f"Could not open the browser: {exc.message}")
+            else:
+                self.close()
+        elif isinstance(target, SettingsPage):
+            try:
+                Gio.Subprocess.new(["gnome-control-center", target.panel],
+                                   Gio.SubprocessFlags.NONE)
+            except GLib.Error as exc:
+                self._show_text(f"Could not open Settings: {exc.message}")
+            else:
+                self.close()
         elif target is None:
             self._ask_ai()
 
@@ -725,6 +847,7 @@ class AssistantWindow(Adw.ApplicationWindow):
             self.close()
 
     def _open_app(self, app: AppResult) -> None:
+        self.usage.record(app.desktop_id)
         self.pending = None
         self._launching = True
         self._execute(
