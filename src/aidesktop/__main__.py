@@ -14,6 +14,7 @@ def main() -> None:
     parser.add_argument("--search", help="Search installed applications without opening the GUI")
     parser.add_argument("--history", action="store_true", help="Show recent approved actions")
     parser.add_argument("--setup", action="store_true", help="Show the welcome wizard again")
+    parser.add_argument("--query", help="Open Search with this text already typed")
     parser.add_argument("--setup-status", action="store_true", help="Show saved onboarding status")
     parser.add_argument("--check-newelle", action="store_true", help="Test the local Newelle GUI API connection")
     parser.add_argument("--test-newelle", action="store_true", help="Send a harmless inference test to Newelle")
@@ -66,7 +67,12 @@ def main() -> None:
     # already-running primary instance as a command-line request. Without
     # HANDLES_COMMAND_LINE, --setup on a second process just reactivated
     # the old Spotlight and quietly ignored the force_setup constructor flag.
-    internal_argv = ["ai-desktop", "setup"] if args.setup else ["ai-desktop"]
+    if args.setup:
+        internal_argv = ["ai-desktop", "setup"]
+    elif args.query:
+        internal_argv = ["ai-desktop", "query", args.query]
+    else:
+        internal_argv = ["ai-desktop"]
     raise SystemExit(app.run(internal_argv))
 
 

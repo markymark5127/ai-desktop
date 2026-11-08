@@ -19,7 +19,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 
 from .agent import Agent, AgentResponse, PendingAction
 from .search import AppResult, list_applications
-from .search_routing import route_query, should_hide_on_focus_loss
+from .search_routing import route_query, shell_manages_dismissal, should_hide_on_focus_loss
 from .file_search import FileResult, list_local_files, search_local_files
 from .spotlight import (
     Answer, WebAction, SettingsPage, UsageStore, SEARCH_ENGINES,
@@ -338,6 +338,11 @@ class AssistantWindow(Adw.ApplicationWindow):
     def _dismiss_if_unfocused(self) -> bool:
         self._pending_dismiss = False
         if self._opening_setup:
+            return GLib.SOURCE_REMOVE
+        if shell_manages_dismissal():
+            # Mutsu's Shell extension hides Search on outside taps and app
+            # switches, and knows that taps on the on-screen keyboard (or
+            # its button) are typing, which this window cannot tell.
             return GLib.SOURCE_REMOVE
         if should_hide_on_focus_loss(
             activated_once=self._ever_active,
@@ -959,6 +964,8 @@ class AssistantApp(Adw.Application):
         args = command_line.get_arguments()
         if len(args) > 1 and args[1] == "setup":
             self.force_setup = True
+        elif len(args) > 2 and args[1] == "query":
+            self.initial_query = args[2]
         self.activate()
         return 0
 
@@ -974,6 +981,10 @@ class AssistantApp(Adw.Application):
             window._sync_model_permission()
         window.present()
         window.entry.grab_focus()
+        query, self.initial_query = getattr(self, "initial_query", ""), ""
+        if query:
+            window.entry.set_text(query)
+            window.entry.set_position(-1)
 
     def open_setup_from(self, launcher: AssistantWindow) -> None:
         """Open or focus setup first; dismiss Spotlight only on success."""
@@ -1048,3 +1059,7 @@ class AssistantApp(Adw.Application):
             window.prepare_activation()
         window.present()
         window.entry.grab_focus()
+        query, self.initial_query = getattr(self, "initial_query", ""), ""
+        if query:
+            window.entry.set_text(query)
+            window.entry.set_position(-1)

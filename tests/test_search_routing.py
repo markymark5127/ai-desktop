@@ -1,7 +1,7 @@
 import unittest
 
 from aidesktop.search import AppResult
-from aidesktop.search_routing import route_query, should_hide_on_focus_loss
+from aidesktop.search_routing import route_query, shell_manages_dismissal, should_hide_on_focus_loss
 
 
 class SpotlightRoutingTests(unittest.TestCase):
@@ -55,6 +55,15 @@ class SpotlightRoutingTests(unittest.TestCase):
         ):
             with self.subTest(key=key):
                 self.assertFalse(should_hide_on_focus_loss(**{**args, key: value}))
+
+
+class ShellDismissalTests(unittest.TestCase):
+    def test_mutsu_shell_extension_owns_dismissal(self):
+        self.assertTrue(shell_manages_dismissal(["mutsu-branding@mutsu-os"], False))
+
+    def test_window_dismisses_itself_without_the_extension(self):
+        self.assertFalse(shell_manages_dismissal(["other@x"], False))
+        self.assertFalse(shell_manages_dismissal(["mutsu-branding@mutsu-os"], True))
 
 
 if __name__ == "__main__":

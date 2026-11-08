@@ -55,3 +55,30 @@ def should_hide_on_focus_loss(
         activated_once and is_visible and not is_active
         and not modal_dialog and not settings_open
     )
+
+
+SHELL_EXTENSION = "mutsu-branding@mutsu-os"
+
+
+def shell_manages_dismissal(enabled_extensions=None, disable_user_extensions=None) -> bool:
+    """True when Mutsu's GNOME Shell extension owns hiding Search.
+
+    The extension dismisses Search on taps outside it and on app switches,
+    and ignores taps on the on-screen keyboard. A window only sees "lost
+    focus", so it would close while the user types on the keyboard.
+    """
+    import os
+    if os.environ.get("MUTSU_SEARCH_SELF_DISMISS") == "1":
+        return False
+    if enabled_extensions is None:
+        try:
+            from gi.repository import Gio
+            source = Gio.SettingsSchemaSource.get_default()
+            if source is None or source.lookup("org.gnome.shell", True) is None:
+                return False
+            settings = Gio.Settings.new("org.gnome.shell")
+            enabled_extensions = list(settings.get_strv("enabled-extensions"))
+            disable_user_extensions = settings.get_boolean("disable-user-extensions")
+        except Exception:  # noqa: BLE001 - no GNOME Shell settings available
+            return False
+    return SHELL_EXTENSION in enabled_extensions and not disable_user_extensions

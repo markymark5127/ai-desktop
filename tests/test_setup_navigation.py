@@ -65,7 +65,8 @@ class SetupNavigationTests(unittest.TestCase):
         main = (
             FILE.parent / "__main__.py"
         ).read_text(encoding="utf-8")
-        self.assertIn('["ai-desktop", "setup"] if args.setup else ["ai-desktop"]', main)
+        self.assertIn('internal_argv = ["ai-desktop", "setup"]', main)
+        self.assertIn('internal_argv = ["ai-desktop", "query", args.query]', main)
         self.assertIn("app.run(internal_argv)", main)
         self.assertNotIn("app.run(None)", main)
 
