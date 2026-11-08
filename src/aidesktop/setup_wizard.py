@@ -22,6 +22,7 @@ from .keyboard_profiles import (
 )
 from .dock import DockError, POSITIONS, apply_dock, restore_dock, dock_status
 from .phone_download import PHONE_APPS, qr_matrix, app_info
+from . import gsconnect
 from .window_controls import (
     WindowLayoutError, apply_mac_layout, restore_previous_layout as restore_window_layout,
     describe_layout,
@@ -40,9 +41,9 @@ from .mac_stoplights import install_stoplights
 from .tools import ToolError, run_tool
 
 
-GSCONNECT_ID = "gsconnect@andyholmes.github.io"
+GSCONNECT_ID = gsconnect.GSCONNECT_ID
 NEWELLE_SETUP_URL = "https://github.com/markymark5127/ai-desktop/blob/main/docs/NEWELLE_SETUP.md"
-STEPS = ("Welcome", "Look and keyboard", "You are ready")
+STEPS = ("Welcome", "Look and keyboard", "Your phone", "You are ready")
 
 
 class SetupWizard(Adw.ApplicationWindow):
@@ -80,6 +81,7 @@ class SetupWizard(Adw.ApplicationWindow):
         # explicitly removed. Without cleanup, reopening Spotlight can leave
         # old themes overriding new window/list styling.
         self.connect("close-request", self._remove_theme_provider)
+        self.connect("close-request", self._stop_phone_poll)
 
         header = Gtk.HeaderBar()
         install_stoplights(self, header)
@@ -98,7 +100,7 @@ class SetupWizard(Adw.ApplicationWindow):
         self.stack.set_transition_duration(180)
 
         for idx, make_page in enumerate(
-            (self._welcome, self._appearance, self._ready)
+            (self._welcome, self._appearance, self._phone, self._ready)
         ):
             child = make_page()
             self.stack.add_named(child, f"step-{idx}")
@@ -596,10 +598,11 @@ class SetupWizard(Adw.ApplicationWindow):
 
     def _phone(self) -> Gtk.Box:
         page = self._page(
-            "Connect your phone (optional).",
-            "Bazzite GNOME may already include GSConnect; we'll check rather than reinstall it.",
+            "Connect your phone.",
+            "Share files, links and your clipboard, and see phone notifications on "
+            "Android, with KDE Connect. Optional, and you can do it later.",
         )
-        self._paragraph(page, "Which phone would you like to pair?")
+        self._paragraph(page, "Which phone do you have?")
         self.phone_choice = Gtk.DropDown.new_from_strings(
             [label for label, _ in PHONE_OPTIONS]
         )
@@ -607,15 +610,14 @@ class SetupWizard(Adw.ApplicationWindow):
         self.phone_choice.set_selected(next(
             i for i, (_label, name) in enumerate(PHONE_OPTIONS) if name == current
         ))
-        self.phone_choice.connect("notify::selected", self._phone_selected)
         page.append(self.phone_choice)
         self.phone_details = Gtk.Label(xalign=0)
         self.phone_details.set_wrap(True)
+        self.phone_details.add_css_class("dim-label")
         page.append(self.phone_details)
-        # The QR is produced entirely offline and stays crisp regardless of
-        # theme. GSConnect runs on the Linux desktop; scan this to install
-        # KDE Connect on the phone (the actual pairing happens separately).
-        self.qr_caption = Gtk.Label(xalign=0)
+        # Drawn locally from a pre-built matrix: nothing is fetched. It links to
+        # KDE Connect in the phone's app store; GSConnect is the computer side.
+        self.qr_caption = Gtk.Label(xalign=0.5)
         self.qr_caption.set_wrap(True)
         page.append(self.qr_caption)
         self.phone_qr = Gtk.DrawingArea()
@@ -625,24 +627,136 @@ class SetupWizard(Adw.ApplicationWindow):
         self.phone_qr.set_halign(Gtk.Align.CENTER)
         self.phone_qr.set_draw_func(self._draw_phone_qr)
         page.append(self.phone_qr)
-        self._phone_selected(persist=False)
-
-        self.gsconnect_status = Gtk.Label(label="GSConnect not checked yet.", xalign=0)
+        self.phone_steps = Gtk.Label(xalign=0)
+        self.phone_steps.set_wrap(True)
+        page.append(self.phone_steps)
+        self.gsconnect_status = Gtk.Label(xalign=0)
         self.gsconnect_status.set_wrap(True)
         page.append(self.gsconnect_status)
-        check = Gtk.Button(label="Check GSConnect availability")
-        check.connect("clicked", self._check_gsconnect)
-        page.append(check)
-        open_settings = Gtk.Button(label="Open GSConnect preferences")
+        # Phones GSConnect can see, with a Pair button; refreshed while this
+        # step is on screen.
+        self.phone_list = Gtk.ListBox()
+        self.phone_list.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.phone_list.add_css_class("boxed-list")
+        page.append(self.phone_list)
+        open_settings = Gtk.Button(label="More phone settings")
+        open_settings.set_halign(Gtk.Align.START)
         open_settings.connect("clicked", self._open_gsconnect)
+        self.phone_more = open_settings
         page.append(open_settings)
-        self._paragraph(
-            page,
-            "Install KDE Connect on your phone and pair it over the same local "
-            "network. Pairing is always optional; this wizard won't install "
-            "an app or grant phone permissions automatically.",
-        )
+        self._phone_enabled = False
+        self._phone_poll = 0
+        self._phone_seen = None
+        self.phone_choice.connect("notify::selected", self._phone_selected)
+        self._phone_selected(persist=False)
+        self.stack.connect("notify::visible-child", self._phone_page_visibility)
+        self._phone_page = page
         return page
+
+    def _stop_phone_poll(self, *_unused):
+        if getattr(self, "_phone_poll", 0):
+            GLib.source_remove(self._phone_poll)
+            self._phone_poll = 0
+        return False
+
+    def _phone_page_visibility(self, *_unused):
+        on_page = self.stack.get_visible_child() is getattr(self, "_phone_page", None)
+        choice = PHONE_OPTIONS[self.phone_choice.get_selected()][1]
+        if on_page and choice in PHONE_APPS:
+            self._enable_phone_connection()
+            if not self._phone_poll:
+                self._refresh_phones()
+                self._phone_poll = GLib.timeout_add_seconds(2, self._refresh_phones)
+        elif self._phone_poll:
+            GLib.source_remove(self._phone_poll)
+            self._phone_poll = 0
+
+    def _enable_phone_connection(self):
+        if self._phone_enabled:
+            return
+        self._phone_enabled = True
+        self.gsconnect_status.set_text("Turning on phone connection…")
+
+        def work():
+            ok, message = gsconnect.enable_gsconnect()
+            name = gsconnect.computer_name()
+            GLib.idle_add(self._phone_connection_ready, ok, message, name)
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _phone_connection_ready(self, ok, message, name):
+        self._computer_name = name
+        self.gsconnect_status.set_text(message)
+        if not ok:
+            self._phone_enabled = False
+        self._show_phone_steps()
+        return GLib.SOURCE_REMOVE
+
+    def _show_phone_steps(self):
+        choice = PHONE_OPTIONS[self.phone_choice.get_selected()][1]
+        if choice not in PHONE_APPS:
+            self.phone_steps.set_text("")
+            return
+        name = getattr(self, "_computer_name", None) or gsconnect.computer_name()
+        steps = gsconnect.pairing_steps(choice, name)
+        self.phone_steps.set_text("\n".join(f"{i}. {step}" for i, step in enumerate(steps, 1)))
+
+    def _refresh_phones(self):
+        def work():
+            try:
+                bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+                devices = gsconnect.list_devices(bus)
+            except Exception:  # GSConnect still starting, or not available
+                devices = None
+            GLib.idle_add(self._show_phones, devices)
+
+        threading.Thread(target=work, daemon=True).start()
+        return GLib.SOURCE_CONTINUE
+
+    def _show_phones(self, devices):
+        key = None if devices is None else tuple(
+            (d["path"], d["paired"], d["connected"], d["name"]) for d in devices)
+        if key == self._phone_seen:
+            return GLib.SOURCE_REMOVE
+        self._phone_seen = key
+        child = self.phone_list.get_first_child()
+        while child:
+            self.phone_list.remove(child)
+            child = self.phone_list.get_first_child()
+        if not devices:
+            row = Adw.ActionRow(title="Looking for your phone…",
+                                subtitle="Open KDE Connect on it, on the same Wi-Fi.")
+            self.phone_list.append(row)
+            return GLib.SOURCE_REMOVE
+        for device in devices:
+            row = Adw.ActionRow(title=device["name"], subtitle=gsconnect.device_state(device))
+            if not device["paired"] and device["connected"]:
+                button = Gtk.Button(label="Pair", valign=Gtk.Align.CENTER)
+                button.add_css_class("suggested-action")
+                button.connect("clicked", self._pair_phone, device["path"])
+                row.add_suffix(button)
+            elif device["paired"]:
+                done = Gtk.Image.new_from_icon_name("emblem-ok-symbolic")
+                row.add_suffix(done)
+            self.phone_list.append(row)
+        if any(d["paired"] for d in devices):
+            self.status.set_text("Your phone is paired. Continue when you're ready.")
+        return GLib.SOURCE_REMOVE
+
+    def _pair_phone(self, button, path):
+        button.set_sensitive(False)
+        button.set_label("Check your phone…")
+
+        def work():
+            try:
+                bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+                gsconnect.pair(bus, path)
+                message = "Pairing requested. Accept it on your phone if it asks."
+            except Exception:
+                message = "Couldn't send the pairing request. Try again from KDE Connect on the phone."
+            GLib.idle_add(self.status.set_text, message)
+
+        threading.Thread(target=work, daemon=True).start()
 
     def _draw_phone_qr(self, _area, cr, width, height):
         if not self.phone_qr.get_visible():
@@ -679,14 +793,21 @@ class SetupWizard(Adw.ApplicationWindow):
                 "Android can offer broader KDE Connect features including "
                 "notifications and clipboard integration, depending on permissions."
             ),
-            "later": "You can set up GSConnect at any time in GNOME later.",
+            "later": "You can connect a phone any time from Settings \u2192 Extensions \u2192 GSConnect.",
         }
         self.phone_details.set_text(descriptions[value])
         active = value in PHONE_APPS
         self.phone_qr.set_visible(active)
+        for widget in ("phone_steps", "phone_list", "gsconnect_status", "phone_more"):
+            if hasattr(self, widget):
+                getattr(self, widget).set_visible(active)
+        if hasattr(self, "_phone_page"):
+            self._phone_page_visibility()
+        if hasattr(self, "phone_steps"):
+            self._show_phone_steps()
         if active:
             self.qr_caption.set_text(
-                "Scan this QR code with your phone to install " + app_info(value)["label"]
+                "Scan with your phone's camera to get " + app_info(value)["label"]
             )
             self.phone_qr.set_tooltip_text(app_info(value)["label"])
             self.phone_qr.queue_draw()
