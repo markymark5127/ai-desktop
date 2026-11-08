@@ -9,14 +9,30 @@ from .agent import Agent
 from .branding import PRODUCT_NAME
 
 
+_SET_BY_US: dict[str, str | None] = {}
+
+
+def forget_portal_overrides() -> None:
+    """Undo _no_portal_settings() once GTK has started."""
+    for key, previous in _SET_BY_US.items():
+        if previous is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = previous
+    _SET_BY_US.clear()
+
+
 def _no_portal_settings() -> None:
     """Mutsu Search runs on the host, not in a sandbox: read the colour
     scheme and other settings straight from GSettings. Asking the settings
     portal blocked start-up for its full 25 s timeout (three times) when the
     portal was slow, e.g. just after login."""
-    os.environ.setdefault("ADW_DISABLE_PORTAL", "1")
+    if "ADW_DISABLE_PORTAL" not in os.environ:
+        _SET_BY_US["ADW_DISABLE_PORTAL"] = None
+        os.environ["ADW_DISABLE_PORTAL"] = "1"
     debug = os.environ.get("GDK_DEBUG", "")
     if "portals" not in debug:
+        _SET_BY_US["GDK_DEBUG"] = os.environ.get("GDK_DEBUG")
         os.environ["GDK_DEBUG"] = f"{debug},no-portals" if debug else "no-portals"
 
 

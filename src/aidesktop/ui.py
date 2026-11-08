@@ -941,6 +941,10 @@ class AssistantApp(Adw.Application):
 
     def do_startup(self) -> None:
         Adw.Application.do_startup(self)
+        # GTK and libadwaita have read these by now. Apps we launch must not
+        # inherit them (a Flatpak app needs its portals for file access).
+        from . import __main__ as entry
+        entry.forget_portal_overrides()
         setup_action = Gio.SimpleAction.new("open-setup", None)
         setup_action.connect("activate", self._on_open_setup_action)
         self.add_action(setup_action)
