@@ -3,12 +3,25 @@
 from __future__ import annotations
 
 import argparse
+import os
 
 from .agent import Agent
 from .branding import PRODUCT_NAME
 
 
+def _no_portal_settings() -> None:
+    """Mutsu Search runs on the host, not in a sandbox: read the colour
+    scheme and other settings straight from GSettings. Asking the settings
+    portal blocked start-up for its full 25 s timeout (three times) when the
+    portal was slow, e.g. just after login."""
+    os.environ.setdefault("ADW_DISABLE_PORTAL", "1")
+    debug = os.environ.get("GDK_DEBUG", "")
+    if "portals" not in debug:
+        os.environ["GDK_DEBUG"] = f"{debug},no-portals" if debug else "no-portals"
+
+
 def main() -> None:
+    _no_portal_settings()
     parser = argparse.ArgumentParser(description=f"{PRODUCT_NAME} desktop prototype")
     parser.add_argument("--ask", help="Run one request without opening the GUI")
     parser.add_argument("--search", help="Search installed applications without opening the GUI")
