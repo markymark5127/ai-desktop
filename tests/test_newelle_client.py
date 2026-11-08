@@ -127,8 +127,29 @@ class NewelleTests(unittest.TestCase):
         with patch.dict(os.environ, {
             'AIDESKTOP_NEWELLE_PORT': '1', 'AIDESKTOP_NEWELLE_API_KEY':'test-private-key'
         }):
-            with self.assertRaisesRegex(NewelleError, 'still starting the local AI'):
-                check_newelle()
+            with patch('aidesktop.newelle_client._link_state', return_value=''):
+                with self.assertRaisesRegex(NewelleError, 'still starting the local AI'):
+                    check_newelle()
+
+    def test_starting_message_reflects_pairing_state(self):
+        from aidesktop import newelle_client as nc
+        with patch.object(nc, '_link_state', return_value='activating'):
+            self.assertIn('first start after installing', nc._starting_message())
+        with patch.object(nc, '_link_state', return_value='failed'):
+            message = nc._starting_message()
+            self.assertIn('could not start', message)
+            self.assertNotIn('finish on its own', message)
+
+    def test_restart_is_retried_after_a_minute_not_once_per_run(self):
+        from aidesktop import newelle_client as nc
+        calls = []
+        with patch('subprocess.run', side_effect=lambda cmd, **kw: calls.append(cmd)), \
+                patch('time.monotonic', side_effect=[1000.0, 1010.0, 1075.0]):
+            nc._ensure_local_api.last = None
+            self.assertTrue(nc._ensure_local_api())
+            self.assertFalse(nc._ensure_local_api())
+            self.assertTrue(nc._ensure_local_api())
+        self.assertIn(['systemctl', '--user', 'reset-failed', 'mutsu-newelle-link.service'], calls)
 
 
 if __name__ == '__main__':

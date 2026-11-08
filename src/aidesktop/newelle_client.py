@@ -53,15 +53,40 @@ def _api_key() -> str:
 
 
 
-def _ensure_local_api() -> bool:
-    """Start the bundled headless service once. Never ask the user to open Newelle."""
-    if getattr(_ensure_local_api, "tried", False):
-        return False
-    _ensure_local_api.tried = True
+_ENSURE_INTERVAL = 60.0
+
+
+def _link_state() -> str:
+    """ActiveState of the per-user pairing unit ('activating' while it waits
+    for the model seed, 'failed' once it gave up)."""
     import subprocess
+    try:
+        out = subprocess.run(
+            ["systemctl", "--user", "show", "-p", "ActiveState", "--value",
+             "mutsu-newelle-link.service"],
+            check=False, timeout=5, capture_output=True, text=True)
+        return out.stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return ""
+
+
+def _ensure_local_api() -> bool:
+    """Start the bundled headless service. Never ask the user to open Newelle.
+
+    Retried at most once a minute (not once per app run), and a pairing unit
+    that hit its retry limit is reset, so a slow first boot recovers.
+    """
+    import subprocess
+    import time
+    now = time.monotonic()
+    last = getattr(_ensure_local_api, "last", None)
+    if last is not None and now - last < _ENSURE_INTERVAL:
+        return False
+    _ensure_local_api.last = now
     commands = (
+        ["systemctl", "--user", "reset-failed", "mutsu-newelle-link.service"],
         ["systemctl", "--user", "start", "ai-desktop-newelle.service"],
-        ["systemctl", "--user", "start", "mutsu-newelle-link.service"],
+        ["systemctl", "--user", "start", "--no-block", "mutsu-newelle-link.service"],
     )
     for command in commands:
         try:
@@ -70,6 +95,20 @@ def _ensure_local_api() -> bool:
         except (OSError, subprocess.TimeoutExpired):
             continue
     return True
+
+
+def _starting_message() -> str:
+    state = _link_state()
+    if state == "failed":
+        return ("Mutsu could not start the local AI. Mutsu Mechanic restarted it; "
+                "if this stays, run: journalctl --user -u mutsu-newelle-link -b "
+                "and journalctl -u mutsu-local-model -b")
+    if state == "activating":
+        return ("Mutsu is still setting up the local AI on 127.0.0.1. The first "
+                "start after installing copies the built-in model and can take "
+                "several minutes. You do not open Newelle or type a key.")
+    return ("Mutsu is still starting the local AI on 127.0.0.1. "
+            "You do not open Newelle or type a key. It will finish on its own.")
 
 
 def _request(path: str, payload: dict | None = None, *, timeout: int = 30) -> dict:
@@ -116,10 +155,7 @@ def _request(path: str, payload: dict | None = None, *, timeout: int = 30) -> di
     except (URLError, TimeoutError, OSError) as exc:
         if _ensure_local_api():
             return _request(path, payload, timeout=timeout)
-        raise NewelleError(
-            "Mutsu is still starting the local AI on 127.0.0.1. "
-            "You do not open Newelle or type a key. It will finish on its own."
-        ) from exc
+        raise NewelleError(_starting_message()) from exc
     if len(raw) > 1_000_000:
         raise NewelleError("Newelle response exceeded the allowed size")
     try:
