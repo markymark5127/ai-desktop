@@ -96,7 +96,21 @@ def save_preferences(**updates: str | bool) -> dict[str, str | bool]:
     return updated
 
 
+def is_live_session(cmdline_path: str = "/proc/cmdline") -> bool:
+    """True when booted from the Mutsu live USB (Tacklebox live media)."""
+    try:
+        with open(cmdline_path, encoding="utf-8") as stream:
+            tokens = stream.read().split()
+    except OSError:
+        return False
+    return any(t.startswith("tacklebox.live.squashimg") or t.startswith("root=tbox:") for t in tokens)
+
+
 def is_setup_done() -> bool:
+    # The live USB is for trying Mutsu and installing it: Search works
+    # straight away there, and setup happens on the installed system.
+    if is_live_session():
+        return True
     return load_preferences()["status"] in ("completed", "skipped")
 
 

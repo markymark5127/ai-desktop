@@ -122,3 +122,16 @@ class OnboardingTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LiveSessionTests(unittest.TestCase):
+    def test_live_usb_detected_from_kernel_arguments(self):
+        import tempfile
+        from aidesktop.onboarding import is_live_session
+        with tempfile.NamedTemporaryFile("w", delete=False) as live:
+            live.write("BOOT_IMAGE=/vmlinuz root=tbox:CDLABEL=MUTSU_LIVE tacklebox.live.squashimg=x quiet\n")
+        with tempfile.NamedTemporaryFile("w", delete=False) as installed:
+            installed.write("BOOT_IMAGE=/vmlinuz root=UUID=abc rw quiet\n")
+        self.assertTrue(is_live_session(live.name))
+        self.assertFalse(is_live_session(installed.name))
+        self.assertFalse(is_live_session("/nonexistent"))
