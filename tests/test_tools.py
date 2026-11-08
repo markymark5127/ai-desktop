@@ -29,5 +29,25 @@ class ToolTests(unittest.TestCase):
             run_tool("set_audio_output", {"sink": "a", "command": "extra"})
 
 
+
+
+class DiskSpaceTests(unittest.TestCase):
+    def test_image_based_root_reporting_zero_is_skipped(self):
+        from collections import namedtuple
+        from aidesktop.tools import disk_space
+        Usage = namedtuple("Usage", "total used free")
+        sizes = {"/var": Usage(500 * 1024 ** 3, 100 * 1024 ** 3, 400 * 1024 ** 3), "/": Usage(0, 0, 0)}
+        path, usage = disk_space(paths=("/", "/var"), usage=lambda p: sizes[p])
+        self.assertEqual(path, "/var")
+        self.assertEqual(usage.free // 1024 ** 3, 400)
+
+    def test_unreadable_everywhere(self):
+        from aidesktop.tools import disk_space
+
+        def fail(_path):
+            raise OSError("nope")
+        self.assertEqual(disk_space(paths=("/x",), usage=fail), (None, None))
+
+
 if __name__ == "__main__":
     unittest.main()

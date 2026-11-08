@@ -31,14 +31,35 @@ def _command(argv: list[str], timeout: int = 6) -> str:
     return (result.stdout.strip() or "(no output)")[:5000]
 
 
+def disk_space(paths=("/var", "/sysroot", "/home", "/"), usage=shutil.disk_usage):
+    """Free/total bytes of the disk that holds the user's data.
+
+    On an image-based system (bootc / composefs) "/" is a read-only image
+    that reports 0 bytes, so look at /var (where /home lives) first and take
+    the first path that reports a real size.
+    """
+    for path in paths:
+        try:
+            result = usage(path)
+        except OSError:
+            continue
+        if result.total > 0:
+            return path, result
+    return None, None
+
+
 def _system_snapshot(_: dict[str, str]) -> str:
-    usage = shutil.disk_usage("/")
+    path, usage = disk_space()
+    if usage:
+        disk = (f"Disk free ({path}): {usage.free // (1024 ** 3)} GiB "
+                f"of {usage.total // (1024 ** 3)} GiB")
+    else:
+        disk = "Disk free: unknown (could not read the disk size)"
     return (
         f"OS: {platform.system()} {platform.release()}\n"
         f"Architecture: {platform.machine()}\n"
         f"CPU threads: {os.cpu_count()}\n"
-        f"Root filesystem free: {usage.free // (1024 ** 3)} GiB "
-        f"of {usage.total // (1024 ** 3)} GiB"
+        f"{disk}"
     )
 
 
@@ -68,7 +89,12 @@ def _installed_apps(_: dict[str, str]) -> str:
 
 def _launch_application(args: dict[str, str]) -> str:
     desktop_id = args["desktop_id"]
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,150}", desktop_id):
+    # Desktop IDs can contain spaces and punctuation: Steam names its game
+    # shortcuts after the game ("Baldur's Gate 3.desktop"). What matters is
+    # that it is a real, visible entry in an application directory (checked
+    # below); refuse only what could never be one.
+    if (not desktop_id.endswith(".desktop") or len(desktop_id) > 255 or "/" in desktop_id
+            or desktop_id.startswith(("-", ".")) or any(ord(ch) < 32 for ch in desktop_id)):
         raise ToolError("Invalid desktop application ID")
     if not resolve_app_id(desktop_id):
         raise ToolError("Application is not installed or is not visible in the app menu")
