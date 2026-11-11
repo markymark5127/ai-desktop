@@ -29,6 +29,7 @@ STATES = {"pending", "completed", "skipped"}
 MODEL_SHARING_LABEL = "Use Mutsu Mechanic AI (runs on this computer)"
 CLOUD_SHARING_LABEL = "Allow cloud AI models"
 CLOUD_PROVIDERS = frozenset({"openai", "anthropic"})
+PROVIDERS = ("newelle", "builtin", "local", "openai", "anthropic")
 
 DEFAULTS = {
     "status": "pending",
@@ -40,6 +41,8 @@ DEFAULTS = {
     "ai_enabled": True,
     # Web search only runs when the user picks the "Search the web" row.
     "search_engine": "duckduckgo",
+    # Which AI answers in Search (Settings → Mutsu Search).
+    "provider": "newelle",
 }
 
 
@@ -68,6 +71,8 @@ def _validated(value: dict) -> dict[str, str | bool]:
     from .spotlight import SEARCH_ENGINES
     if data["search_engine"] not in SEARCH_ENGINES:
         data["search_engine"] = "duckduckgo"
+    if data["provider"] not in PROVIDERS:
+        data["provider"] = "newelle"
     return data
 
 

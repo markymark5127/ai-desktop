@@ -1,8 +1,8 @@
 """Compact Spotlight-style GNOME launcher.
 
 The everyday surface is a single translucent search field. Local app matches
-and AI responses expand underneath only when requested. Settings remain in a
-small optional popover and the complete welcome wizard stays separate.
+and AI responses expand underneath only when requested. Settings live in
+GNOME Settings → Mutsu Search (Ctrl+, opens it); the welcome wizard is separate.
 This is a regular GTK4 window, not yet a GNOME Shell overlay/layer surface.
 """
 
@@ -22,33 +22,16 @@ from .search import AppResult, list_applications
 from .search_routing import route_query, shell_manages_dismissal, should_hide_on_focus_loss
 from .file_search import FileResult, list_local_files, search_local_files
 from .spotlight import (
-    Answer, WebAction, SettingsPage, UsageStore, SEARCH_ENGINES,
+    Answer, WebAction, SettingsPage, UsageStore,
     instant_answer, web_actions, search_settings, search_file_contents,
 )
-from .wallpaper import WallpaperError, apply_theme_wallpaper
 from .branding import SEARCH_NAME, AI_NAME, icon_source
-from .newelle_client import NewelleError, test_newelle
 from .tools import run_tool
 from .themes import (
-    THEME_LABELS, STYLES, SCHEMES, SPOTLIGHT_STYLES,
-    SPOTLIGHT_HIGH_CONTRAST, load_theme, save_theme,
+    STYLES, SCHEMES, SPOTLIGHT_STYLES, SPOTLIGHT_HIGH_CONTRAST, load_theme,
 )
-from .keyboard_profiles import shortcut_label, get_profile
-from .onboarding import (
-    model_sharing_allowed, set_model_sharing_allowed, MODEL_SHARING_LABEL,
-    cloud_sharing_allowed, set_cloud_sharing_allowed, CLOUD_SHARING_LABEL,
-    load_preferences, save_preferences,
-)
-ENGINE_KEYS = list(SEARCH_ENGINES)
-
-
-CHOICES = [
-    ("Mutsu Mechanic (on this computer, recommended)", "newelle"),
-    ("Built-in (offline)", "builtin"),
-    ("Local Ollama", "local"),
-    ("OpenAI API", "openai"),
-    ("Claude API", "anthropic"),
-]
+from .onboarding import model_sharing_allowed, load_preferences
+from .search_settings import PROVIDER_LABELS
 
 
 class AssistantWindow(Adw.ApplicationWindow):
@@ -77,7 +60,6 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.selectable_indices: list[int] = []
         self.busy = False
         self._ever_active = False
-        self._syncing_model_permission = False
         self._pending_dismiss = False
         self._opening_setup = False
         self._launching = False
@@ -119,12 +101,6 @@ class AssistantWindow(Adw.ApplicationWindow):
         search_row.add_css_class("spotlight-searchbar")
         self.entry.set_hexpand(True)
         search_row.append(self.entry)
-        self.settings_button = Gtk.MenuButton()
-        self.settings_button.add_css_class("spotlight-settings-button")
-        self.settings_button.set_icon_name("preferences-system-symbolic")
-        self.settings_button.set_has_frame(False)
-        self.settings_button.set_tooltip_text("Preferences (Ctrl+, or ⌘+,)")
-        search_row.append(self.settings_button)
         root.append(search_row)
 
         self.results_section = Gtk.Box(
@@ -212,97 +188,9 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.response_section.append(approval)
         root.append(self.response_section)
 
-        # Secondary icon / Ctrl+, is the only settings entry point in the bar.
-        # Provider, theme, setup, and keyboard options no longer clutter search.
-        self.settings = Gtk.Popover()
-        self.settings.set_has_arrow(False)
-        self.settings.set_autohide(True)
-        self.settings.set_position(Gtk.PositionType.BOTTOM)
-        self.settings_button.set_popover(self.settings)
-        menu = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
-        menu.set_margin_top(14)
-        menu.set_margin_bottom(14)
-        menu.set_margin_start(16)
-        menu.set_margin_end(16)
-        label = Gtk.Label(label="Assistant provider", xalign=0)
-        menu.append(label)
-        self.choice = Gtk.DropDown.new_from_strings(
-            [item[0] for item in CHOICES]
-        )
-        menu.append(self.choice)
-        self.model_permission = Gtk.CheckButton(label=MODEL_SHARING_LABEL)
-        self.model_permission.set_active(model_sharing_allowed())
-        self.model_permission.connect("toggled", self._on_model_permission_changed)
-        menu.append(self.model_permission)
-        self.cloud_permission = Gtk.CheckButton(label=CLOUD_SHARING_LABEL)
-        self.cloud_permission.set_active(cloud_sharing_allowed())
-        self.cloud_permission.connect("toggled", self._on_cloud_permission_changed)
-        menu.append(self.cloud_permission)
-        privacy_description = Gtk.Label(
-            label="Mutsu Mechanic answers with a model that runs on this "
-                  "computer; your questions stay here. Cloud providers only "
-                  "receive questions if you allow cloud AI models.",
-            xalign=0,
-        )
-        privacy_description.set_wrap(True)
-        privacy_description.add_css_class("dim-label")
-        menu.append(privacy_description)
-        menu.append(Gtk.Label(label="Web search", xalign=0))
-        self.engine_choice = Gtk.DropDown.new_from_strings(
-            [SEARCH_ENGINES[key][0] for key in ENGINE_KEYS])
-        engine = load_preferences().get("search_engine", "duckduckgo")
-        self.engine_choice.set_selected(ENGINE_KEYS.index(engine) if engine in ENGINE_KEYS else 0)
-        self.engine_choice.connect("notify::selected", self._on_engine_changed)
-        menu.append(self.engine_choice)
-        menu.append(Gtk.Label(label="Appearance", xalign=0))
-        self.theme_choice = Gtk.DropDown.new_from_strings(
-            [label for label, _name in THEME_LABELS]
-        )
-        menu.append(self.theme_choice)
-        self.wallpaper_status = Gtk.Label(label="", xalign=0)
-        self.wallpaper_status.add_css_class("dim-label")
-        self.wallpaper_status.set_wrap(True)
-        menu.append(self.wallpaper_status)
-        self.setup_button = Gtk.Button(label="Setup & keyboard settings…")
-        # Let Gio.Application own navigation so this also works from a menu
-        # and can be invoked without relying on popover/window focus.
-        self.setup_button.set_action_name("app.open-setup")
-        # Fallback for unusual popover/action-dispatch combinations. The
-        # _opening_setup latch makes both paths safely idempotent if GTK emits
-        # clicked and activates the action during the same pointer release.
-        self.setup_button.connect("clicked", self._open_setup)
-        menu.append(self.setup_button)
-        self.shortcut_hint = Gtk.Label(
-            label=f"Mutsu Search: {shortcut_label(get_profile())}  ·  "
-                  "Enter: open/ask  ·  Esc: close"
-        )
-        self.shortcut_hint.add_css_class("dim-label")
-        self.shortcut_hint.set_wrap(True)
-        menu.append(self.shortcut_hint)
-        self.model_status = Gtk.Label(
-            label="Mutsu Mechanic AI not checked yet.", xalign=0
-        )
-        self.model_status.set_wrap(True)
-        self.model_status.add_css_class("dim-label")
-        menu.append(self.model_status)
-        self.model_test_button = Gtk.Button(label="Test Mutsu Mechanic AI")
-        self.model_test_button.set_tooltip_text(
-            "Sends a short, non-personal test prompt to Mutsu Mechanic's model"
-        )
-        self.model_test_button.connect("clicked", self._test_newelle)
-        self.model_test_button.set_sensitive(model_sharing_allowed())
-        menu.append(self.model_test_button)
-        self.settings.set_child(menu)
-        self.choice.connect("notify::selected", self._on_provider_changed)
-        self.settings.connect("closed", self._on_settings_closed)
-
-        active_theme = load_theme()
-        self.theme_choice.set_selected(
-            next(i for i, (_, name) in enumerate(THEME_LABELS)
-                 if name == active_theme)
-        )
-        self._apply_theme(active_theme)
-        self.theme_choice.connect("notify::selected", self._on_theme_changed)
+        # Settings (provider, privacy, web search, look) live in GNOME
+        # Settings → Mutsu Search and are read fresh whenever they're used.
+        self._apply_theme(load_theme())
         self.entry.grab_focus()
         GLib.idle_add(self._begin_file_scan)
 
@@ -349,7 +237,7 @@ class AssistantWindow(Adw.ApplicationWindow):
             is_active=self.is_active(),
             is_visible=self.get_visible(),
             modal_dialog=False,
-            settings_open=self.settings.get_visible(),
+            settings_open=False,
         ):
             # For ordinary Spotlight searches, CLOSE instead of just hiding.
             # That releases the old GNOME app instance so a later shortcut
@@ -361,78 +249,12 @@ class AssistantWindow(Adw.ApplicationWindow):
                 self.close()
         return GLib.SOURCE_REMOVE
 
-    def _on_settings_closed(self, *_unused) -> None:
-        if not self.is_active() and self.get_visible():
-            GLib.timeout_add(150, self._dismiss_if_unfocused)
-
     def prepare_activation(self) -> None:
         if not self.busy and self.pending is None:
             self.entry.set_text("")
             self.response_section.set_visible(False)
             self.results_section.set_visible(False)
             self._update_results()  # shows Suggested Apps when there are any
-
-    def _on_provider_changed(self, *_unused) -> None:
-        self._update_results()
-
-    def _on_model_permission_changed(self, button: Gtk.CheckButton) -> None:
-        if self._syncing_model_permission:
-            return
-        allowed = button.get_active()
-        try:
-            set_model_sharing_allowed(allowed)
-        except (OSError, ValueError):
-            self._sync_model_permission()
-            self.model_status.set_text(
-                "Could not save the permission. No new model access was granted."
-            )
-            return
-        self.model_test_button.set_sensitive(allowed)
-        self._update_results()
-
-    def _on_cloud_permission_changed(self, button: Gtk.CheckButton) -> None:
-        if self._syncing_model_permission:
-            return
-        try:
-            set_cloud_sharing_allowed(button.get_active())
-        except (OSError, ValueError):
-            self._sync_model_permission()
-            self.model_status.set_text("Could not save the cloud permission.")
-            return
-        self._update_results()
-
-    def _sync_model_permission(self) -> None:
-        self._syncing_model_permission = True
-        try:
-            allowed = model_sharing_allowed()
-            self.model_permission.set_active(allowed)
-            self.cloud_permission.set_active(cloud_sharing_allowed())
-            self.model_test_button.set_sensitive(allowed)
-        finally:
-            self._syncing_model_permission = False
-
-    def _test_newelle(self, *_unused) -> None:
-        if not model_sharing_allowed():
-            self.model_status.set_text(
-                "Turn on Mutsu Mechanic AI before testing model replies."
-            )
-            return
-        self.model_test_button.set_sensitive(False)
-        self.model_status.set_text("Checking API and test inference…")
-
-        def worker() -> None:
-            try:
-                message = test_newelle()
-            except NewelleError as exc:
-                message = f"Mutsu Mechanic isn't ready: {exc}"
-            GLib.idle_add(self._show_newelle_status, message)
-
-        threading.Thread(target=worker, daemon=True).start()
-
-    def _show_newelle_status(self, message: str) -> bool:
-        self.model_status.set_text(message)
-        self.model_test_button.set_sensitive(True)
-        return GLib.SOURCE_REMOVE
 
     def _apply_theme(self, theme: str) -> None:
         for name in ("japandi", "cyberpunk", "system"):
@@ -455,31 +277,15 @@ class AssistantWindow(Adw.ApplicationWindow):
         }
         style_manager.set_color_scheme(schemes[scheme])
 
-    def _on_theme_changed(self, *_unused) -> None:
-        theme = THEME_LABELS[self.theme_choice.get_selected()][1]
-        self._apply_theme(theme)
-        try:
-            save_theme(theme)
-        except OSError:
-            self.wallpaper_status.set_text(
-                "Appearance changed, but your preference could not be saved."
-            )
-            return
-        try:
-            self.wallpaper_status.set_text(apply_theme_wallpaper(theme))
-        except WallpaperError as exc:
-            self.wallpaper_status.set_text(
-                f"Launcher theme applied. GNOME wallpaper unchanged: {exc}"
-            )
-
     def _show_settings(self) -> None:
-        # The wizard can change this preference while Spotlight is hidden.
-        self._sync_model_permission()
-        self.shortcut_hint.set_label(
-            f"Mutsu Search: {shortcut_label(get_profile())}  ·  "
-            "Enter: open/ask  ·  Esc: close"
-        )
-        self.settings_button.popup()
+        """Ctrl+, opens Settings → Mutsu Search (the wizard if that's missing)."""
+        try:
+            Gio.Subprocess.new(["gnome-control-center", "mutsu-search"],
+                               Gio.SubprocessFlags.NONE)
+        except GLib.Error:
+            self._open_setup()
+            return
+        self.close()
 
     def _open_setup(self, *_unused) -> None:
         """Leave Spotlight visible until the complete wizard is presented.
@@ -491,7 +297,6 @@ class AssistantWindow(Adw.ApplicationWindow):
         if self._opening_setup:
             return
         self._opening_setup = True
-        self.settings.popdown()
         GLib.idle_add(self._present_setup)
 
     def _present_setup(self) -> bool:
@@ -524,12 +329,11 @@ class AssistantWindow(Adw.ApplicationWindow):
         self._relayout()
 
     def _provider(self) -> str:
-        return CHOICES[self.choice.get_selected()][1]
+        return str(load_preferences()["provider"])
 
     def _busy(self, busy: bool) -> None:
         self.busy = busy
         self.entry.set_sensitive(not busy)
-        self.choice.set_sensitive(not busy)
         self.approve_button.set_sensitive(not busy)
         self.cancel_button.set_sensitive(not busy)
 
@@ -610,15 +414,8 @@ class AssistantWindow(Adw.ApplicationWindow):
         row.set_child(content)
         return row
 
-    def _on_engine_changed(self, *_unused) -> None:
-        try:
-            save_preferences(search_engine=ENGINE_KEYS[self.engine_choice.get_selected()])
-        except (OSError, ValueError):
-            pass
-        self._update_results()
-
     def _engine(self) -> str:
-        return ENGINE_KEYS[self.engine_choice.get_selected()]
+        return str(load_preferences()["search_engine"])
 
     def _schedule_content_search(self, query: str) -> None:
         """Search file contents (LocalSearch index) off the UI thread."""
@@ -741,9 +538,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         if route.offer_ai:
             self._append_heading("AI Suggestions")
             chosen = self._provider()
-            provider = dict((key, label) for label, key in CHOICES).get(
-                chosen, "assistant"
-            ).replace(" (on this computer, recommended)", "").replace(" (recommended)", "")
+            provider = PROVIDER_LABELS.get(chosen, "assistant").replace(" (on this computer)", "")
             row = self._make_result(
                 f"Ask {AI_NAME}",
                 f"Via {provider} · {route.query[:75]}",
@@ -769,10 +564,7 @@ class AssistantWindow(Adw.ApplicationWindow):
 
     def _on_key(self, _controller, keyval, _keycode, state) -> bool:
         if keyval == Gdk.KEY_Escape:
-            if self.settings.get_visible():
-                self.settings.popdown()
-            else:
-                self.close()
+            self.close()
             return True
         # Enter is enough for both launch and AI; there is no special AI
         # hotkey. Only Settings retains its Ctrl/Command+, shortcut.
@@ -874,11 +666,11 @@ class AssistantWindow(Adw.ApplicationWindow):
         self._launching = False
         if provider != "builtin" and not model_sharing_allowed(provider):
             self._show_text(
-                ("Cloud AI is off. Open the gear icon and check "
-                 f"'{CLOUD_SHARING_LABEL}' to use this provider. ")
+                ("Cloud AI is off. Turn on cloud AI models in Settings → "
+                 "Mutsu Search (Ctrl+,) to use this provider. ")
                 if model_sharing_allowed() else
-                ("Mutsu Mechanic's AI is switched off. Open the gear icon and "
-                 f"check '{MODEL_SHARING_LABEL}'. ")
+                ("Mutsu Mechanic's AI is switched off. Turn it on in Settings → "
+                 "Mutsu Search (Ctrl+,). ")
                 + "App search and built-in checks still work."
             )
             return
@@ -982,7 +774,8 @@ class AssistantApp(Adw.Application):
             window = AssistantWindow(self)
         else:
             window.prepare_activation()
-            window._sync_model_permission()
+            # Settings → Mutsu Search may have changed the look meanwhile.
+            window._apply_theme(load_theme())
         window.present()
         window.entry.grab_focus()
         query, self.initial_query = getattr(self, "initial_query", ""), ""

@@ -30,9 +30,8 @@ def method_source(class_name: str, method_name: str) -> str:
 
 
 class SetupNavigationTests(unittest.TestCase):
-    def test_setup_button_defers_navigation_until_popover_closes(self):
+    def test_setup_defers_navigation_to_idle(self):
         callback = method_source("AssistantWindow", "_open_setup")
-        self.assertIn("self.settings.popdown()", callback)
         self.assertIn("GLib.idle_add(self._present_setup)", callback)
         self.assertNotIn("self.hide()", callback)
 
@@ -46,9 +45,7 @@ class SetupNavigationTests(unittest.TestCase):
         self.assertNotIn("pkill -9", script)
         self.assertNotIn("Newelle --", script)
 
-    def test_setup_button_activates_application_action(self):
-        constructor = method_source("AssistantWindow", "__init__")
-        self.assertIn('self.setup_button.set_action_name("app.open-setup")', constructor)
+    def test_open_setup_application_action(self):
         startup = method_source("AssistantApp", "do_startup")
         self.assertIn('Gio.SimpleAction.new("open-setup", None)', startup)
         self.assertIn("self.add_action(setup_action)", startup)
