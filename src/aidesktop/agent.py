@@ -30,6 +30,24 @@ class AgentResponse:
     pending: PendingAction | None = None
 
 
+# What the user is running, so questions about its features are answered
+# about Mutsu OS (not iPadOS or macOS, which some of them resemble).
+MUTSU_FACTS = (
+    "The computer runs Mutsu OS (developer alpha), a Fedora-based image OS "
+    "(bootc, like Bazzite) with GNOME Shell and Mutsu's own extensions. "
+    "Its tablet mode (when a 2-in-1 folds, or switched on by hand) is Mutsu's "
+    "own GNOME Shell code, not iPadOS: a Home screen with folders, a dock, "
+    "multitasking cards, Split View (two apps side by side) and Slide Over "
+    "(up to two floating apps, one per screen edge, swiped away to an arrow "
+    "tab on that edge and brought back from the same edge), an on-screen "
+    "keyboard and an on-screen gamepad for Steam games. Mutsu Search opens "
+    "with Win/Cmd+Space. Settings has Software Updates (whole-OS updates "
+    "that start after a restart, with a go-back option) and Mutsu Search "
+    "pages. If something in tablet mode misbehaves, it is a Mutsu bug to "
+    "report, not an Apple design choice. "
+)
+
+
 def _system_prompt(learning_style: str = "guided") -> str:
     descriptions = [
         {
@@ -42,6 +60,7 @@ def _system_prompt(learning_style: str = "guided") -> str:
     ]
     return (
         "You are Mutsu Mechanic, a patient Linux troubleshooting buddy helping someone who may be migrating from macOS. "
+        + MUTSU_FACTS +
         "Explain what you verified, distinguish possible from confirmed causes, and help the user learn when useful. "
         "Education preference: " + helper_intro(learning_style) + " "
         "This preference NEVER changes tool permissions, approval requirements, or the allowlist. "
