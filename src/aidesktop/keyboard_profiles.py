@@ -99,7 +99,8 @@ def keyd_active() -> bool:
 def set_keyd(enabled: bool) -> str:
     """Start or stop the Mac-shortcut mapper.
 
-    Prefer Toshy, the OS default. Fall back to keyd if Toshy is not seeded.
+    Uses Mutsu's helper (keyd, enabled so it survives restarts); falls back
+    to starting keyd directly on other systems.
     """
     helper = "/usr/libexec/mutsu-os/set-mac-shortcuts.sh"
     if Path(helper).is_file():
@@ -110,7 +111,7 @@ def set_keyd(enabled: bool) -> str:
         if result.returncode == 0:
             state = "on" if enabled else "off"
             return f"Mac shortcuts are {state}."
-        raise KeyboardError((result.stderr or result.stdout or "Toshy could not be changed").strip())
+        raise KeyboardError((result.stderr or result.stdout or "Mac shortcuts could not be changed").strip())
     action = "start" if enabled else "stop"
     commands = (
         ["systemctl", action, "keyd"],

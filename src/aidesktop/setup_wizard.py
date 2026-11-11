@@ -23,6 +23,7 @@ from .keyboard_profiles import (
 from .dock import DockError, POSITIONS, apply_dock, restore_dock, dock_status
 from .phone_download import PHONE_APPS, qr_matrix, app_info
 from . import gsconnect
+from . import wizard_steps
 from .window_controls import (
     WindowLayoutError, apply_mac_layout, restore_previous_layout as restore_window_layout,
     describe_layout,
@@ -43,7 +44,8 @@ from .tools import ToolError, run_tool
 
 GSCONNECT_ID = gsconnect.GSCONNECT_ID
 NEWELLE_SETUP_URL = "https://github.com/markymark5127/ai-desktop/blob/main/docs/NEWELLE_SETUP.md"
-STEPS = ("Welcome", "Look and keyboard", "Your phone", "You are ready")
+STEPS = ("Welcome", "Get online", "Look and keyboard", "Your phone", "AI and privacy", "Backups",
+         "You are ready")
 
 
 class SetupWizard(Adw.ApplicationWindow):
@@ -100,7 +102,8 @@ class SetupWizard(Adw.ApplicationWindow):
         self.stack.set_transition_duration(180)
 
         for idx, make_page in enumerate(
-            (self._welcome, self._appearance, self._phone, self._ready)
+            (self._welcome, self._online, self._appearance, self._phone, self._privacy, self._backups,
+             self._ready)
         ):
             child = make_page()
             self.stack.add_named(child, f"step-{idx}")
@@ -211,7 +214,101 @@ class SetupWizard(Adw.ApplicationWindow):
 
         self.try_search.connect("changed", search_changed)
         search_changed(self.try_search)
+        alpha = Gtk.Label(label=wizard_steps.ALPHA_NOTICE, xalign=0)
+        alpha.set_wrap(True)
+        alpha.add_css_class("dim-label")
+        alpha.set_margin_top(12)
+        page.append(alpha)
         return page
+
+    def _online(self) -> Gtk.Box:
+        page = self._page(
+            "Get online.",
+            "For updates, apps from Flathub and pairing a phone. Everything else works offline.",
+        )
+        self.online_label = Gtk.Label(xalign=0)
+        self.online_label.set_wrap(True)
+        page.append(self.online_label)
+        choose = Gtk.Button(label="Choose a Wi-Fi Network")
+        choose.set_halign(Gtk.Align.START)
+        choose.add_css_class("suggested-action")
+        choose.connect("clicked", lambda *_: self._launch(["gnome-control-center", "wifi"]))
+        page.append(choose)
+        self._online_choose = choose
+        monitor = Gio.NetworkMonitor.get_default()
+        monitor.connect("network-changed", lambda *_: self._refresh_online())
+        self._refresh_online()
+        return page
+
+    def _refresh_online(self):
+        monitor = Gio.NetworkMonitor.get_default()
+        online = monitor.get_connectivity() == Gio.NetworkConnectivity.FULL
+
+        def work():
+            ssid = wizard_steps.wifi_name()
+            GLib.idle_add(self._show_online, online, ssid)
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def _show_online(self, online, ssid):
+        self.online_label.set_text(wizard_steps.connection_summary(online, ssid))
+        self._online_choose.set_label("Change Wi-Fi Network" if online else "Choose a Wi-Fi Network")
+        if online:
+            self._online_choose.remove_css_class("suggested-action")
+        else:
+            self._online_choose.add_css_class("suggested-action")
+        return GLib.SOURCE_REMOVE
+
+    def _launch(self, argv):
+        try:
+            Gio.Subprocess.new(argv, Gio.SubprocessFlags.NONE)
+        except GLib.Error as exc:
+            self.status.set_text(f"Couldn't open it: {exc.message}")
+
+    def _privacy(self) -> Gtk.Box:
+        page = self._page(
+            "Your AI stays on this computer.",
+            "How Mutsu Search and Mutsu Mechanic handle what you ask.",
+        )
+        for title, body in wizard_steps.PRIVACY_POINTS:
+            heading = Gtk.Label(label=title, xalign=0)
+            heading.add_css_class("heading")
+            heading.set_wrap(True)
+            heading.set_margin_top(6)
+            page.append(heading)
+            self._paragraph(page, body)
+        return page
+
+    def _backups(self) -> Gtk.Box:
+        page = self._page(
+            "Back up your files.",
+            "Keep a copy of your home folder on an external drive or a network share. "
+            "Recommended, and you can do it later.",
+        )
+        self.backup_label = Gtk.Label(xalign=0)
+        self.backup_label.set_wrap(True)
+        page.append(self.backup_label)
+        setup = Gtk.Button(label="Set Up Backups")
+        setup.set_halign(Gtk.Align.START)
+        setup.add_css_class("suggested-action")
+        setup.connect("clicked", self._open_backups)
+        page.append(setup)
+        self._backup_button = setup
+        self._refresh_backups()
+        return page
+
+    def _refresh_backups(self):
+        if wizard_steps.backup_app_installed():
+            self.backup_label.set_text("Backups opens next. Pick a drive and how often to back up.")
+            self._backup_button.set_sensitive(True)
+        else:
+            self.backup_label.set_text(
+                "The Backups app is still being installed (it needs a connection). "
+                "You'll find it in your apps later.")
+            self._backup_button.set_sensitive(False)
+
+    def _open_backups(self, *_unused):
+        self._launch(["gtk-launch", wizard_steps.BACKUP_APP_ID])
 
     def _appearance(self) -> Gtk.Box:
         page = self._page(
