@@ -40,6 +40,7 @@ from .wallpaper import WallpaperError, apply_theme_wallpaper
 from .branding import PRODUCT_NAME, WELCOME_TITLE
 from .mac_stoplights import install_stoplights
 from .tools import ToolError, run_tool
+from .adaptive_prefs import MODES as ADAPTIVE_MODES, get_adaptive_mode, set_adaptive_mode
 
 
 GSCONNECT_ID = gsconnect.GSCONNECT_ID
@@ -339,9 +340,21 @@ class SetupWizard(Adw.ApplicationWindow):
         self.keyboard_shortcut = Gtk.Label(xalign=0)
         page.append(self.keyboard_shortcut)
         self._refresh_shortcut()
+
+        current = get_adaptive_mode()
+        if current is not None:
+            self._paragraph(page, "Tablet mode. On a 2-in-1, folding the keyboard back switches "
+                                  "to a touch Home screen; you can also keep one mode.")
+            self.adaptive_choice = Gtk.DropDown.new_from_strings([label for label, _ in ADAPTIVE_MODES])
+            self.adaptive_choice.set_selected(next(
+                i for i, (_label, value) in enumerate(ADAPTIVE_MODES) if value == current))
+            self.adaptive_choice.connect("notify::selected", self._adaptive_selected)
+            page.append(self.adaptive_choice)
         return page
 
-        return page
+    def _adaptive_selected(self, *_unused):
+        mode = ADAPTIVE_MODES[self.adaptive_choice.get_selected()][1]
+        self._run_background(lambda: set_adaptive_mode(mode))
 
     def _confirm_window_layout(self, *_unused):
         dialog = Gtk.MessageDialog(
