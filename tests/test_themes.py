@@ -71,7 +71,7 @@ class ThemeTests(unittest.TestCase):
                 self.assertIn("row.spotlight-ask-row", style)
                 self.assertIn("background: transparent;", style)
                 self.assertIn("row:selected", style)
-        self.assertIn("rgba(81, 107, 92, 0.18)", SPOTLIGHT_STYLES["japandi"])
+        self.assertIn("rgba(127, 154, 130, 0.22)", SPOTLIGHT_STYLES["japandi"])
         self.assertIn("border-radius: 12px;", SPOTLIGHT_STYLES["japandi"])
         self.assertIn("border-left: 3px solid #ff36ba;", SPOTLIGHT_STYLES["cyberpunk"])
 

@@ -90,40 +90,40 @@ JAPANDI = """
 .ai-desktop.japandi,
 window.ai-desktop-window.japandi {
   background-color: #f3efe7;
-  color: #303832;
+  color: #33302c;
 }
 window.ai-desktop-window.japandi headerbar {
   background-color: #f3efe7;
-  color: #303832;
+  color: #33302c;
   box-shadow: none;
 }
 .ai-desktop.japandi entry {
   background-color: #fffdf9;
-  color: #303832;
+  color: #33302c;
   border: 1px solid #c6c7b7;
   box-shadow: none;
 }
 .ai-desktop.japandi list {
   background-color: #fffcf6;
-  color: #303832;
+  color: #33302c;
   border: 1px solid #d9d7cc;
 }
 .ai-desktop.japandi list row:selected {
-  background-color: #dce5d9;
-  color: #263b2d;
+  background-color: #e2e9df;
+  color: #3b3632;
 }
 .ai-desktop.japandi textview,
 .ai-desktop.japandi textview text {
   background-color: #fffcf6;
-  color: #303832;
+  color: #33302c;
 }
 .ai-desktop.japandi button.suggested-action {
-  background-color: #516b5c;
+  background-color: #6f8a72;
   color: #ffffff;
-  border: 1px solid #516b5c;
+  border: 1px solid #6f8a72;
 }
 .ai-desktop.japandi button.suggested-action:hover {
-  background-color: #405849;
+  background-color: #5e7761;
 }
 """
 
@@ -421,7 +421,7 @@ window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row:sele
     "japandi": SPOTLIGHT_COMMON + """
 window.spotlight-window .ai-desktop.spotlight-shell.japandi {
   background-color: rgba(243, 239, 231, 0.88);
-  color: #303832;
+  color: #33302c;
   border: 1px solid rgba(104, 117, 97, 0.40);
   border-radius: 20px;
   box-shadow: 0 9px 26px rgba(40, 51, 45, 0.20);
@@ -431,7 +431,7 @@ window.spotlight-window .ai-desktop.spotlight-shell.japandi textview.spotlight-o
 window.spotlight-window .ai-desktop.spotlight-shell.japandi textview.spotlight-output text {
   background: transparent;
   border: none;
-  color: #303832;
+  color: #33302c;
   box-shadow: none;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi scrolledwindow.spotlight-scroll,
@@ -441,22 +441,22 @@ window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list 
   background: transparent;
   background-image: none;
   border: none;
-  color: #303832;
+  color: #33302c;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row {
   border-radius: 12px;
-  color: #303832;
+  color: #33302c;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:hover:not(:selected) {
-  background: rgba(81, 107, 92, 0.08);
+  background: rgba(127, 154, 130, 0.10);
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:selected {
-  background-color: rgba(81, 107, 92, 0.18);
-  color: #263b2d;
+  background-color: rgba(127, 154, 130, 0.22);
+  color: #3b3632;
   border-radius: 12px;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:selected label {
-  color: #263b2d;
+  color: #3b3632;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi .spotlight-section-heading {
   color: #646a5c;
@@ -465,10 +465,10 @@ window.spotlight-window .ai-desktop.spotlight-shell.japandi button.spotlight-chi
   background-color: rgba(243, 239, 231, 0.75);
   border: 1px solid rgba(104, 117, 97, 0.27);
   border-radius: 999px;
-  color: #303832;
+  color: #33302c;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi button.spotlight-chip:hover {
-  background-color: rgba(81, 107, 92, 0.14);
+  background-color: rgba(127, 154, 130, 0.16);
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row.spotlight-section-row {
   border-radius: 0;
