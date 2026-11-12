@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from .providers import ProviderError, complete
+from .chat import Turn, history_block
 from .history import record_action
 from .onboarding import (
     get_learning_style, helper_intro, model_sharing_allowed, MODEL_SHARING_LABEL,
@@ -61,6 +62,8 @@ def _system_prompt(learning_style: str = "guided") -> str:
     return (
         "You are Mutsu Mechanic, a patient Linux troubleshooting buddy helping someone who may be migrating from macOS. "
         + MUTSU_FACTS +
+        "This is a chat: answer the user's latest message, using the conversation so far for context, "
+        "and keep replies short and conversational unless asked for detail. "
         "Explain what you verified, distinguish possible from confirmed causes, and help the user learn when useful. "
         "Education preference: " + helper_intro(learning_style) + " "
         "This preference NEVER changes tool permissions, approval requirements, or the allowlist. "
@@ -94,7 +97,9 @@ class Agent:
     def __init__(self, inference: Callable[[str, str, str], str] = complete):
         self.inference = inference
 
-    def ask(self, request: str, provider: str) -> AgentResponse:
+    def ask(self, request: str, provider: str, history: tuple[Turn, ...] | list[Turn] = ()) -> AgentResponse:
+        """Answer one message. `history` is the chat so far (oldest first);
+        built-in mode answers each message on its own."""
         request = request.strip()
         if not request or len(request) > 4000:
             return AgentResponse("Enter a request of 1–4000 characters.")
@@ -111,7 +116,8 @@ class Agent:
                 f"'{MODEL_SHARING_LABEL}' in Mutsu Search settings (the gear icon)."
             )
 
-        context = [f"User request: {request}"]
+        earlier = history_block(history)
+        context = ([earlier] if earlier else []) + [f"User request: {request}"]
         for _ in range(4):  # no unending autonomous action loop
             # Re-check consent between diagnostic steps. Turning permission
             # off prevents additional model requests, although it cannot

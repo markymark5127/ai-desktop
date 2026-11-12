@@ -18,6 +18,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 
 from .agent import Agent, AgentResponse, PendingAction
+from .chat import Conversation, USER, MECHANIC, to_markup
 from .search import AppResult, list_applications
 from .search_routing import route_query, shell_manages_dismissal, should_hide_on_focus_loss
 from .file_search import FileResult, list_local_files, search_local_files
@@ -48,6 +49,10 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.connect("notify::is-active", self._on_active_changed)
         self.agent = Agent()
         self.pending: PendingAction | None = None
+        # Asking Mechanic turns this window into a chat (see _enter_chat).
+        self.conversation = Conversation()
+        self.chat_mode = False
+        self._thinking: Gtk.Widget | None = None
         self.catalog: list[AppResult] = list_applications()
         self.usage = UsageStore()
         self._content_query = ""
@@ -102,6 +107,8 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.entry.set_hexpand(True)
         search_row.append(self.entry)
         root.append(search_row)
+        self.search_row = search_row
+        self.entry.connect("icon-press", self._on_entry_icon)
 
         self.results_section = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=0
@@ -188,11 +195,212 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.response_section.append(approval)
         root.append(self.response_section)
 
+        root.append(self._build_chat())
+
         # Settings (provider, privacy, web search, look) live in GNOME
         # Settings → Mutsu Search and are read fresh whenever they're used.
         self._apply_theme(load_theme())
         self.entry.grab_focus()
         GLib.idle_add(self._begin_file_scan)
+
+    # ---- chat with Mutsu Mechanic -------------------------------------------
+
+    def _build_chat(self) -> Gtk.Widget:
+        """Header, message bubbles and approval row. Hidden until someone asks
+        Mechanic; then it slides open and the search field moves under it to
+        become the reply box."""
+        self.chat_revealer = Gtk.Revealer()
+        self.chat_revealer.set_transition_type(Gtk.RevealerTransitionType.SLIDE_DOWN)
+        self.chat_revealer.set_transition_duration(220)
+        self.chat_revealer.set_reveal_child(False)
+        self.chat_revealer.set_visible(False)
+
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        box.add_css_class("mechanic-chat")
+
+        header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        header.add_css_class("mechanic-header")
+        back = Gtk.Button.new_from_icon_name("go-previous-symbolic")
+        back.add_css_class("flat")
+        back.set_tooltip_text("Back to search (Esc)")
+        back.connect("clicked", lambda *_: self._leave_chat())
+        header.append(back)
+        icon_path = icon_source("mutsu-ai.svg", "mutsu-logo-symbol.svg")
+        avatar = (Gtk.Image.new_from_file(str(icon_path)) if icon_path is not None
+                  else Gtk.Image.new_from_icon_name("dialog-question-symbolic"))
+        avatar.set_pixel_size(22)
+        header.append(avatar)
+        title = Gtk.Label(label=AI_NAME, xalign=0)
+        title.add_css_class("mechanic-title")
+        title.set_hexpand(True)
+        header.append(title)
+        new_chat = Gtk.Button.new_from_icon_name("list-add-symbolic")
+        new_chat.add_css_class("flat")
+        new_chat.set_tooltip_text("New chat")
+        new_chat.connect("clicked", lambda *_: self._new_chat())
+        header.append(new_chat)
+        box.append(header)
+
+        self.chat_scroll = Gtk.ScrolledWindow()
+        self.chat_scroll.add_css_class("mechanic-scroll")
+        self.chat_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
+        self.chat_scroll.set_min_content_height(160)
+        self.chat_scroll.set_max_content_height(440)
+        self.chat_scroll.set_propagate_natural_height(True)
+        self.chat_list = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        self.chat_list.add_css_class("mechanic-messages")
+        self.chat_scroll.set_child(self.chat_list)
+        box.append(self.chat_scroll)
+
+        approval = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        approval.add_css_class("spotlight-approval")
+        self.chat_approve = Gtk.Button(label="Apply change")
+        self.chat_approve.add_css_class("suggested-action")
+        self.chat_approve.connect("clicked", self._on_approve)
+        self.chat_decline = Gtk.Button(label="Decline")
+        self.chat_decline.connect("clicked", self._on_decline)
+        approval.append(self.chat_approve)
+        approval.append(self.chat_decline)
+        self.chat_approval = approval
+        approval.set_visible(False)
+        box.append(approval)
+
+        self.chat_revealer.set_child(box)
+        return self.chat_revealer
+
+    def _bubble(self, role: str, text: str) -> Gtk.Widget:
+        label = Gtk.Label(xalign=0, wrap=True, selectable=True)
+        label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
+        label.set_max_width_chars(54)
+        if role == MECHANIC:
+            label.set_markup(to_markup(text))
+        else:
+            label.set_text(text)
+        bubble = Gtk.Box()
+        bubble.add_css_class("mechanic-bubble")
+        bubble.add_css_class("from-user" if role == USER else "from-mechanic")
+        bubble.set_halign(Gtk.Align.END if role == USER else Gtk.Align.START)
+        bubble.append(label)
+        return bubble
+
+    def _append_bubble(self, role: str, text: str) -> None:
+        self.chat_list.append(self._bubble(role, text))
+        self._scroll_chat_to_end()
+
+    def _scroll_chat_to_end(self) -> None:
+        self._relayout()  # grow with the conversation, up to the scroll limit
+
+        def scroll() -> bool:
+            adj = self.chat_scroll.get_vadjustment()
+            adj.set_value(adj.get_upper() - adj.get_page_size())
+            return GLib.SOURCE_REMOVE
+        GLib.idle_add(scroll)
+
+    def _show_thinking(self) -> None:
+        self._hide_thinking()
+        label = Gtk.Label(label=f"{AI_NAME} is thinking…", xalign=0)
+        bubble = Gtk.Box()
+        bubble.add_css_class("mechanic-bubble")
+        bubble.add_css_class("from-mechanic")
+        bubble.add_css_class("thinking")
+        bubble.set_halign(Gtk.Align.START)
+        bubble.append(label)
+        self._thinking = bubble
+        self.chat_list.append(bubble)
+        self._scroll_chat_to_end()
+
+    def _hide_thinking(self) -> None:
+        if self._thinking is not None:
+            self.chat_list.remove(self._thinking)
+            self._thinking = None
+
+    def _clear_bubbles(self) -> None:
+        self._thinking = None
+        while child := self.chat_list.get_first_child():
+            self.chat_list.remove(child)
+
+    def _enter_chat(self) -> None:
+        if self.chat_mode:
+            return
+        if self.conversation.stale():
+            self.conversation.clear()
+            self._clear_bubbles()
+        self.chat_mode = True
+        self.results_section.set_visible(False)
+        self.response_section.set_visible(False)
+        self.add_css_class("chatting")
+        self.theme_root.add_css_class("chatting")
+        # The search field slides under the chat and becomes the reply box.
+        self.theme_root.reorder_child_after(self.search_row, self.chat_revealer)
+        self.entry.set_placeholder_text(f"Reply to {AI_NAME}…")
+        self.entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, None)
+        self.entry.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "mail-send-symbolic")
+        self.entry.set_icon_tooltip_text(Gtk.EntryIconPosition.SECONDARY, "Send")
+        self.chat_revealer.set_visible(True)
+        self.chat_revealer.set_reveal_child(True)
+        self._relayout()
+
+    def _leave_chat(self) -> None:
+        if not self.chat_mode:
+            return
+        self.chat_mode = False
+        self.pending = None
+        self.chat_approval.set_visible(False)
+        self.conversation.clear()
+        self._clear_bubbles()
+        self.remove_css_class("chatting")
+        self.theme_root.remove_css_class("chatting")
+        self.chat_revealer.set_reveal_child(False)
+        self.chat_revealer.set_visible(False)
+        self.theme_root.reorder_child_after(self.search_row, None)
+        self.entry.set_placeholder_text(f"Search apps, files, or ask {AI_NAME}…")
+        self.entry.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, None)
+        self.entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic")
+        self.entry.set_text("")
+        self._update_results()
+        self.entry.grab_focus()
+
+    def _new_chat(self) -> None:
+        if self.busy:
+            return
+        self.pending = None
+        self.chat_approval.set_visible(False)
+        self.conversation.clear()
+        self._clear_bubbles()
+        self._append_bubble(MECHANIC, "New chat. What can I help with?")
+        self.entry.grab_focus()
+
+    def _on_entry_icon(self, _entry, position) -> None:
+        if self.chat_mode and position == Gtk.EntryIconPosition.SECONDARY:
+            self._send_chat()
+
+    def _send_chat(self) -> None:
+        text = self.entry.get_text().strip()
+        if text.lower().startswith("ask "):
+            text = text[4:].strip()
+        if not text or self.busy:
+            return
+        provider = self._provider()
+        if provider != "builtin" and not model_sharing_allowed(provider):
+            self._append_bubble(MECHANIC, self._ai_off_message())
+            return
+        history = self.conversation.history()
+        self.conversation.add(USER, text)
+        self._append_bubble(USER, text)
+        self.entry.set_text("")
+        self.pending = None
+        self.chat_approval.set_visible(False)
+        self._launching = False
+        self._execute(lambda: self.agent.ask(text, provider, history))
+
+    def _ai_off_message(self) -> str:
+        return (
+            ("Cloud AI is off. Turn on cloud AI models in Settings → "
+             "Mutsu Search (Ctrl+,) to use this provider. ")
+            if model_sharing_allowed() else
+            ("Mutsu Mechanic's AI is switched off. Turn it on in Settings → "
+             "Mutsu Search (Ctrl+,). ")
+        ) + "App search and built-in checks still work."
 
     def _begin_file_scan(self) -> bool:
         def worker() -> None:
@@ -243,13 +451,19 @@ class AssistantWindow(Adw.ApplicationWindow):
             # That releases the old GNOME app instance so a later shortcut
             # starts current code (important while developing). Preserve a
             # hidden window only for an in-flight request or approval.
-            if self.busy or self.pending is not None:
+            if self.busy or self.pending is not None or (self.chat_mode and len(self.conversation)):
                 self.hide()
             else:
                 self.close()
         return GLib.SOURCE_REMOVE
 
     def prepare_activation(self) -> None:
+        if self.chat_mode:
+            # Coming back to a recent chat picks it up; an old one starts over.
+            if self.busy or self.pending is not None or not self.conversation.stale():
+                self.entry.grab_focus()
+                return
+            self._leave_chat()
         if not self.busy and self.pending is None:
             self.entry.set_text("")
             self.response_section.set_visible(False)
@@ -336,8 +550,13 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.entry.set_sensitive(not busy)
         self.approve_button.set_sensitive(not busy)
         self.cancel_button.set_sensitive(not busy)
+        if hasattr(self, "chat_approve"):
+            self.chat_approve.set_sensitive(not busy)
+            self.chat_decline.set_sensitive(not busy)
 
     def _on_search_changed(self, *_unused) -> None:
+        if self.chat_mode:
+            return  # typing a reply, not searching
         self.response_section.set_visible(False)
         self.pending = None
         self.approve_button.set_visible(False)
@@ -564,6 +783,14 @@ class AssistantWindow(Adw.ApplicationWindow):
 
     def _on_key(self, _controller, keyval, _keycode, state) -> bool:
         if keyval == Gdk.KEY_Escape:
+            if self.chat_mode:
+                # Esc goes back to search; mid-answer it just hides the
+                # window so the answer is waiting when Search reopens.
+                if self.busy:
+                    self.hide()
+                else:
+                    self._leave_chat()
+                return True
             self.close()
             return True
         # Enter is enough for both launch and AI; there is no special AI
@@ -590,6 +817,9 @@ class AssistantWindow(Adw.ApplicationWindow):
         return False
 
     def _on_submit(self, *_unused) -> None:
+        if self.chat_mode:
+            self._send_chat()
+            return
         query = self.entry.get_text().strip()
         if not query:
             return
@@ -665,22 +895,21 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.pending = None
         self._launching = False
         if provider != "builtin" and not model_sharing_allowed(provider):
-            self._show_text(
-                ("Cloud AI is off. Turn on cloud AI models in Settings → "
-                 "Mutsu Search (Ctrl+,) to use this provider. ")
-                if model_sharing_allowed() else
-                ("Mutsu Mechanic's AI is switched off. Turn it on in Settings → "
-                 "Mutsu Search (Ctrl+,). ")
-                + "App search and built-in checks still work."
-            )
+            self._show_text(self._ai_off_message())
             return
         # User already opted in via setup/Settings. Do not interrupt every
         # question; the agent re-checks persisted consent before inference.
-        self._execute(lambda: self.agent.ask(query, provider))
+        # The question opens the chat; replies continue it (_send_chat).
+        self._enter_chat()
+        self.entry.set_text(query)
+        self._send_chat()
 
     def _execute(self, operation) -> None:
         self._busy(True)
-        self._show_text("Working…")
+        if self.chat_mode:
+            self._show_thinking()
+        else:
+            self._show_text("Working…")
 
         def worker():
             try:
@@ -702,9 +931,15 @@ class AssistantWindow(Adw.ApplicationWindow):
             return GLib.SOURCE_REMOVE
         self._launching = False
         self.pending = response.pending
-        self._show_text(response.message)
-        self.approve_button.set_visible(response.pending is not None)
-        self.cancel_button.set_visible(response.pending is not None)
+        if self.chat_mode:
+            self._hide_thinking()
+            self.conversation.add(MECHANIC, response.message)
+            self._append_bubble(MECHANIC, response.message)
+            self.chat_approval.set_visible(response.pending is not None)
+        else:
+            self._show_text(response.message)
+            self.approve_button.set_visible(response.pending is not None)
+            self.cancel_button.set_visible(response.pending is not None)
         self.entry.grab_focus()
         return GLib.SOURCE_REMOVE
 
@@ -713,6 +948,7 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.pending = None
         self.approve_button.set_visible(False)
         self.cancel_button.set_visible(False)
+        self.chat_approval.set_visible(False)
         if action:
             self._execute(lambda: self.agent.approve(action))
 
@@ -720,6 +956,13 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.pending = None
         self.approve_button.set_visible(False)
         self.cancel_button.set_visible(False)
+        self.chat_approval.set_visible(False)
+        if self.chat_mode:
+            message = "Okay, I won't change anything."
+            self.conversation.add(MECHANIC, message)
+            self._append_bubble(MECHANIC, message)
+            self.entry.grab_focus()
+            return
         self._show_text("Action declined. No settings were changed.")
 
 

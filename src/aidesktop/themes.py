@@ -392,6 +392,47 @@ window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output te
 window.spotlight-window .ai-desktop.spotlight-shell separator {
   min-height: 1px;
 }
+/* Chat with Mutsu Mechanic: the search window becomes a conversation. */
+window.spotlight-window .ai-desktop.spotlight-shell .mechanic-header {
+  padding: 6px 2px 2px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .mechanic-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell scrolledwindow.mechanic-scroll,
+window.spotlight-window .ai-desktop.spotlight-shell scrolledwindow.mechanic-scroll > viewport {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .mechanic-messages {
+  padding: 4px 4px 8px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .mechanic-bubble {
+  padding: 8px 12px;
+  border-radius: 16px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .mechanic-bubble.from-user {
+  margin-left: 64px;
+  border-bottom-right-radius: 5px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .mechanic-bubble.from-mechanic {
+  margin-right: 48px;
+  border-bottom-left-radius: 5px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .mechanic-bubble.thinking {
+  opacity: 0.7;
+  font-style: italic;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.chatting .spotlight-searchbar {
+  margin-top: 4px;
+  border-radius: 14px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.chatting entry.spotlight-entry {
+  min-height: 44px;
+  font-size: 15px;
+}
 """
 
 SPOTLIGHT_STYLES = {
@@ -416,6 +457,15 @@ window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row:not(
 window.spotlight-window .ai-desktop.spotlight-shell list.spotlight-list row:selected {
   background-color: rgba(255,255,255,0.18);
   border-radius: 10px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .mechanic-bubble.from-mechanic {
+  background-color: rgba(255, 255, 255, 0.10);
+}
+window.spotlight-window .ai-desktop.spotlight-shell .mechanic-bubble.from-user {
+  background-color: rgba(120, 160, 255, 0.35);
+}
+window.spotlight-window .ai-desktop.spotlight-shell.chatting .spotlight-searchbar {
+  background-color: rgba(255, 255, 255, 0.08);
 }
 """,
     "japandi": SPOTLIGHT_COMMON + """
@@ -473,6 +523,22 @@ window.spotlight-window .ai-desktop.spotlight-shell.japandi button.spotlight-chi
 window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row.spotlight-section-row {
   border-radius: 0;
 }
+window.spotlight-window .ai-desktop.spotlight-shell.japandi .mechanic-bubble.from-mechanic {
+  background-color: rgba(255, 252, 246, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  color: #33302c;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi .mechanic-bubble.from-user {
+  background-color: #7F9A82;
+  color: #FFFCF6;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi .mechanic-bubble.from-user label {
+  color: #FFFCF6;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi.chatting .spotlight-searchbar {
+  background-color: rgba(255, 252, 246, 0.70);
+  border: 1px solid rgba(104, 117, 97, 0.25);
+}
 """,
     "cyberpunk": SPOTLIGHT_COMMON + """
 window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk {
@@ -529,6 +595,22 @@ window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk button.spotlight-c
   border-color: #ff36ba;
   color: #ff36ba;
 }
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk .mechanic-bubble {
+  border-radius: 0;
+  font-family: monospace;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk .mechanic-bubble.from-mechanic {
+  background-color: rgba(0, 245, 255, 0.06);
+  border-left: 2px solid #00f5ff;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk .mechanic-bubble.from-user {
+  background-color: rgba(255, 54, 186, 0.16);
+  border-right: 2px solid #ff36ba;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk.chatting .spotlight-searchbar {
+  border: 1px solid rgba(0, 245, 255, 0.5);
+  border-radius: 0;
+}
 """,
 }
 
@@ -548,6 +630,11 @@ window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output,
 window.spotlight-window .ai-desktop.spotlight-shell textview.spotlight-output text {
   background: #101010;
   color: #ffffff;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .mechanic-bubble {
+  padding: 8px 12px;
+  border: 2px solid #ffffff;
+  border-radius: 6px;
 }
 """
 

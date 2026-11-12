@@ -26,7 +26,7 @@ class SpotlightLifecycleTests(unittest.TestCase):
     def test_unfocused_idle_launcher_closes_instead_of_lingering(self):
         source = method_source(UI, "AssistantWindow", "_dismiss_if_unfocused")
         self.assertIn("should_hide_on_focus_loss(", source)
-        self.assertIn("if self.busy or self.pending is not None:", source)
+        self.assertIn("if self.busy or self.pending is not None or (self.chat_mode and len(self.conversation)):", source)
         self.assertIn("self.hide()", source)
         self.assertIn("self.close()", source)
 
