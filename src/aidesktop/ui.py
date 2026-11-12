@@ -34,6 +34,42 @@ from .themes import (
 from .onboarding import model_sharing_allowed, load_preferences
 from .search_settings import PROVIDER_LABELS
 
+GRID_SIZE = 12          # app tiles on the empty launcher, "All Apps" included
+GRID_COLUMNS = 6
+# Shown under usage suggestions and the dock when those are short.
+DEFAULT_GRID_APPS = (
+    "org.mozilla.firefox.desktop", "firefox.desktop", "org.gnome.Nautilus.desktop",
+    "steam.desktop", "com.valvesoftware.Steam.desktop", "org.gnome.Ptyxis.desktop",
+    "org.gnome.Settings.desktop", "io.github.kolunmi.Bazaar.desktop",
+    "org.gnome.TextEditor.desktop", "org.gnome.Calendar.desktop",
+    "org.gnome.Loupe.desktop", "org.gnome.Music.desktop",
+)
+
+
+def search_placeholder() -> str:
+    return f"Search apps, files, settings, or ask {AI_NAME}…"
+
+
+def grid_app_ids(catalog_ids: list[str], suggested: list[str], favorites: list[str],
+                 limit: int = GRID_SIZE - 1) -> list[str]:
+    """Launcher tiles: what you use now, then your dock, then Mutsu's picks,
+    then anything else, without repeats and only apps that exist."""
+    known = set(catalog_ids)
+    out: list[str] = []
+    for desktop_id in [*suggested, *favorites, *DEFAULT_GRID_APPS, *catalog_ids]:
+        if desktop_id in known and desktop_id not in out:
+            out.append(desktop_id)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def dock_favorites() -> list[str]:
+    source = Gio.SettingsSchemaSource.get_default()
+    if source is None or source.lookup("org.gnome.shell", True) is None:
+        return []
+    return list(Gio.Settings(schema_id="org.gnome.shell").get_strv("favorite-apps"))
+
 
 class AssistantWindow(Adw.ApplicationWindow):
     """Small undecorated launcher; results/diagnostics appear only on demand."""
@@ -41,7 +77,7 @@ class AssistantWindow(Adw.ApplicationWindow):
     def __init__(self, application: Adw.Application):
         super().__init__(application=application)
         self.set_title(SEARCH_NAME)
-        self.set_default_size(640, -1)
+        self.set_default_size(700, -1)
         self.set_decorated(False)
         # Gtk.Window:is-active becomes False after another app or the desktop
         # receives focus. A short deferred check avoids closing for our own
@@ -91,7 +127,7 @@ class AssistantWindow(Adw.ApplicationWindow):
 
         self.entry = Gtk.Entry()
         self.entry.add_css_class("spotlight-entry")
-        self.entry.set_placeholder_text(f"Search apps, files, or ask {AI_NAME}…")
+        self.entry.set_placeholder_text(search_placeholder())
         self.entry.set_icon_from_icon_name(
             Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic"
         )
@@ -106,9 +142,15 @@ class AssistantWindow(Adw.ApplicationWindow):
         search_row.add_css_class("spotlight-searchbar")
         self.entry.set_hexpand(True)
         search_row.append(self.entry)
+        self.shortcut_hint = Gtk.Label(label="Super + Space")
+        self.shortcut_hint.add_css_class("spotlight-hint")
+        self.shortcut_hint.set_valign(Gtk.Align.CENTER)
+        search_row.append(self.shortcut_hint)
         root.append(search_row)
         self.search_row = search_row
         self.entry.connect("icon-press", self._on_entry_icon)
+
+        root.append(self._build_launchpad())
 
         self.results_section = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL, spacing=0
@@ -202,6 +244,102 @@ class AssistantWindow(Adw.ApplicationWindow):
         self._apply_theme(load_theme())
         self.entry.grab_focus()
         GLib.idle_add(self._begin_file_scan)
+
+    # ---- launchpad: the empty launcher is a grid of apps --------------------
+
+    def _build_launchpad(self) -> Gtk.Widget:
+        self.launchpad = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.launchpad.add_css_class("spotlight-launchpad")
+        self.app_grid = Gtk.FlowBox()
+        self.app_grid.add_css_class("spotlight-grid")
+        self.app_grid.set_selection_mode(Gtk.SelectionMode.NONE)
+        self.app_grid.set_homogeneous(True)
+        self.app_grid.set_min_children_per_line(GRID_COLUMNS)
+        self.app_grid.set_max_children_per_line(GRID_COLUMNS)
+        self.app_grid.set_row_spacing(4)
+        self.app_grid.set_column_spacing(4)
+        self.app_grid.connect("child-activated", self._on_tile_activated)
+        keys = Gtk.EventControllerKey()
+        keys.connect("key-pressed", self._on_grid_key)
+        self.app_grid.add_controller(keys)
+        self.launchpad.append(self.app_grid)
+        self.grid_targets: list[AppResult | str] = []
+        self._fill_launchpad()
+        return self.launchpad
+
+    def _tile(self, label: str, icon_name: str, size: int = 48) -> Gtk.FlowBoxChild:
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        box.add_css_class("spotlight-tile-box")
+        icon = Gtk.Image.new_from_icon_name(icon_name)
+        icon.set_pixel_size(size)
+        icon.set_halign(Gtk.Align.CENTER)
+        icon.add_css_class("spotlight-tile-icon")
+        box.append(icon)
+        name = Gtk.Label(label=label, justify=Gtk.Justification.CENTER)
+        name.set_ellipsize(Pango.EllipsizeMode.END)
+        name.set_max_width_chars(11)
+        name.add_css_class("spotlight-tile-label")
+        box.append(name)
+        child = Gtk.FlowBoxChild()
+        child.add_css_class("spotlight-tile")
+        child.set_child(box)
+        child.set_tooltip_text(label)
+        return child
+
+    def _fill_launchpad(self) -> None:
+        while child := self.app_grid.get_child_at_index(0):
+            self.app_grid.remove(child)
+        by_id = {app.desktop_id: app for app in self.catalog}
+        try:
+            favorites = dock_favorites()
+        except GLib.Error:
+            favorites = []
+        ids = grid_app_ids(list(by_id), self.usage.suggestions(list(by_id), limit=GRID_SIZE),
+                           favorites)
+        self.grid_targets = [by_id[d] for d in ids] + ["all-apps"]
+        for target in self.grid_targets:
+            if target == "all-apps":
+                tile = self._tile("All Apps", "view-app-grid-symbolic", 28)
+                tile.add_css_class("spotlight-all-apps")
+            else:
+                tile = self._tile(target.name, target.icon)
+            self.app_grid.append(tile)
+
+    def _on_tile_activated(self, _grid, child) -> None:
+        index = child.get_index()
+        if not 0 <= index < len(self.grid_targets):
+            return
+        target = self.grid_targets[index]
+        if target == "all-apps":
+            self._show_all_apps()
+        else:
+            self._open_app(target)
+
+    def _show_all_apps(self) -> None:
+        """GNOME's own app grid, like the dock's Show Apps button."""
+        try:
+            Gio.bus_get_sync(Gio.BusType.SESSION, None).call(
+                "org.gnome.Shell", "/org/gnome/Shell", "org.gnome.Shell",
+                "ShowApplications", None, None, Gio.DBusCallFlags.NONE, 2000, None, None)
+        except GLib.Error as exc:
+            self._show_text(f"Could not open the app grid: {exc.message}")
+            return
+        self.close()
+
+    def _on_grid_key(self, controller, keyval, _keycode, _state) -> bool:
+        if keyval == Gdk.KEY_Escape:
+            self.close()
+            return True
+        focused = self.app_grid.get_focus_child()
+        index = focused.get_index() if focused else 0
+        if keyval == Gdk.KEY_Up and index < GRID_COLUMNS:
+            self.entry.grab_focus_without_selecting()
+            return True
+        if Gdk.keyval_to_unicode(keyval) and keyval not in (Gdk.KEY_space, Gdk.KEY_Return):
+            # Typing from the grid searches, as it does from the field.
+            self.entry.grab_focus_without_selecting()
+            return controller.forward(self.entry.get_delegate() or self.entry)
+        return False
 
     # ---- chat with Mutsu Mechanic -------------------------------------------
 
@@ -332,6 +470,8 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.theme_root.add_css_class("chatting")
         # The search field slides under the chat and becomes the reply box.
         self.theme_root.reorder_child_after(self.search_row, self.chat_revealer)
+        self.launchpad.set_visible(False)
+        self.shortcut_hint.set_visible(False)
         self.entry.set_placeholder_text(f"Reply to {AI_NAME}…")
         self.entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, None)
         self.entry.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, "mail-send-symbolic")
@@ -353,7 +493,8 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.chat_revealer.set_reveal_child(False)
         self.chat_revealer.set_visible(False)
         self.theme_root.reorder_child_after(self.search_row, None)
-        self.entry.set_placeholder_text(f"Search apps, files, or ask {AI_NAME}…")
+        self.shortcut_hint.set_visible(True)
+        self.entry.set_placeholder_text(search_placeholder())
         self.entry.set_icon_from_icon_name(Gtk.EntryIconPosition.SECONDARY, None)
         self.entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "system-search-symbolic")
         self.entry.set_text("")
@@ -468,7 +609,8 @@ class AssistantWindow(Adw.ApplicationWindow):
             self.entry.set_text("")
             self.response_section.set_visible(False)
             self.results_section.set_visible(False)
-            self._update_results()  # shows Suggested Apps when there are any
+            self._fill_launchpad()  # suggestions follow the time of day
+            self._update_results()
 
     def _apply_theme(self, theme: str) -> None:
         for name in ("japandi", "cyberpunk", "system"):
@@ -533,7 +675,7 @@ class AssistantWindow(Adw.ApplicationWindow):
     def _relayout(self) -> None:
         # Clearing GTK's cached height prevents the window remaining the size
         # of a previous long AI response after returning to an empty search.
-        self.set_default_size(640, -1)
+        self.set_default_size(700, -1)
         self.queue_resize()
 
     def _show_text(self, message: str) -> None:
@@ -684,16 +826,8 @@ class AssistantWindow(Adw.ApplicationWindow):
         while child := self.results.get_row_at_index(0):
             self.results.remove(child)
 
-        if not query:
-            # Suggestions on open, like Siri Suggestions in Spotlight.
-            by_id = {app.desktop_id: app for app in self.catalog}
-            suggested = [by_id[d] for d in self.usage.suggestions(list(by_id), limit=5)]
-            if suggested:
-                self._append_heading("Suggested Apps")
-                for app in suggested:
-                    self._append_result(self._make_result(
-                        app.name, app.description or "Application", app.icon,
-                        css_class="spotlight-app-row"), app)
+        # An empty launcher shows the app grid (suggestions first) instead.
+        self.launchpad.set_visible(not query and not self.chat_mode)
 
         if answer:
             self._append_heading("Calculator" if answer.title.count(" ") <= 1 else "Conversion")
@@ -799,6 +933,12 @@ class AssistantWindow(Adw.ApplicationWindow):
                 and keyval == Gdk.KEY_comma):
             self._show_settings()
             return True
+        if (keyval == Gdk.KEY_Down and self.launchpad.get_visible()
+                and not self.entry.get_text().strip()):
+            first = self.app_grid.get_child_at_index(0)
+            if first is not None:
+                first.grab_focus()
+                return True
         if keyval in (Gdk.KEY_Down, Gdk.KEY_Up) and self.selectable_indices:
             current = self.results.get_selected_row()
             index = current.get_index() if current else -1

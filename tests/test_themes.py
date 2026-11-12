@@ -15,7 +15,7 @@ class ThemeTests(unittest.TestCase):
         # The system palette remains GNOME-native, while AI Desktop still
         # provides its own traffic-light title controls.
         self.assertIn("button.mac-stoplight", STYLES["system"])
-        self.assertNotIn("#f3efe7", STYLES["system"])
+        self.assertNotIn("#f5f0e7", STYLES["system"])
         for name in ("japandi", "cyberpunk"):
             self.assertIn(".ai-desktop", STYLES[name])
             self.assertIn("window.ai-desktop-window", STYLES[name])
@@ -33,7 +33,8 @@ class ThemeTests(unittest.TestCase):
         self.assertIn("box-shadow", neon)
         # Japandi stays soft and independently scoped, without Cyberpunk's styles.
         calm = STYLES["japandi"]
-        self.assertIn("#f3efe7", calm)
+        self.assertIn("#f5f0e7", calm)
+        self.assertIn("linear-gradient(90deg, #3D8C99, #7466C2)", calm)  # liquid primary action
         self.assertIn("border-radius: 12px;", calm)
         self.assertNotIn("#00f5ff", calm)
 
@@ -55,7 +56,7 @@ class ThemeTests(unittest.TestCase):
                 self.assertIn("spotlight-response", css)
                 self.assertIn("rgba(", css)
                 self.assertIn("spotlight-settings-button", css)
-        self.assertIn("border-radius: 20px", SPOTLIGHT_STYLES["japandi"])
+        self.assertIn("border-radius: 28px", SPOTLIGHT_STYLES["japandi"])
         self.assertIn("border-radius: 0", SPOTLIGHT_STYLES["cyberpunk"])
         self.assertIn("#00f5ff", SPOTLIGHT_STYLES["cyberpunk"])
         self.assertIn("background-color: #101010", SPOTLIGHT_HIGH_CONTRAST)
@@ -71,8 +72,8 @@ class ThemeTests(unittest.TestCase):
                 self.assertIn("row.spotlight-ask-row", style)
                 self.assertIn("background: transparent;", style)
                 self.assertIn("row:selected", style)
-        self.assertIn("rgba(127, 154, 130, 0.22)", SPOTLIGHT_STYLES["japandi"])
-        self.assertIn("border-radius: 12px;", SPOTLIGHT_STYLES["japandi"])
+        self.assertIn("linear-gradient(90deg, #3D8C99, #7466C2)", SPOTLIGHT_STYLES["japandi"])
+        self.assertIn("flowboxchild.spotlight-tile", SPOTLIGHT_STYLES["japandi"])
         self.assertIn("border-left: 3px solid #ff36ba;", SPOTLIGHT_STYLES["cyberpunk"])
 
     def test_persist_and_reload_theme(self):

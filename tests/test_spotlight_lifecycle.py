@@ -93,5 +93,17 @@ class SpotlightLifecycleTests(unittest.TestCase):
         self.assertIn("/usr/share/backgrounds/mutsu/", asset_readme)
 
 
+
+class LaunchpadOrderTest(unittest.TestCase):
+    def test_grid_prefers_usage_then_dock_then_defaults(self):
+        try:
+            from aidesktop.ui import grid_app_ids
+        except (ImportError, ValueError) as exc:
+            self.skipTest(f"needs GTK 4: {exc}")
+        catalog = ["a.desktop", "b.desktop", "firefox.desktop", "org.gnome.Nautilus.desktop", "z.desktop"]
+        ids = grid_app_ids(catalog, ["b.desktop"], ["gone.desktop", "a.desktop", "b.desktop"], limit=4)
+        self.assertEqual(ids, ["b.desktop", "a.desktop", "firefox.desktop", "org.gnome.Nautilus.desktop"])
+        self.assertEqual(len(grid_app_ids(catalog, [], [], limit=11)), 5)  # only apps that exist
+
 if __name__ == "__main__":
     unittest.main()

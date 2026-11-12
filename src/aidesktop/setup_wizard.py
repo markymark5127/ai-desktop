@@ -192,6 +192,20 @@ class SetupWizard(Adw.ApplicationWindow):
             f"Welcome to {PRODUCT_NAME}.",
             "This takes a minute. Super+Space opens apps and files.",
         )
+        overview = Gtk.ListBox()
+        overview.add_css_class("boxed-list")
+        overview.add_css_class("welcome-overview")
+        overview.set_selection_mode(Gtk.SelectionMode.NONE)
+        for step, title, subtitle, icon_name in wizard_steps.WELCOME_OVERVIEW:
+            row = Adw.ActionRow(title=title, subtitle=subtitle, activatable=True)
+            icon = Gtk.Image.new_from_icon_name(icon_name)
+            icon.add_css_class("welcome-row-icon")
+            icon.set_valign(Gtk.Align.CENTER)
+            row.add_prefix(icon)
+            row.add_suffix(Gtk.Image.new_from_icon_name("go-next-symbolic"))
+            row.connect("activated", lambda _row, i=STEPS.index(step): self._show(i))
+            overview.append(row)
+        page.append(overview)
         self._paragraph(page, "Try a search:")
         self.try_search = Gtk.Entry()
         self.try_search.set_placeholder_text("e.g. Files, Settings, Terminal")

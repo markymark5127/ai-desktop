@@ -13,6 +13,15 @@ ALPHA_NOTICE = (
     "If something breaks, ask Mutsu Mechanic (Super+Space) or report it on GitHub."
 )
 
+# The welcome card's overview: each row opens its own step.
+WELCOME_OVERVIEW = (
+    ("Get online", "Get online", "Wi-Fi for updates and apps", "network-wireless-symbolic"),
+    ("Look and keyboard", "Customize", "Theme, tablet mode and keyboard", "applications-graphics-symbolic"),
+    ("Your phone", "Your devices", "Pair your phone for files and texts", "phone-symbolic"),
+    ("AI and privacy", "AI assistant", "Mutsu Mechanic, on this computer", "starred-symbolic"),
+    ("Backups", "Backups", "Keep a copy of what matters", "drive-harddisk-symbolic"),
+)
+
 PRIVACY_POINTS = (
     ("The AI runs on this computer.",
      "Mutsu Search and Mechanic use a model stored on your drive. Questions and answers "

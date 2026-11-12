@@ -20,6 +20,12 @@ class WizardStepTests(unittest.TestCase):
         self.assertEqual(STEPS, ("Welcome", "Get online", "Look and keyboard", "Your phone",
                                  "AI and privacy", "Backups", "You are ready"))
 
+    def test_welcome_overview_rows_open_real_steps(self):
+        from aidesktop.setup_wizard import STEPS
+        for step, title, subtitle, icon in wizard_steps.WELCOME_OVERVIEW:
+            self.assertIn(step, STEPS)
+            self.assertTrue(title and subtitle and icon.endswith("-symbolic"))
+
     def test_wifi_name_from_nmcli(self):
         out = "no:Neighbours\\:5G\nyes:Home\\:Wi-Fi\n"
         with unittest.mock.patch("shutil.which", return_value="/usr/bin/nmcli"):

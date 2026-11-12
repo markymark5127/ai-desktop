@@ -87,30 +87,62 @@ window.ai-desktop-window headerbar button.mac-stoplight:focus-visible {
 """
 
 JAPANDI = """
+/* Shoji Glass: warm paper, milky glass rows with a bright rim, and the
+   liquid teal-to-violet only on the one action that matters. */
 .ai-desktop.japandi,
 window.ai-desktop-window.japandi {
-  background-color: #f3efe7;
-  color: #33302c;
+  background-color: #f5f0e7;
+  background-image: linear-gradient(180deg, #fbf8f2, #efe7da);
+  color: #2B2F2C;
 }
 window.ai-desktop-window.japandi headerbar {
-  background-color: #f3efe7;
-  color: #33302c;
+  background-color: transparent;
+  background-image: none;
+  color: #2B2F2C;
   box-shadow: none;
 }
 .ai-desktop.japandi entry {
-  background-color: #fffdf9;
-  color: #33302c;
-  border: 1px solid #c6c7b7;
-  box-shadow: none;
+  background-color: rgba(255, 255, 255, 0.70);
+  color: #2B2F2C;
+  border: 1px solid rgba(43, 47, 44, 0.12);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 2px rgba(43, 36, 28, 0.05);
 }
-.ai-desktop.japandi list {
-  background-color: #fffcf6;
-  color: #33302c;
-  border: 1px solid #d9d7cc;
+.ai-desktop.japandi entry:focus-within {
+  border-color: #7466C2;
+}
+.ai-desktop.japandi list,
+.ai-desktop.japandi list.boxed-list {
+  background-color: rgba(255, 255, 255, 0.58);
+  color: #2B2F2C;
+  border: 1px solid rgba(255, 255, 255, 0.90);
+  border-radius: 18px;
+  box-shadow: 0 4px 14px rgba(43, 36, 28, 0.07);
 }
 .ai-desktop.japandi list row:selected {
-  background-color: #e2e9df;
-  color: #3b3632;
+  background-color: rgba(116, 102, 194, 0.12);
+  color: #2B2F2C;
+}
+.ai-desktop.japandi list.welcome-overview row {
+  border-radius: 0;
+}
+.ai-desktop.japandi list.welcome-overview row:hover {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+.ai-desktop.japandi .welcome-row-icon {
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 11px;
+  color: #3F5F86;
+  background-color: rgba(255, 255, 255, 0.80);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 3px rgba(43, 36, 28, 0.10);
+}
+.ai-desktop.japandi button {
+  border-radius: 12px;
+}
+.ai-desktop.japandi button.pill {
+  border-radius: 999px;
 }
 .ai-desktop.japandi textview,
 .ai-desktop.japandi textview text {
@@ -118,12 +150,17 @@ window.ai-desktop-window.japandi headerbar {
   color: #33302c;
 }
 .ai-desktop.japandi button.suggested-action {
-  background-color: #6f8a72;
+  background-color: #5879AD;
+  background-image: linear-gradient(90deg, #3D8C99, #7466C2);
   color: #ffffff;
-  border: 1px solid #6f8a72;
+  border: 1px solid rgba(255, 255, 255, 0.40);
+  box-shadow: 0 4px 12px rgba(88, 121, 173, 0.28);
 }
 .ai-desktop.japandi button.suggested-action:hover {
-  background-color: #5e7761;
+  background-image: linear-gradient(90deg, #46979F, #7E71CB);
+}
+.ai-desktop.japandi button.suggested-action:active {
+  background-image: linear-gradient(90deg, #357D89, #6658B1);
 }
 """
 
@@ -269,9 +306,40 @@ window.ai-desktop-window.spotlight-window {
   box-shadow: none;
 }
 window.spotlight-window .ai-desktop.spotlight-shell {
-  margin: 8px;
-  padding: 5px 10px;
+  margin: 30px;
+  padding: 10px 12px;
   border-radius: 18px;
+}
+window.spotlight-window .spotlight-searchbar .spotlight-hint {
+  margin: 0 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  opacity: 0.72;
+}
+/* The empty launcher: a grid of apps under the field. */
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-launchpad {
+  padding: 12px 2px 4px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell flowbox.spotlight-grid {
+  background: transparent;
+}
+window.spotlight-window .ai-desktop.spotlight-shell flowboxchild.spotlight-tile {
+  padding: 10px 2px 8px;
+  border-radius: 18px;
+  background: transparent;
+  transition: background-color 160ms ease-out;
+}
+window.spotlight-window .ai-desktop.spotlight-shell flowboxchild.spotlight-tile:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-tile-label {
+  font-size: 12px;
+}
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-all-apps .spotlight-tile-icon {
+  padding: 10px;
+  border-radius: 14px;
 }
 window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry {
   min-height: 52px;
@@ -282,8 +350,16 @@ window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry {
   box-shadow: none;
   font-size: 17px;
 }
-window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry:focus {
+window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry:focus,
+window.spotlight-window .ai-desktop.spotlight-shell entry.spotlight-entry:focus-within {
   outline: none;
+  box-shadow: none;
+}
+/* Nothing but the card paints: no window outline or shade around it. */
+window.ai-desktop-window.spotlight-window,
+window.ai-desktop-window.spotlight-window > widget {
+  outline: none;
+  background: transparent;
   box-shadow: none;
 }
 window.spotlight-window .spotlight-searchbar menubutton.spotlight-settings-button > button {
@@ -467,14 +543,54 @@ window.spotlight-window .ai-desktop.spotlight-shell .mechanic-bubble.from-user {
 window.spotlight-window .ai-desktop.spotlight-shell.chatting .spotlight-searchbar {
   background-color: rgba(255, 255, 255, 0.08);
 }
+window.spotlight-window .ai-desktop.spotlight-shell flowboxchild.spotlight-tile:hover,
+window.spotlight-window .ai-desktop.spotlight-shell flowboxchild.spotlight-tile:focus-visible {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+window.spotlight-window .spotlight-searchbar .spotlight-hint,
+window.spotlight-window .ai-desktop.spotlight-shell .spotlight-all-apps .spotlight-tile-icon {
+  background-color: rgba(255, 255, 255, 0.10);
+}
 """,
     "japandi": SPOTLIGHT_COMMON + """
+/* Shoji Glass: milky paper with a bright rim, liquid colour only for
+   the active moment (selection, your messages). */
 window.spotlight-window .ai-desktop.spotlight-shell.japandi {
-  background-color: rgba(243, 239, 231, 0.88);
-  color: #33302c;
-  border: 1px solid rgba(104, 117, 97, 0.40);
+  background-color: rgba(250, 246, 238, 0.86);
+  background-image: linear-gradient(180deg, rgba(255, 253, 248, 0.90), rgba(244, 237, 224, 0.80));
+  color: #2B2F2C;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 28px;
+  box-shadow: 0 8px 22px rgba(43, 36, 28, 0.22), inset 0 1px rgba(255, 255, 255, 0.90);
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi .spotlight-searchbar {
+  background-color: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.80);
   border-radius: 20px;
-  box-shadow: 0 9px 26px rgba(40, 51, 45, 0.20);
+  box-shadow: inset 0 1px 2px rgba(43, 36, 28, 0.06);
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi .spotlight-searchbar:focus-within {
+  border-color: rgba(116, 102, 194, 0.45);
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi .spotlight-hint {
+  background-color: rgba(43, 47, 44, 0.06);
+  border: 1px solid rgba(43, 47, 44, 0.08);
+  color: #4A4E49;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi flowboxchild.spotlight-tile:hover {
+  background-color: rgba(255, 255, 255, 0.55);
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi flowboxchild.spotlight-tile:focus-visible {
+  background-color: rgba(255, 255, 255, 0.70);
+  outline-color: #7466C2;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi .spotlight-tile-label {
+  color: #2B2F2C;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.japandi .spotlight-all-apps .spotlight-tile-icon {
+  background-color: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.90);
+  color: #2B2F2C;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi entry.spotlight-entry,
 window.spotlight-window .ai-desktop.spotlight-shell.japandi textview.spotlight-output,
@@ -498,46 +614,50 @@ window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list 
   color: #33302c;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:hover:not(:selected) {
-  background: rgba(127, 154, 130, 0.10);
+  background: rgba(255, 255, 255, 0.50);
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:selected {
-  background-color: rgba(127, 154, 130, 0.22);
-  color: #3b3632;
-  border-radius: 12px;
+  background-color: #5879AD;
+  background-image: linear-gradient(90deg, #3D8C99, #7466C2);
+  color: #FFFFFF;
+  border-radius: 14px;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.35);
 }
-window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:selected label {
-  color: #3b3632;
+window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:selected label,
+window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row:selected image {
+  color: #FFFFFF;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi .spotlight-section-heading {
-  color: #646a5c;
+  color: #6B6459;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi button.spotlight-chip {
-  background-color: rgba(243, 239, 231, 0.75);
-  border: 1px solid rgba(104, 117, 97, 0.27);
+  background-color: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.85);
   border-radius: 999px;
-  color: #33302c;
+  color: #2B2F2C;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi button.spotlight-chip:hover {
-  background-color: rgba(127, 154, 130, 0.16);
+  background-color: rgba(255, 255, 255, 0.80);
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi list.spotlight-list row.spotlight-section-row {
   border-radius: 0;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi .mechanic-bubble.from-mechanic {
-  background-color: rgba(255, 252, 246, 0.78);
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  color: #33302c;
+  background-color: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  color: #2B2F2C;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi .mechanic-bubble.from-user {
-  background-color: #7F9A82;
+  background-color: #5879AD;
+  background-image: linear-gradient(135deg, #3D8C99, #7466C2);
   color: #FFFCF6;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi .mechanic-bubble.from-user label {
   color: #FFFCF6;
 }
 window.spotlight-window .ai-desktop.spotlight-shell.japandi.chatting .spotlight-searchbar {
-  background-color: rgba(255, 252, 246, 0.70);
-  border: 1px solid rgba(104, 117, 97, 0.25);
+  background-color: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.85);
 }
 """,
     "cyberpunk": SPOTLIGHT_COMMON + """
@@ -610,6 +730,19 @@ window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk .mechanic-bubble.f
 window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk.chatting .spotlight-searchbar {
   border: 1px solid rgba(0, 245, 255, 0.5);
   border-radius: 0;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk flowboxchild.spotlight-tile {
+  border-radius: 0;
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk flowboxchild.spotlight-tile:hover,
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk flowboxchild.spotlight-tile:focus-visible {
+  background-color: rgba(0, 245, 255, 0.12);
+}
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk .spotlight-hint,
+window.spotlight-window .ai-desktop.spotlight-shell.cyberpunk .spotlight-all-apps .spotlight-tile-icon {
+  border: 1px solid rgba(0, 245, 255, 0.35);
+  border-radius: 0;
+  color: #00f5ff;
 }
 """,
 }
