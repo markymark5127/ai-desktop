@@ -21,7 +21,7 @@ class WizardStepTests(unittest.TestCase):
                                  "AI and privacy", "Backups", "You are ready"))
 
     def test_welcome_overview_rows_open_real_steps(self):
-        from aidesktop.setup_wizard import STEPS
+        # STEPS comes from the source (above): importing setup_wizard needs GTK
         for step, title, subtitle, icon in wizard_steps.WELCOME_OVERVIEW:
             self.assertIn(step, STEPS)
             self.assertTrue(title and subtitle and icon.endswith("-symbolic"))
