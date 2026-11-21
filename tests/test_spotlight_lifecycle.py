@@ -23,12 +23,44 @@ def method_source(path: Path, klass: str, method: str) -> str:
 
 
 class SpotlightLifecycleTests(unittest.TestCase):
-    def test_unfocused_idle_launcher_closes_instead_of_lingering(self):
+    def test_dismissed_launcher_hides_and_stays_ready(self):
+        # Closing only hides, so the next Super+Space shows the same window
+        # at once instead of starting Python and GTK again.
+        constructor = method_source(UI, "AssistantWindow", "__init__")
+        self.assertIn("self.set_hide_on_close(True)", constructor)
         source = method_source(UI, "AssistantWindow", "_dismiss_if_unfocused")
         self.assertIn("should_hide_on_focus_loss(", source)
-        self.assertIn("if self.busy or self.pending is not None or (self.chat_mode and len(self.conversation)):", source)
-        self.assertIn("self.hide()", source)
         self.assertIn("self.close()", source)
+
+    def test_reopened_launcher_is_current(self):
+        # Apps installed and files saved while Search sat hidden show up,
+        # re-read in the background and only when something changed.
+        prepare = method_source(UI, "AssistantWindow", "prepare_activation")
+        self.assertIn("self._refresh_catalog_if_changed()", prepare)
+        self.assertIn("FILE_RESCAN_SECONDS", prepare)
+        refresh = method_source(UI, "AssistantWindow", "_refresh_catalog_if_changed")
+        self.assertIn("if stamp == self._apps_stamp or self._catalog_refreshing:", refresh)
+        self.assertIn("threading.Thread(target=worker", refresh)
+        scan = method_source(UI, "AssistantWindow", "_begin_file_scan")
+        self.assertIn("if self._file_scan_running:", scan)
+        # and the look follows Settings changes made meanwhile
+        activate = method_source(UI, "AssistantApp", "do_activate")
+        self.assertIn("window._apply_theme(load_theme())", activate)
+
+    def test_background_start_prepares_search_without_showing_it(self):
+        command = method_source(UI, "AssistantApp", "do_command_line")
+        self.assertIn('args[1] == "background"', command)
+        self.assertIn("self._prewarm()", command)
+        prewarm = method_source(UI, "AssistantApp", "_prewarm")
+        self.assertIn("self.hold()", prewarm)
+        self.assertIn("if not is_setup_done():", prewarm)
+        self.assertIn("AssistantWindow(self)", prewarm)
+        self.assertNotIn("present()", prewarm)
+        self.assertNotIn("activate()", prewarm)
+        main = (ROOT / "src/aidesktop/__main__.py").read_text(encoding="utf-8")
+        self.assertIn('internal_argv = ["ai-desktop", "background"]', main)
+        # D-Bus activation's flag goes on to GApplication.
+        self.assertIn('internal_argv = ["ai-desktop", "--gapplication-service"]', main)
 
     def test_search_groups_and_ai_result_remain_keyboard_selectable(self):
         constructor = method_source(UI, "AssistantWindow", "__init__")
@@ -71,14 +103,15 @@ class SpotlightLifecycleTests(unittest.TestCase):
         self.assertIn("Gio.AppInfo.launch_default_for_uri", open_file)
 
     def test_recreated_windows_remove_old_display_css(self):
-        for path, klass, provider in (
-            (UI, "AssistantWindow", "self._theme_provider"),
-            (WIZARD, "SetupWizard", "self.css"),
+        # Search's window only hides on close, so its CSS goes with the window.
+        for path, klass, provider, signal in (
+            (UI, "AssistantWindow", "self._theme_provider", "destroy"),
+            (WIZARD, "SetupWizard", "self.css", "close-request"),
         ):
             with self.subTest(window=klass):
                 constructor = method_source(path, klass, "__init__")
                 cleanup = method_source(path, klass, "_remove_theme_provider")
-                self.assertIn('self.connect("close-request", self._remove_theme_provider)', constructor)
+                self.assertIn(f'self.connect("{signal}", self._remove_theme_provider)', constructor)
                 self.assertIn("Gtk.StyleContext.remove_provider_for_display(", cleanup)
                 self.assertIn(provider, cleanup)
                 self.assertIn("return False", cleanup)

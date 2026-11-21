@@ -63,6 +63,20 @@ def _parse(path: Path, desktop_id: str) -> AppResult | None:
     return AppResult(desktop_id, name, info.get("Comment", "").strip(), info.get("Icon", "application-x-executable"))
 
 
+def applications_stamp(directories: list[Path] | None = None) -> tuple:
+    """Changes when an app is installed or removed (the folders' mtimes).
+
+    Cheap enough to check on every Super+Space; reading the apps is not.
+    """
+    stamp: list[int | None] = []
+    for directory in application_dirs() if directories is None else directories:
+        try:
+            stamp.append(directory.stat().st_mtime_ns)
+        except OSError:
+            stamp.append(None)
+    return tuple(stamp)
+
+
 def list_applications(directories: list[Path] | None = None) -> list[AppResult]:
     """Read app metadata, respecting the first entry with each desktop ID."""
     apps: list[AppResult] = []

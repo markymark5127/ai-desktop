@@ -44,6 +44,13 @@ def main() -> None:
     parser.add_argument("--history", action="store_true", help="Show recent approved actions")
     parser.add_argument("--setup", action="store_true", help="Show the welcome wizard again")
     parser.add_argument("--query", help="Open Search with this text already typed")
+    parser.add_argument(
+        "--background", action="store_true",
+        help="Start ready for Super+Space without showing anything (used after login)",
+    )
+    # D-Bus activation (DBusActivatable) starts the app with this GLib flag;
+    # it is GApplication's, so it is handed on, not handled here.
+    parser.add_argument("--gapplication-service", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--setup-status", action="store_true", help="Show saved onboarding status")
     parser.add_argument("--check-newelle", action="store_true", help="Test the local Newelle GUI API connection")
     parser.add_argument("--test-newelle", action="store_true", help="Send a harmless inference test to Newelle")
@@ -96,7 +103,11 @@ def main() -> None:
     # already-running primary instance as a command-line request. Without
     # HANDLES_COMMAND_LINE, --setup on a second process just reactivated
     # the old Spotlight and quietly ignored the force_setup constructor flag.
-    if args.setup:
+    if args.gapplication_service:
+        internal_argv = ["ai-desktop", "--gapplication-service"]
+    elif args.background:
+        internal_argv = ["ai-desktop", "background"]
+    elif args.setup:
         internal_argv = ["ai-desktop", "setup"]
     elif args.query:
         internal_argv = ["ai-desktop", "query", args.query]

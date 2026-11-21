@@ -9,6 +9,7 @@ This is a regular GTK4 window, not yet a GNOME Shell overlay/layer surface.
 from __future__ import annotations
 
 import threading
+import time
 import traceback
 
 import gi
@@ -19,7 +20,7 @@ from gi.repository import Adw, Gdk, Gio, GLib, Gtk, Pango  # noqa: E402
 
 from .agent import Agent, AgentResponse, PendingAction
 from .chat import Conversation, USER, MECHANIC, to_markup
-from .search import AppResult, list_applications
+from .search import AppResult, applications_stamp, list_applications
 from .search_routing import route_query, shell_manages_dismissal, should_hide_on_focus_loss
 from .file_search import FileResult, list_local_files, search_local_files
 from .spotlight import (
@@ -35,6 +36,9 @@ from .onboarding import model_sharing_allowed, load_preferences
 from .search_settings import PROVIDER_LABELS
 
 GRID_SIZE = 12          # app tiles on the empty launcher, "All Apps" included
+# Search stays running between uses; its filename index is refreshed when it
+# reopens after this long.
+FILE_RESCAN_SECONDS = 300
 GRID_COLUMNS = 6
 # Shown under usage suggestions and the dock when those are short.
 DEFAULT_GRID_APPS = (
@@ -79,6 +83,10 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.set_title(SEARCH_NAME)
         self.set_default_size(700, -1)
         self.set_decorated(False)
+        # Closing only hides: the app stays running, so the next Super+Space
+        # shows this window at once instead of starting Python and GTK and
+        # reading every app again (most of a second).
+        self.set_hide_on_close(True)
         # Gtk.Window:is-active becomes False after another app or the desktop
         # receives focus. A short deferred check avoids closing for our own
         # preferences popover and permission dialogs.
@@ -89,7 +97,9 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.conversation = Conversation()
         self.chat_mode = False
         self._thinking: Gtk.Widget | None = None
+        self._apps_stamp = applications_stamp()
         self.catalog: list[AppResult] = list_applications()
+        self._catalog_refreshing = False
         self.usage = UsageStore()
         self._content_query = ""
         self._content_results: list = []
@@ -97,6 +107,8 @@ class AssistantWindow(Adw.ApplicationWindow):
         self.matches: list[AppResult] = []
         # Index filenames in a bounded background task, never on each key.
         self.files_catalog: list[FileResult] = []
+        self._files_scanned_at = 0.0
+        self._file_scan_running = False
         self.targets: list[AppResult | FileResult | str | None] = []
         self.selectable_indices: list[int] = []
         self.busy = False
@@ -120,10 +132,10 @@ class AssistantWindow(Adw.ApplicationWindow):
             self._theme_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
-        # CSS providers added for the display survive window closure unless
-        # explicitly removed. Without cleanup, reopening Spotlight can leave
-        # old themes overriding new window/list styling.
-        self.connect("close-request", self._remove_theme_provider)
+        # CSS providers added for the display outlive the window unless
+        # explicitly removed. Closing only hides this window, so the provider
+        # goes when the window is destroyed (a new one adds its own).
+        self.connect("destroy", self._remove_theme_provider)
 
         self.entry = Gtk.Entry()
         self.entry.add_css_class("spotlight-entry")
@@ -544,6 +556,10 @@ class AssistantWindow(Adw.ApplicationWindow):
         ) + "App search and built-in checks still work."
 
     def _begin_file_scan(self) -> bool:
+        if self._file_scan_running:
+            return GLib.SOURCE_REMOVE
+        self._file_scan_running = True
+
         def worker() -> None:
             files = list_local_files()
             GLib.idle_add(self._on_file_scan_finished, files)
@@ -551,9 +567,34 @@ class AssistantWindow(Adw.ApplicationWindow):
         return GLib.SOURCE_REMOVE
 
     def _on_file_scan_finished(self, files: list[FileResult]) -> bool:
+        self._file_scan_running = False
+        self._files_scanned_at = time.monotonic()
         self.files_catalog = files
         if self.entry.get_text().strip() and self.get_visible():
             self._update_results()
+        return GLib.SOURCE_REMOVE
+
+    def _refresh_catalog_if_changed(self) -> None:
+        """Re-read apps only when an applications folder changed."""
+        stamp = applications_stamp()
+        if stamp == self._apps_stamp or self._catalog_refreshing:
+            return
+        self._catalog_refreshing = True
+
+        def worker() -> None:
+            apps = list_applications()
+            GLib.idle_add(self._on_catalog_refreshed, apps, stamp)
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_catalog_refreshed(self, apps: list[AppResult], stamp: tuple) -> bool:
+        self._catalog_refreshing = False
+        self._apps_stamp = stamp
+        self.catalog = apps
+        if self.get_visible() and not self.chat_mode:
+            if self.entry.get_text().strip():
+                self._update_results()
+            else:
+                self._fill_launchpad()
         return GLib.SOURCE_REMOVE
 
     def _remove_theme_provider(self, *_unused) -> bool:
@@ -588,17 +629,17 @@ class AssistantWindow(Adw.ApplicationWindow):
             modal_dialog=False,
             settings_open=False,
         ):
-            # For ordinary Spotlight searches, CLOSE instead of just hiding.
-            # That releases the old GNOME app instance so a later shortcut
-            # starts current code (important while developing). Preserve a
-            # hidden window only for an in-flight request or approval.
-            if self.busy or self.pending is not None or (self.chat_mode and len(self.conversation)):
-                self.hide()
-            else:
-                self.close()
+            # Closing hides (hide-on-close): Search stays ready for the next
+            # Super+Space, with an in-flight answer or approval kept.
+            self.close()
         return GLib.SOURCE_REMOVE
 
     def prepare_activation(self) -> None:
+        # Search sat hidden since it was last used: pick up apps installed or
+        # removed meanwhile, and files saved since (both in the background).
+        self._refresh_catalog_if_changed()
+        if time.monotonic() - self._files_scanned_at > FILE_RESCAN_SECONDS:
+            GLib.idle_add(self._begin_file_scan)
         if self.chat_mode:
             # Coming back to a recent chat picks it up; an old one starts over.
             if self.busy or self.pending is not None or not self.conversation.stale():
@@ -1141,12 +1182,32 @@ class AssistantApp(Adw.Application):
         # primary application through its D-Bus command-line handler.
         # The private "setup" positional token is supplied by __main__.py.
         args = command_line.get_arguments()
+        if len(args) > 1 and args[1] == "background":
+            self._prewarm()
+            return 0
         if len(args) > 1 and args[1] == "setup":
             self.force_setup = True
         elif len(args) > 2 and args[1] == "query":
             self.initial_query = args[2]
         self.activate()
         return 0
+
+    def _prewarm(self) -> None:
+        """Get ready for Super+Space without showing anything.
+
+        Started after login (mutsu-search.service in Mutsu OS), so even the
+        first Super+Space only has to show a window that already exists.
+        """
+        if not getattr(self, "_held", False):
+            self.hold()  # keep running with no window on screen
+            self._held = True
+        from .onboarding import is_setup_done
+        if not is_setup_done():
+            return  # the welcome wizard comes first; it opens Search after
+        if not any(isinstance(w, AssistantWindow) for w in self.get_windows()):
+            # Realized too (surface, renderer) but not shown: about half of
+            # what the first show would otherwise wait for.
+            AssistantWindow(self).realize()
 
     def _show_launcher(self) -> None:
         window = next(
@@ -1237,6 +1298,8 @@ class AssistantApp(Adw.Application):
             window = AssistantWindow(self)
         else:
             window.prepare_activation()
+            # Settings → Mutsu Search may have changed the look meanwhile.
+            window._apply_theme(load_theme())
         window.present()
         window.entry.grab_focus()
         query, self.initial_query = getattr(self, "initial_query", ""), ""

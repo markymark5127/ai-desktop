@@ -4,7 +4,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from aidesktop.search import AppResult, list_applications, resolve_app_id, search_applications
+from aidesktop.search import (
+    AppResult, applications_stamp, list_applications, resolve_app_id, search_applications,
+)
 
 
 class SearchTests(unittest.TestCase):
@@ -35,3 +37,23 @@ class SearchTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class ApplicationsStampTests(unittest.TestCase):
+    def test_changes_when_an_app_is_installed_or_removed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            apps = Path(tmp, "applications")
+            apps.mkdir()
+            missing = Path(tmp, "missing")
+            before = applications_stamp([apps, missing])
+            self.assertEqual(before[1], None)
+            self.assertEqual(applications_stamp([apps, missing]), before)
+            desktop = apps / "new.desktop"
+            desktop.write_text("[Desktop Entry]\nType=Application\nName=New\n")
+            os.utime(apps, ns=(before[0] + 10**9, before[0] + 10**9))
+            installed = applications_stamp([apps, missing])
+            self.assertNotEqual(installed, before)
+            desktop.unlink()
+            os.utime(apps, ns=(before[0] + 2 * 10**9, before[0] + 2 * 10**9))
+            self.assertNotEqual(applications_stamp([apps, missing]), installed)
+

@@ -81,8 +81,8 @@ class ChatWindowTests(unittest.TestCase):
         # typing a reply never runs a search; Esc goes back instead of closing
         self.assertIn("if self.chat_mode:\n            return", methods["_on_search_changed"])
         self.assertIn("self._leave_chat()", methods["_on_key"])
-        # a chat survives Search being dismissed for a while
-        self.assertIn("self.chat_mode and len(self.conversation)", methods["_dismiss_if_unfocused"])
+        # a chat survives Search being dismissed for a while: closing hides
+        self.assertIn("self.set_hide_on_close(True)", UI)
         self.assertIn("self.conversation.stale()", methods["prepare_activation"])
         # replies render escaped markup; the user's text is plain
         self.assertIn("set_markup(to_markup(text))", methods["_bubble"])
